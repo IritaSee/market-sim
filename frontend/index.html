@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SimPasar IDX</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --text:     #c9d1d9;
+      --text-dim: #8b949e;
+      --green:    #3fb950;
+      --red:      #f85149;
+      --blue:     #58a6ff;
+      --purple:   #bc8cff;
+      --orange:   #f0883e;
+      --yellow:   #e3b341;
+      --teal:     #39d353;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+                 font-family: 'SF Mono','Cascadia Code','Fira Code',monospace;
+                 font-size: 13px; overflow: hidden; }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── Header ── */
+    #header {
+      display: flex; align-items: center; gap: 14px; padding: 7px 16px;
+      background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    #logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+    #logo span { color: var(--blue); }
+    #status-badge {
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.5px; transition: all 0.4s;
+    }
+    .badge-normal { background:#1f3a1f; color:var(--green);  border:1px solid var(--green); }
+    .badge-bubble { background:#3a2a00; color:var(--yellow); border:1px solid var(--yellow); }
+    .badge-crash  { background:#3a0f0f; color:var(--red);    border:1px solid var(--red); }
+    #price-display { font-size: 18px; font-weight: 700; min-width: 80px; text-align: right; }
+    #tick-counter { color: var(--text-dim); font-size: 11px; margin-left: auto; }
+    #conn-dot { width: 8px; height: 8px; border-radius: 50%;
+                background: var(--red); transition: background 0.3s; }
+    #conn-dot.connected { background: var(--green); }
+
+    /* ── Main ── */
+    #main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Left panel ── */
+    #left-panel {
+      width: 240px; flex-shrink: 0; display: flex; flex-direction: column;
+      background: var(--surface); border-right: 1px solid var(--border);
+      padding: 10px; gap: 10px; overflow-y: auto;
+    }
+    .section-title {
+      font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* Agent grid */
+    #agentCanvas { width: 216px; height: 216px; border: 1px solid var(--border); border-radius: 4px; }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 3px; }
+    .legend-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .sq  { width: 9px; height: 9px; flex-shrink: 0; }
+
+    /* Info-style bar */
+    .pop-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+    .pop-label { width: 80px; }
+    .pop-bar-wrap { flex:1; height:5px; background:#21262d; border-radius:3px; overflow:hidden; }
+    .pop-bar { height:100%; border-radius:3px; transition: width 0.3s; }
+    .pop-pct { width:28px; text-align:right; font-size:10px; }
+
+    /* P&L overview */
+    #pnl-section { display:flex; flex-direction:column; gap:5px; }
+    .pnl-row { display:flex; justify-content:space-between; font-size:11px; }
+    .pnl-label { color: var(--text-dim); }
+    .pnl-val   { font-weight:600; }
+    #pnl-pain-bar-wrap { height:6px; background:#21262d; border-radius:3px; overflow:hidden; }
+    #pnl-pain-bar { height:100%; background:var(--red); border-radius:3px; transition:width 0.3s; }
+
+    /* Psych profile bar */
+    #psych-section { display:flex; flex-direction:column; gap:4px; }
+
+    /* Sentiment */
+    #sentiment-bar-wrap {
+      height:7px; background:#21262d; border-radius:4px; overflow:hidden; position:relative;
+    }
+    #sentiment-bar {
+      height:100%; border-radius:4px; transition:width 0.2s,background 0.2s;
+      position:absolute; left:50%;
+    }
+
+    /* ── Right panel ── */
+    #right-panel { flex:1; display:flex; flex-direction:column; padding:10px; gap:8px; min-width:0; }
+    #chart-title { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
+    #price-stats { display:flex; gap:18px; flex-shrink:0; }
+    .stat-item { display:flex; flex-direction:column; gap:1px; }
+    .stat-label { font-size:10px; color:var(--text-dim); }
+    .stat-value { font-size:13px; font-weight:600; }
+    #chartWrap { flex:1; min-height:0; position:relative; }
+    #priceChart { width:100%; height:100%; }
+
+    /* ── Controls ── */
+    #controls {
+      flex-shrink:0; background:var(--surface); border-top:1px solid var(--border);
+      padding:8px 14px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
+    }
+    .ctrl-group { display:flex; flex-direction:column; gap:4px; }
+    .ctrl-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
+    button {
+      cursor:pointer; border:none; border-radius:6px; padding:5px 12px;
+      font-family:inherit; font-size:11px; font-weight:600; transition:all 0.15s;
+    }
+    #btn-rumor { background:var(--yellow); color:#000; }
+    #btn-rumor:hover { filter:brightness(1.15); }
+    #btn-panic { background:var(--red); color:#fff; }
+    #btn-panic:hover { filter:brightness(1.2); }
+    #btn-pause { background:#21262d; color:var(--text); border:1px solid var(--border); }
+    #btn-pause:hover { background:#30363d; }
+    #btn-reset { background:#21262d; color:var(--text-dim); border:1px solid var(--border); }
+    #btn-reset:hover { background:#30363d; color:var(--text); }
+    .btn-row { display:flex; gap:5px; }
+    .divider { width:1px; height:38px; background:var(--border); margin:0 2px; }
+    .slider-row { display:flex; align-items:center; gap:7px; }
+    .slider-row label { font-size:10px; color:var(--text-dim); width:82px; }
+    input[type=range] {
+      -webkit-appearance:none; appearance:none; width:100px; height:4px;
+      background:#30363d; border-radius:2px; outline:none; cursor:pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+      background:var(--blue); cursor:pointer;
+    }
+    .slider-val { font-size:10px; color:var(--text); width:30px; text-align:right; }
+
+    /* Tooltip */
+    #agent-tooltip {
+      position:fixed; background:var(--surface); border:1px solid var(--border);
+      border-radius:6px; padding:6px 10px; font-size:11px; color:var(--text);
+      pointer-events:none; display:none; z-index:100; line-height:1.6;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <div id="logo">Sim<span>Pasar</span> IDX</div>
+    <div id="status-badge" class="badge-normal">NORMAL</div>
+    <div id="price-display">100.00</div>
+    <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
+      <div id="conn-dot"></div>
+      <span id="tick-counter">Tick: 0</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <!-- Left panel -->
+    <div id="left-panel">
+
+      <!-- Agent grid -->
+      <div class="section-title">AGEN (100)</div>
+      <canvas id="agentCanvas" width="216" height="216"></canvas>
+
+      <!-- Legend info-style × action -->
+      <div class="legend">
+        <div class="legend-row"><div class="dot" style="background:#3fb950"></div>Beli — Fundamental</div>
+        <div class="legend-row"><div class="dot" style="background:#56d364"></div>Beli — Chartist</div>
+        <div class="legend-row"><div class="dot" style="background:#8ee8a4"></div>Beli — Noise</div>
+        <div class="legend-row"><div class="dot" style="background:#f85149"></div>Jual — Fundamental</div>
+        <div class="legend-row"><div class="dot" style="background:#ff7b72"></div>Jual — Chartist</div>
+        <div class="legend-row"><div class="dot" style="background:#fca5a5"></div>Jual — Noise</div>
+        <div class="legend-row" style="margin-top:3px">
+          <div class="sq" style="background:#21262d;border:1px dashed #58a6ff"></div>Disciplined
+          <div class="sq" style="background:#21262d;border:1px dashed #bc8cff;margin-left:4px"></div>Bagholder
+          <div class="sq" style="background:#21262d;border:1px dashed #f0883e;margin-left:4px"></div>Averager
+        </div>
+      </div>
+
+      <!-- Info-style composition -->
+      <div>
+        <div class="section-title" style="margin-bottom:4px">KOMPOSISI INFO-STYLE</div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:var(--blue)">Fundamental</span>
+          <div class="pop-bar-wrap"><div id="bar-f" class="pop-bar" style="background:var(--blue);width:30%"></div></div>
+          <span class="pop-pct" id="pct-f">30%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:var(--purple)">Chartist</span>
+          <div class="pop-bar-wrap"><div id="bar-c" class="pop-bar" style="background:var(--purple);width:50%"></div></div>
+          <span class="pop-pct" id="pct-c">50%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:var(--orange)">Noise</span>
+          <div class="pop-bar-wrap"><div id="bar-n" class="pop-bar" style="background:var(--orange);width:20%"></div></div>
+          <span class="pop-pct" id="pct-n">20%</span>
+        </div>
+      </div>
+
+      <!-- Psych profile composition -->
+      <div id="psych-section">
+        <div class="section-title" style="margin-bottom:4px">PSYCH PROFILE</div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#58a6ff">Disciplined</span>
+          <div class="pop-bar-wrap"><div id="bar-d" class="pop-bar" style="background:#58a6ff;width:34%"></div></div>
+          <span class="pop-pct" id="pct-d">34%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#bc8cff">Bagholder</span>
+          <div class="pop-bar-wrap"><div id="bar-b" class="pop-bar" style="background:#bc8cff;width:33%"></div></div>
+          <span class="pop-pct" id="pct-b">33%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#f0883e">Averager</span>
+          <div class="pop-bar-wrap"><div id="bar-a" class="pop-bar" style="background:#f0883e;width:33%"></div></div>
+          <span class="pop-pct" id="pct-a">33%</span>
+        </div>
+      </div>
+
+      <!-- P&L overview -->
+      <div id="pnl-section">
+        <div class="section-title" style="margin-bottom:4px">P&amp;L OVERVIEW</div>
+        <div class="pnl-row">
+          <span class="pnl-label">Punya posisi</span>
+          <span class="pnl-val" id="pnl-in-pos" style="color:var(--text)">—</span>
+        </div>
+        <div class="pnl-row">
+          <span class="pnl-label">Dalam pain 🔴</span>
+          <span class="pnl-val" id="pnl-in-pain" style="color:var(--red)">—</span>
+        </div>
+        <div class="pnl-row">
+          <span class="pnl-label">Sedang averaging ↗</span>
+          <span class="pnl-val" id="pnl-averaging" style="color:var(--orange)">—</span>
+        </div>
+        <div class="pnl-row">
+          <span class="pnl-label">Avg P&L</span>
+          <span class="pnl-val" id="pnl-avg" style="color:var(--text-dim)">—</span>
+        </div>
+        <!-- Pain meter -->
+        <div id="pnl-pain-bar-wrap">
+          <div id="pnl-pain-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Sentiment -->
+      <div>
+        <div class="section-title" style="margin-bottom:4px">SENTIMEN PASAR</div>
+        <div id="sentiment-bar-wrap">
+          <div id="sentiment-bar" style="width:0%;background:var(--green)"></div>
+        </div>
+        <div id="sentiment-val" style="font-size:10px;color:var(--text-dim);text-align:center">0.000</div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div id="right-panel">
+      <div class="section-title">CHART HARGA vs FUNDAMENTAL</div>
+      <div id="price-stats">
+        <div class="stat-item">
+          <span class="stat-label">Harga</span>
+          <span class="stat-value" id="stat-price" style="color:var(--text)">100.00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Fundamental</span>
+          <span class="stat-value" style="color:var(--blue)">100.00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Deviasi</span>
+          <span class="stat-value" id="stat-dev">+0.0%</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Maks</span>
+          <span class="stat-value" id="stat-max" style="color:var(--green)">100.00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Min</span>
+          <span class="stat-value" id="stat-min" style="color:var(--red)">100.00</span>
+        </div>
+      </div>
+      <div id="chartWrap"><canvas id="priceChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label">Aksi Pasar</div>
+      <div class="btn-row">
+        <button id="btn-rumor">📢 Inject Rumor</button>
+        <button id="btn-panic">📉 Bad News</button>
+        <button id="btn-pause">⏸ Pause</button>
+        <button id="btn-reset">↺ Reset</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <!-- Info-style sliders -->
+    <div class="ctrl-group">
+      <div class="ctrl-label">Info-Style</div>
+      <div class="slider-row">
+        <label style="color:var(--blue)">Fundamental</label>
+        <input type="range" id="sl-f" min="0" max="100" value="30" step="5" />
+        <span class="slider-val" id="lbl-f">30%</span>
+      </div>
+      <div class="slider-row">
+        <label style="color:var(--purple)">Chartist</label>
+        <input type="range" id="sl-c" min="0" max="100" value="50" step="5" />
+        <span class="slider-val" id="lbl-c">50%</span>
+      </div>
+      <div class="slider-row">
+        <label style="color:var(--orange)">Noise</label>
+        <input type="range" id="sl-n" min="0" max="100" value="20" step="5" />
+        <span class="slider-val" id="lbl-n">20%</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <!-- Psych sliders -->
+    <div class="ctrl-group">
+      <div class="ctrl-label">Psych Profile</div>
+      <div class="slider-row">
+        <label style="color:#58a6ff">Disciplined</label>
+        <input type="range" id="sl-d" min="0" max="100" value="34" step="5" />
+        <span class="slider-val" id="lbl-d">34%</span>
+      </div>
+      <div class="slider-row">
+        <label style="color:#bc8cff">Bagholder</label>
+        <input type="range" id="sl-b" min="0" max="100" value="33" step="5" />
+        <span class="slider-val" id="lbl-b">33%</span>
+      </div>
+      <div class="slider-row">
+        <label style="color:#f0883e">Averager</label>
+        <input type="range" id="sl-a" min="0" max="100" value="33" step="5" readonly disabled
+               style="opacity:0.5;cursor:default" />
+        <span class="slider-val" id="lbl-a" style="color:var(--text-dim)">33%</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <!-- Speed + Rumor strength -->
+    <div class="ctrl-group">
+      <div class="ctrl-label">Kecepatan</div>
+      <div class="slider-row">
+        <label id="speed-label">Normal</label>
+        <input type="range" id="sl-speed" min="1" max="9" value="5" step="1" />
+        <span class="slider-val" id="lbl-speed">x1</span>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="ctrl-label">Kekuatan Rumor</div>
+      <div class="slider-row">
+        <label>Strength</label>
+        <input type="range" id="sl-rumor" min="1" max="30" value="10" step="1" />
+        <span class="slider-val" id="lbl-rumor">1.0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="agent-tooltip"></div>
+
+<script>
+// ── WebSocket ──────────────────────────────────────────────────────
+const WS_URL = `ws://${location.host}/ws`;
+let ws, reconnTimer;
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen  = () => {
+    document.getElementById('conn-dot').classList.add('connected');
+    if (reconnTimer) { clearTimeout(reconnTimer); reconnTimer = null; }
+  };
+  ws.onmessage = e => handleState(JSON.parse(e.data));
+  ws.onclose   = () => {
+    document.getElementById('conn-dot').classList.remove('connected');
+    reconnTimer = setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+// ── Chart.js ──────────────────────────────────────────────────────
+const chartCtx = document.getElementById('priceChart').getContext('2d');
+const priceChart = new Chart(chartCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      { label:'Harga', data:[], borderColor:'#c9d1d9',
+        backgroundColor:'rgba(201,209,217,0.06)', borderWidth:2,
+        pointRadius:0, tension:0.3, fill:false, order:1 },
+      { label:'Fundamental', data:[], borderColor:'#58a6ff',
+        borderDash:[6,4], borderWidth:1.5, pointRadius:0,
+        tension:0, fill:false, order:2 },
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, animation:{duration:0},
+    plugins: {
+      legend:{display:false},
+      tooltip:{
+        mode:'index', intersect:false,
+        backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1,
+        titleColor:'#8b949e', bodyColor:'#c9d1d9',
+      }
+    },
+    scales:{
+      x:{ ticks:{color:'#8b949e',maxTicksLimit:8,font:{size:9}}, grid:{color:'#21262d'} },
+      y:{ ticks:{color:'#8b949e',font:{size:9}}, grid:{color:'#21262d'}, beginAtZero:false }
+    }
+  }
+});
+
+// ── Agent canvas ──────────────────────────────────────────────────
+const canvas  = document.getElementById('agentCanvas');
+const ctx2d   = canvas.getContext('2d');
+const CELL    = 216 / 10;
+let lastAgents = [];
+
+// Warna aksi × info-style
+const ACTION_COLORS = {
+  fundamentalist: { buy:'#3fb950', sell:'#f85149', hold:'#1a2a1a' },
+  chartist:       { buy:'#56d364', sell:'#ff7b72', hold:'#1a1a2a' },
+  noise:          { buy:'#8ee8a4', sell:'#fca5a5', hold:'#21262d' },
+};
+// Border psych profile
+const PSYCH_BORDER = {
+  disciplined: '#58a6ff',
+  bagholder:   '#bc8cff',
+  averager:    '#f0883e',
+};
+
+function drawAgents(agents) {
+  ctx2d.clearRect(0, 0, 216, 216);
+  agents.forEach((a, i) => {
+    const col = i % 10, row = Math.floor(i / 10);
+    const x = col * CELL, y = row * CELL;
+
+    // Isi sel berdasarkan aksi × info_style
+    const colors = ACTION_COLORS[a.type] || ACTION_COLORS.noise;
+    // Agen yang "in pain" → isi merah tua (override warna)
+    ctx2d.fillStyle = a.pain ? '#4a0f0f' : colors[a.action];
+    ctx2d.fillRect(x+1, y+1, CELL-2, CELL-2);
+
+    // Border psych profile (1px tipis)
+    ctx2d.strokeStyle = PSYCH_BORDER[a.psych] || '#444';
+    ctx2d.lineWidth = 0.8;
+    ctx2d.strokeRect(x+1.5, y+1.5, CELL-3, CELL-3);
+
+    // Dot tengah = info_style color
+    ctx2d.fillStyle = a.type==='fundamentalist' ? '#58a6ff'
+                    : a.type==='chartist'       ? '#bc8cff' : '#f0883e';
+    ctx2d.beginPath();
+    ctx2d.arc(x+CELL/2, y+CELL/2, 1.8, 0, Math.PI*2);
+    ctx2d.fill();
+
+    // Tanda averaging (▲ kecil di pojok kanan atas saat position > 1.0)
+    if (a.psych === 'averager' && a.pos > 1.05) {
+      ctx2d.fillStyle = '#f0883e';
+      ctx2d.beginPath();
+      ctx2d.moveTo(x+CELL-4, y+CELL-1);
+      ctx2d.lineTo(x+CELL-1, y+CELL-1);
+      ctx2d.lineTo(x+CELL-2.5, y+CELL-4);
+      ctx2d.closePath();
+      ctx2d.fill();
+    }
+  });
+}
+
+// Tooltip hover
+const tooltip = document.getElementById('agent-tooltip');
+canvas.addEventListener('mousemove', e => {
+  if (!lastAgents.length) return;
+  const rect = canvas.getBoundingClientRect();
+  const sx = 216 / rect.width, sy = 216 / rect.height;
+  const col = Math.floor((e.clientX - rect.left) * sx / CELL);
+  const row = Math.floor((e.clientY - rect.top)  * sy / CELL);
+  const idx = row * 10 + col;
+  if (idx < 0 || idx >= lastAgents.length) return;
+  const a = lastAgents[idx];
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX + 12) + 'px';
+  tooltip.style.top  = (e.clientY - 22) + 'px';
+  const pnlColor = a.pnl > 0 ? '#3fb950' : a.pnl < 0 ? '#f85149' : '#8b949e';
+  const pnlSign  = a.pnl >= 0 ? '+' : '';
+  tooltip.innerHTML = `
+    <b>#${a.id}</b> ${a.type} / <span style="color:${PSYCH_BORDER[a.psych]}">${a.psych}</span><br>
+    Aksi: ${a.action} (${a.order > 0 ? '+' : ''}${a.order})<br>
+    P&L: <span style="color:${pnlColor}">${pnlSign}${a.pnl}%</span>
+    ${a.pain ? ' 🔴 PAIN' : ''}
+    ${a.pos > 1.05 ? ' ↗ avg x'+a.pos.toFixed(1) : ''}
+  `.trim();
+});
+canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+
+// ── State handler ──────────────────────────────────────────────────
+let sesMax = 100, sesMin = 100;
+
+function handleState(state) {
+  if (state.event) return;   // pause/resume event
+
+  const { price, fundamental, tick, status, sentiment } = state;
+
+  // ── Header ──
+  document.getElementById('tick-counter').textContent = `Tick: ${tick}`;
+  const priceEl = document.getElementById('price-display');
+  priceEl.textContent = price.toFixed(2);
+
+  const hist = state.price_history || [];
+  if (hist.length >= 2) {
+    const prev = hist[hist.length - 2];
+    priceEl.style.color = price > prev ? '#3fb950' : price < prev ? '#f85149' : '#c9d1d9';
+  }
+
+  const badge = document.getElementById('status-badge');
+  if (status === 'Bubble') {
+    badge.className = 'badge-bubble'; badge.textContent = '▲ BUBBLE';
+  } else if (status === 'Panik-Crash') {
+    badge.className = 'badge-crash'; badge.textContent = '▼ PANIK-CRASH';
+  } else {
+    badge.className = 'badge-normal'; badge.textContent = '● NORMAL';
+  }
+
+  // ── Price stats ──
+  if (price > sesMax) sesMax = price;
+  if (price < sesMin) sesMin = price;
+  const dev = ((price - fundamental) / fundamental * 100).toFixed(1);
+  document.getElementById('stat-price').textContent = price.toFixed(2);
+  document.getElementById('stat-price').style.color =
+    price > fundamental ? '#3fb950' : price < fundamental ? '#f85149' : '#c9d1d9';
+  const devEl = document.getElementById('stat-dev');
+  devEl.textContent = (dev > 0 ? '+' : '') + dev + '%';
+  devEl.style.color = dev > 0 ? '#e3b341' : dev < 0 ? '#f85149' : '#8b949e';
+  document.getElementById('stat-max').textContent = sesMax.toFixed(2);
+  document.getElementById('stat-min').textContent = sesMin.toFixed(2);
+
+  // ── Price chart ──
+  if (hist.length) {
+    const labels = hist.map((_, i) => tick - hist.length + i + 1);
+    priceChart.data.labels            = labels;
+    priceChart.data.datasets[0].data  = hist;
+    priceChart.data.datasets[1].data  = Array(hist.length).fill(fundamental);
+    const area = priceChart.chartArea;
+    if (area) {
+      const g = chartCtx.createLinearGradient(0, 0, 0, area.height);
+      if (status === 'Bubble') {
+        g.addColorStop(0, 'rgba(227,179,65,0.10)'); g.addColorStop(1, 'rgba(13,17,23,0)');
+      } else if (status === 'Panik-Crash') {
+        g.addColorStop(0, 'rgba(13,17,23,0)'); g.addColorStop(1, 'rgba(248,81,73,0.10)');
+      } else {
+        g.addColorStop(0, 'rgba(201,209,217,0.04)'); g.addColorStop(1, 'rgba(13,17,23,0)');
+      }
+      priceChart.data.datasets[0].backgroundColor = g;
+    }
+    priceChart.update('none');
+  }
+
+  // ── Agent grid ──
+  if (state.agents) {
+    lastAgents = state.agents;
+    drawAgents(state.agents);
+
+    // Info-style bars
+    const cnts = { fundamentalist:0, chartist:0, noise:0 };
+    state.agents.forEach(a => cnts[a.type] = (cnts[a.type]||0) + 1);
+    const tot = state.agents.length;
+    ['f','c','n'].forEach((k, i) => {
+      const type = ['fundamentalist','chartist','noise'][i];
+      const pct = Math.round(cnts[type] / tot * 100);
+      document.getElementById(`bar-${k}`).style.width = pct + '%';
+      document.getElementById(`pct-${k}`).textContent = pct + '%';
+    });
+
+    // Psych profile bars
+    const pc = { disciplined:0, bagholder:0, averager:0 };
+    state.agents.forEach(a => pc[a.psych] = (pc[a.psych]||0) + 1);
+    ['d','b','a'].forEach((k, i) => {
+      const type = ['disciplined','bagholder','averager'][i];
+      const pct = Math.round(pc[type] / tot * 100);
+      document.getElementById(`bar-${k}`).style.width = pct + '%';
+      document.getElementById(`pct-${k}`).textContent = pct + '%';
+    });
+  }
+
+  // ── P&L stats ──
+  if (state.psych_stats) {
+    const ps = state.psych_stats;
+    document.getElementById('pnl-in-pos').textContent   = ps.in_position;
+    const painEl = document.getElementById('pnl-in-pain');
+    painEl.textContent = ps.in_pain;
+    painEl.style.color = ps.in_pain > 10 ? '#f85149' : ps.in_pain > 5 ? '#e3b341' : '#8b949e';
+    document.getElementById('pnl-averaging').textContent = ps.averaging;
+    const avgPnlEl = document.getElementById('pnl-avg');
+    avgPnlEl.textContent = (ps.avg_pnl_pct >= 0 ? '+' : '') + ps.avg_pnl_pct + '%';
+    avgPnlEl.style.color = ps.avg_pnl_pct > 0 ? '#3fb950' : ps.avg_pnl_pct < -3 ? '#f85149' : '#8b949e';
+    // Pain bar: fraction of in_position agents yang in_pain
+    const painFrac = ps.in_position > 0 ? ps.in_pain / ps.in_position : 0;
+    document.getElementById('pnl-pain-bar').style.width = (painFrac * 100) + '%';
+  }
+
+  // ── Sentiment bar ──
+  const sent = sentiment || 0;
+  const sentBar = document.getElementById('sentiment-bar');
+  const spct = Math.min(50, Math.abs(sent) * 15);
+  sentBar.style.width = spct + '%';
+  sentBar.style.left = '50%';
+  sentBar.style.background = sent > 0 ? '#e3b341' : '#f85149';
+  sentBar.style.transform   = sent >= 0 ? 'none' : 'translateX(-100%)';
+  document.getElementById('sentiment-val').textContent = sent.toFixed(3);
+}
+
+// ── Controls ──────────────────────────────────────────────────────
+
+// Rumor strength
+const slRumor = document.getElementById('sl-rumor');
+slRumor.addEventListener('input', () => {
+  document.getElementById('lbl-rumor').textContent = (parseInt(slRumor.value)/10).toFixed(1);
+});
+document.getElementById('btn-rumor').addEventListener('click', () => {
+  send({ cmd:'inject_rumor', strength: parseInt(slRumor.value)/10 });
+  flash('btn-rumor');
+});
+document.getElementById('btn-panic').addEventListener('click', () => {
+  send({ cmd:'inject_panic', strength: parseInt(slRumor.value)/10 });
+  flash('btn-panic');
+});
+
+// Pause / Reset
+let paused = false;
+document.getElementById('btn-pause').addEventListener('click', () => {
+  paused = !paused;
+  send({ cmd: paused ? 'pause' : 'resume' });
+  document.getElementById('btn-pause').textContent = paused ? '▶ Resume' : '⏸ Pause';
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  sesMax = 100; sesMin = 100;
+  send({ cmd:'reset' });
+});
+
+// Info-style sliders
+const slF = document.getElementById('sl-f');
+const slC = document.getElementById('sl-c');
+const slN = document.getElementById('sl-n');
+let popTimer = null;
+function onPopChange() {
+  const f = parseInt(slF.value), c = parseInt(slC.value), n = parseInt(slN.value);
+  const t = f + c + n || 1;
+  document.getElementById('lbl-f').textContent = Math.round(f/t*100)+'%';
+  document.getElementById('lbl-c').textContent = Math.round(c/t*100)+'%';
+  document.getElementById('lbl-n').textContent = Math.round(n/t*100)+'%';
+  clearTimeout(popTimer);
+  popTimer = setTimeout(() => send({
+    cmd:'set_population',
+    fundamentalist: f/t, chartist: c/t, noise: n/t,
+  }), 400);
+}
+[slF, slC, slN].forEach(s => s.addEventListener('input', onPopChange));
+
+// Psych sliders (averager = sisa, slider-nya disabled)
+const slD = document.getElementById('sl-d');
+const slB = document.getElementById('sl-b');
+const slA = document.getElementById('sl-a');
+let psychTimer = null;
+function onPsychChange() {
+  const d = parseInt(slD.value), b = parseInt(slB.value);
+  const t = d + b || 1;
+  const dPct = Math.round(d/t * 100);
+  const bPct = Math.round(b/t * 100);
+  const aRaw = Math.max(0, 100 - d - b);   // sisa untuk averager
+  document.getElementById('lbl-d').textContent = dPct+'%';
+  document.getElementById('lbl-b').textContent = bPct+'%';
+  document.getElementById('lbl-a').textContent = aRaw+'%';
+  slA.value = aRaw;
+  const total = d + b + aRaw || 1;
+  clearTimeout(psychTimer);
+  psychTimer = setTimeout(() => send({
+    cmd: 'set_psych',
+    disciplined: d/total,
+    bagholder:   b/total,
+  }), 400);
+}
+[slD, slB].forEach(s => s.addEventListener('input', onPsychChange));
+
+// Speed slider
+const SPEED_MAP   = [1.5, 1.0, 0.70, 0.45, 0.20, 0.12, 0.08, 0.05, 0.03];
+const SPEED_NAMES = ['x0.1','x0.2','x0.3','x0.5','x1','x1.5','x2','x3','x5'];
+document.getElementById('sl-speed').addEventListener('input', function() {
+  const idx = parseInt(this.value) - 1;
+  document.getElementById('lbl-speed').textContent  = SPEED_NAMES[idx];
+  document.getElementById('speed-label').textContent = SPEED_NAMES[idx];
+  send({ cmd:'set_speed', interval: SPEED_MAP[idx] });
+});
+
+function flash(id) {
+  const b = document.getElementById(id);
+  b.style.filter = 'brightness(2)';
+  setTimeout(() => b.style.filter = '', 200);
+}
+
+connect();
+</script>
+</body>
+</html>

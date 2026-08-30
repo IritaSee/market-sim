@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "simpasar-idx",
+      "runtimeExecutable": "/Users/iganarendra/market-sim/.venv/bin/uvicorn",
+      "runtimeArgs": ["server:app", "--port", "8000", "--host", "0.0.0.0"],
+      "port": 8000
+    }
+  ]
+}
