@@ -8,6 +8,23 @@ pain_threshold & greed_threshold di-SAMPLE RANDOM per agen → mencegah gelomban
 aksi serentak yang terlalu sempurna.
 """
 from __future__ import annotations
+import os
+from google import genai
+
+_gemini_client = None
+def get_gemini_client():
+    global _gemini_client
+    if _gemini_client is None:
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if api_key:
+            _gemini_client = genai.Client(api_key=api_key)
+        else:
+            try:
+                _gemini_client = genai.Client()
+            except Exception:
+                pass
+    return _gemini_client
+
 import numpy as np
 from dataclasses import dataclass, field
 from typing import Literal
@@ -73,6 +90,36 @@ class Agent:
             return base_order
 
         self.in_pain = bool(pnl < -self.pain_threshold)
+
+        client = get_gemini_client()
+        if client is not None:
+            try:
+                prompt = (
+                    f"Investor psych profile: '{self.psych_profile}', strategy: '{self.agent_type}'.\n"
+                    f"Current state:\n"
+                    f"- Price: {price}\n"
+                    f"- Entry Price: {self.entry_price}\n"
+                    f"- PnL: {pnl * 100:.2f}%\n"
+                    f"- Position: {self.position}\n"
+                    f"- Capital Remaining: {self.capital_remaining}\n"
+                    f"- Pain Threshold: {self.pain_threshold * 100:.2f}%\n"
+                    f"- Greed Threshold: {self.greed_threshold * 100:.2f}%\n"
+                    f"- Base Signal: {base_order}\n\n"
+                    f"Profiles:\n"
+                    f"- disciplined: Cut loss strictly when loss < -pain_threshold, take profit when PnL > greed_threshold.\n"
+                    f"- bagholder: Refuses to cut loss, holds or sells very small fraction, ignores loss to wait for recovery.\n"
+                    f"- averager: Buys more (averaging down) when loss < -pain_threshold if capital remains, takes profit when PnL > greed_threshold.\n\n"
+                    f"Output ONLY a single float number between -1.5 and 1.5 representing the final order."
+                )
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                )
+                val = float(response.text.strip())
+                return float(np.clip(val, -1.5, 1.5))
+            except Exception:
+                pass
 
         if self.psych_profile == "disciplined":
             if pnl < -self.pain_threshold:
