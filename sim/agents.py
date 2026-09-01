@@ -9,6 +9,7 @@ aksi serentak yang terlalu sempurna.
 """
 from __future__ import annotations
 import os
+import time
 from google import genai
 
 _gemini_client = None
@@ -24,6 +25,141 @@ def get_gemini_client():
             except Exception:
                 pass
     return _gemini_client
+
+
+# ── Token Cache ────────────────────────────────────────────────────────────────
+# Caches LLM responses to avoid redundant API calls when agents with identical
+# (bucketed) state ask the same question within a short window.
+
+class TokenCache:
+    """
+    LRU-style time-bounded cache for LLM responses.
+
+    Continuous float inputs are bucketed to a coarse resolution so that agents
+    in nearly-identical states share the same cached answer instead of each
+    triggering a fresh API call.
+
+    Bucket resolutions (tunable via class attributes):
+      pnl              : 2 % steps  (-50% … +50%)
+      pain/greed thresh: 2 % steps  (same scale as pnl)
+      base_order       : 0.1 steps  (-1.5 … +1.5)
+      position         : 0.25 steps
+      capital          : 0.25 steps
+      price / entry    : 1 % steps  (relative scale via pct buckets)
+    """
+
+    PNL_STEP:      float = 0.02   # 2 % bucket for pnl
+    THRESH_STEP:   float = 0.02   # 2 % bucket for pain/greed thresholds
+    ORDER_STEP:    float = 0.10   # 0.1 order-unit bucket
+    POS_STEP:      float = 0.25   # 0.25 position bucket
+    CAP_STEP:      float = 0.25   # 0.25 capital bucket
+    PRICE_STEP:    float = 0.01   # 1 % relative-price bucket (price/entry ratio)
+    TTL:           float = 5.0    # seconds a cache entry stays valid
+    MAX_SIZE:      int   = 2048   # max number of entries before pruning
+
+    def __init__(self) -> None:
+        # key → (result_float, expiry_timestamp)
+        self._store: dict[tuple, tuple[float, float]] = {}
+        self._hits:   int = 0
+        self._misses: int = 0
+
+    # ── helpers ──
+
+    @staticmethod
+    def _bucket(value: float, step: float) -> float:
+        return round(round(value / step) * step, 6)
+
+    def _make_key(
+        self,
+        psych_profile: str,
+        agent_type:    str,
+        pnl:           float,
+        pain:          float,
+        greed:         float,
+        position:      float,
+        capital:       float,
+        base_order:    float,
+        price_ratio:   float,  # price / entry_price (bucketed)
+    ) -> tuple:
+        return (
+            psych_profile,
+            agent_type,
+            self._bucket(pnl,         self.PNL_STEP),
+            self._bucket(pain,        self.THRESH_STEP),
+            self._bucket(greed,       self.THRESH_STEP),
+            self._bucket(position,    self.POS_STEP),
+            self._bucket(capital,     self.CAP_STEP),
+            self._bucket(base_order,  self.ORDER_STEP),
+            self._bucket(price_ratio, self.PRICE_STEP),
+        )
+
+    # ── public API ──
+
+    def get(
+        self,
+        psych_profile: str,
+        agent_type:    str,
+        pnl:           float,
+        pain:          float,
+        greed:         float,
+        position:      float,
+        capital:       float,
+        base_order:    float,
+        price_ratio:   float,
+    ) -> float | None:
+        key = self._make_key(
+            psych_profile, agent_type, pnl, pain, greed,
+            position, capital, base_order, price_ratio,
+        )
+        entry = self._store.get(key)
+        if entry is not None and time.monotonic() < entry[1]:
+            self._hits += 1
+            return entry[0]
+        self._misses += 1
+        return None
+
+    def set(
+        self,
+        psych_profile: str,
+        agent_type:    str,
+        pnl:           float,
+        pain:          float,
+        greed:         float,
+        position:      float,
+        capital:       float,
+        base_order:    float,
+        price_ratio:   float,
+        result:        float,
+    ) -> None:
+        # Prune expired entries when the store grows too large
+        if len(self._store) >= self.MAX_SIZE:
+            now = time.monotonic()
+            self._store = {
+                k: v for k, v in self._store.items() if v[1] > now
+            }
+
+        key = self._make_key(
+            psych_profile, agent_type, pnl, pain, greed,
+            position, capital, base_order, price_ratio,
+        )
+        self._store[key] = (result, time.monotonic() + self.TTL)
+
+    @property
+    def hit_rate(self) -> float:
+        total = self._hits + self._misses
+        return self._hits / total if total else 0.0
+
+    def stats(self) -> dict:
+        return {
+            "hits":     self._hits,
+            "misses":   self._misses,
+            "hit_rate": round(self.hit_rate * 100, 1),
+            "size":     len(self._store),
+        }
+
+
+# Module-level singleton shared by all agents
+_token_cache = TokenCache()
 
 import numpy as np
 from dataclasses import dataclass, field
@@ -93,18 +229,43 @@ class Agent:
 
         client = get_gemini_client()
         if client is not None:
+            # ── Check cache before calling the LLM ────────────────────
+            price_ratio = price / self.entry_price if self.entry_price > 0 else 1.0
+            cached = _token_cache.get(
+                self.psych_profile, self.agent_type,
+                pnl, self.pain_threshold, self.greed_threshold,
+                self.position, self.capital_remaining, base_order,
+                price_ratio,
+            )
+            if cached is not None:
+                return cached
+
             try:
+                # Build prompt using bucketed values so semantically
+                # equivalent states produce identical prompts (and cache keys).
+                pnl_b        = TokenCache._bucket(pnl,                   TokenCache.PNL_STEP)
+                pain_b       = TokenCache._bucket(self.pain_threshold,    TokenCache.THRESH_STEP)
+                greed_b      = TokenCache._bucket(self.greed_threshold,   TokenCache.THRESH_STEP)
+                pos_b        = TokenCache._bucket(self.position,          TokenCache.POS_STEP)
+                cap_b        = TokenCache._bucket(self.capital_remaining, TokenCache.CAP_STEP)
+                signal_b     = TokenCache._bucket(base_order,             TokenCache.ORDER_STEP)
+                # Bucket price and entry to 1% relative steps so nearby
+                # price levels share the same prompt (and cache key).
+                price_step   = max(1.0, self.entry_price * TokenCache.PRICE_STEP)
+                price_b      = TokenCache._bucket(price,            price_step)
+                entry_b      = TokenCache._bucket(self.entry_price, price_step)
+
                 prompt = (
                     f"Investor psych profile: '{self.psych_profile}', strategy: '{self.agent_type}'.\n"
                     f"Current state:\n"
-                    f"- Price: {price}\n"
-                    f"- Entry Price: {self.entry_price}\n"
-                    f"- PnL: {pnl * 100:.2f}%\n"
-                    f"- Position: {self.position}\n"
-                    f"- Capital Remaining: {self.capital_remaining}\n"
-                    f"- Pain Threshold: {self.pain_threshold * 100:.2f}%\n"
-                    f"- Greed Threshold: {self.greed_threshold * 100:.2f}%\n"
-                    f"- Base Signal: {base_order}\n\n"
+                    f"- Price: {price_b}\n"
+                    f"- Entry Price: {entry_b}\n"
+                    f"- PnL: {pnl_b * 100:.1f}%\n"
+                    f"- Position: {pos_b}\n"
+                    f"- Capital Remaining: {cap_b}\n"
+                    f"- Pain Threshold: {pain_b * 100:.1f}%\n"
+                    f"- Greed Threshold: {greed_b * 100:.1f}%\n"
+                    f"- Base Signal: {signal_b}\n\n"
                     f"Profiles:\n"
                     f"- disciplined: Cut loss strictly when loss < -pain_threshold, take profit when PnL > greed_threshold.\n"
                     f"- bagholder: Refuses to cut loss, holds or sells very small fraction, ignores loss to wait for recovery.\n"
@@ -121,8 +282,17 @@ class Agent:
                         "schema": {"type": "number"},
                     },
                 )
-                val = float(interaction.output_text.strip())
-                return float(np.clip(val, -1.5, 1.5))
+                val = float(np.clip(float(interaction.output_text.strip()), -1.5, 1.5))
+
+                # ── Store result in cache ──────────────────────────────
+                _token_cache.set(
+                    self.psych_profile, self.agent_type,
+                    pnl, self.pain_threshold, self.greed_threshold,
+                    self.position, self.capital_remaining, base_order,
+                    price_ratio,
+                    val,
+                )
+                return val
             except Exception:
                 pass
 
@@ -199,6 +369,15 @@ class Agent:
             f"base={base:+.3f} final={final:+.3f} action={self.last_action:<4} "
             f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}"
         )
+
+        # Periodically log cache stats (every 100 decide() calls on agent 0)
+        if self.id == 0:
+            stats = _token_cache.stats()
+            if (stats["hits"] + stats["misses"]) % 100 == 0 and stats["hits"] + stats["misses"] > 0:
+                print(
+                    f"[cache] hits={stats['hits']} misses={stats['misses']} "
+                    f"hit_rate={stats['hit_rate']}% size={stats['size']}"
+                )
 
         return final
 
@@ -307,3 +486,8 @@ def build_agents(
         agent.reaction_delay_prob = float(rng.uniform(0.50, 0.80))
 
     return pool
+
+
+def get_token_cache() -> TokenCache:
+    """Return the module-level LLM token cache (for stats / monitoring)."""
+    return _token_cache
