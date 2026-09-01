@@ -48,8 +48,23 @@ async def simulation_loop() -> None:
         await asyncio.sleep(tick_rate)
 
 
+def _silence_genai_aclose_bug(loop: asyncio.AbstractEventLoop, context: dict) -> None:
+    # Known google-genai SDK cleanup bug: BaseApiClient.__del__ schedules a
+    # background aclose() task whose _async_httpx_client attribute can be
+    # gone by the time it runs (GC cycle-clearing / --reload teardown
+    # timing). We never use the async client (only sync .create() calls),
+    # so this is harmless — but it spams "Task exception was never
+    # retrieved". Filter only this exact known error; delegate everything
+    # else to the default handler so real bugs still surface.
+    exc = context.get("exception")
+    if isinstance(exc, AttributeError) and "_async_httpx_client" in str(exc):
+        return
+    loop.default_exception_handler(context)
+
+
 @app.on_event("startup")
 async def startup_event() -> None:
+    asyncio.get_running_loop().set_exception_handler(_silence_genai_aclose_bug)
     asyncio.create_task(simulation_loop())
 
 
