@@ -12,6 +12,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
+from sim.agents import get_gemini_client
 from sim.market import Market
 
 app = FastAPI(title="SimPasar IDX")
@@ -50,6 +51,20 @@ async def simulation_loop() -> None:
 @app.on_event("startup")
 async def startup_event() -> None:
     asyncio.create_task(simulation_loop())
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    # Close the Gemini client explicitly while the loop is still healthy —
+    # otherwise its __del__ schedules cleanup as a background task that can
+    # fire after --reload has already torn down module state, logging a
+    # spurious "Task exception was never retrieved" AttributeError.
+    client = get_gemini_client()
+    if client is not None:
+        try:
+            await client.aio.aclose()
+        except Exception:
+            pass
 
 
 # ------------------------------------------------------------------ #

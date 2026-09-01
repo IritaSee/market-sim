@@ -112,11 +112,16 @@ class Agent:
                     f"Output ONLY a single float number between -1.5 and 1.5 representing the final order."
                 )
 
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
+                interaction = client.interactions.create(
+                    model="gemini-3.1-flash-lite",
+                    input=prompt,
+                    response_format={
+                        "type": "text",
+                        "mime_type": "application/json",
+                        "schema": {"type": "number"},
+                    },
                 )
-                val = float(response.text.strip())
+                val = float(interaction.output_text.strip())
                 return float(np.clip(val, -1.5, 1.5))
             except Exception:
                 pass
@@ -188,6 +193,13 @@ class Agent:
 
         self.last_order  = final
         self.last_action = "buy" if final > 0.05 else "sell" if final < -0.05 else "hold"
+
+        print(
+            f"[agent {self.id:>3}] {self.agent_type:<14} {self.psych_profile:<11} "
+            f"base={base:+.3f} final={final:+.3f} action={self.last_action:<4} "
+            f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}"
+        )
+
         return final
 
     # ── Snapshot untuk WebSocket ─────────────────────────────────────
