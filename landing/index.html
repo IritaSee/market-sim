@@ -37,7 +37,7 @@
     </nav>
     <div class="nav-cta">
       <a class="btn btn-small btn-ghost" href="/paper.pdf" target="_blank" rel="noopener">Draf paper</a>
-      <a class="btn btn-small btn-amber" href="http://localhost:8000" target="_blank" rel="noopener" title="Membutuhkan server FastAPI berjalan di port 8000">Buka Simulator ↗</a>
+      <a class="btn btn-small btn-amber" href="/simulator" title="Buka Simulator Pasar Interaktif">Buka Simulator ↗</a>
       <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false"><span></span><span></span></button>
     </div>
   </div>
@@ -58,8 +58,14 @@
         <strong>muncul dari interaksi</strong>, bukan dari skenario yang diskrip.
       </p>
       <div class="hero-actions reveal" style="--i:3">
-        <a class="btn btn-amber btn-lg" href="#demo">▶ Lihat simulasi live</a>
-        <a class="btn btn-ghost btn-lg" href="/paper.pdf" target="_blank" rel="noopener">Baca draf paper ↗</a>
+        <a class="btn btn-amber btn-lg" href="/simulator">▶ Buka Simulator Penuh ↗</a>
+        <a class="btn btn-ghost btn-lg" href="#demo">Lihat demo mini</a>
+      </div>
+      <div id="ihsg-ticker" class="reveal mono" style="--i:3.5; margin-top: 14px; font-size: 12px; color: #8b949e; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px;">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
+        <span>IHSG (Sectors Real-time): <strong id="ihsg-val" style="color:#fff;">Loading...</strong></span>
+        <span id="ihsg-change" style="font-weight:600;"></span>
+        <span id="ihsg-date" style="color:#6e7681; font-size:11px;"></span>
       </div>
       <dl class="hero-facts reveal" style="--i:4">
         <div><dt>Agen</dt><dd>100 heterogen</dd></div>
@@ -600,7 +606,7 @@
       <h2 id="h-run">Tiga perintah, satu pasar <em>mini</em>.</h2>
       <p class="sub">Simulator penuh berjalan sebagai server FastAPI dengan WebSocket. API key Gemini bersifat opsional; tanpa itu seluruh agen memakai aturan deterministik.</p>
       <div class="hero-actions">
-        <a class="btn btn-amber btn-lg" href="http://localhost:8000" target="_blank" rel="noopener">Buka simulator di :8000 ↗</a>
+        <a class="btn btn-amber btn-lg" href="/simulator">Buka simulator interaktif ↗</a>
         <a class="btn btn-ghost btn-lg" href="/paper.pdf" target="_blank" rel="noopener">Unduh draf paper (PDF)</a>
       </div>
     </div>

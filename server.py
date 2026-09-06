@@ -1,19 +1,26 @@
 """
-SimPasar IDX — FastAPI server dengan WebSocket real-time.
+SimPasar IDX — FastAPI server dengan WebSocket real-time dan integrasi Sectors MCP.
 
 Jalankan:
-    cd market-sim
+    python server.py
+    atau:
     uvicorn server:app --reload --port 8000
-    buka http://localhost:8000
+
+Buka di browser:
+    Landing Page : http://localhost:8000
+    Simulator    : http://localhost:8000/simulator
 """
+import os
 import asyncio
 import json
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from sim.agents import get_gemini_client
 from sim.market import Market
+from sim.sectors import get_realtime_ihsg, get_latest_news_and_filings
 
 app = FastAPI(title="SimPasar IDX")
 
@@ -23,7 +30,7 @@ app = FastAPI(title="SimPasar IDX")
 
 market     = Market(n_agents=100, seed=42)
 clients:   set[WebSocket] = set()
-tick_rate  = 0.10   # detik antar tick (≈10 tick/detik default)
+tick_rate  = 0.25   # detik antar tick (≈4 tick/detik default 1x, realistis)
 
 
 # ------------------------------------------------------------------ #
@@ -49,13 +56,6 @@ async def simulation_loop() -> None:
 
 
 def _silence_genai_aclose_bug(loop: asyncio.AbstractEventLoop, context: dict) -> None:
-    # Known google-genai SDK cleanup bug: BaseApiClient.__del__ schedules a
-    # background aclose() task whose _async_httpx_client attribute can be
-    # gone by the time it runs (GC cycle-clearing / --reload teardown
-    # timing). We never use the async client (only sync .create() calls),
-    # so this is harmless — but it spams "Task exception was never
-    # retrieved". Filter only this exact known error; delegate everything
-    # else to the default handler so real bugs still surface.
     exc = context.get("exception")
     if isinstance(exc, AttributeError) and "_async_httpx_client" in str(exc):
         return
@@ -65,21 +65,57 @@ def _silence_genai_aclose_bug(loop: asyncio.AbstractEventLoop, context: dict) ->
 @app.on_event("startup")
 async def startup_event() -> None:
     asyncio.get_running_loop().set_exception_handler(_silence_genai_aclose_bug)
+    # Inisialisasi baseline fundamental pasar dengan data IHSG real-time dari Sectors MCP
+    try:
+        ihsg_data = await get_realtime_ihsg()
+        if ihsg_data and ihsg_data.get("price"):
+            market.set_fundamental(float(ihsg_data["price"]))
+    except Exception:
+        pass
     asyncio.create_task(simulation_loop())
 
 
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
-    # Close the Gemini client explicitly while the loop is still healthy —
-    # otherwise its __del__ schedules cleanup as a background task that can
-    # fire after --reload has already torn down module state, logging a
-    # spurious "Task exception was never retrieved" AttributeError.
     client = get_gemini_client()
     if client is not None:
         try:
             await client.aio.aclose()
         except Exception:
             pass
+
+
+# ------------------------------------------------------------------ #
+#  REST Endpoints                                                     #
+# ------------------------------------------------------------------ #
+
+@app.get("/simulator")
+async def serve_simulator() -> FileResponse:
+    """Halaman Dashboard Simulator Interaktif."""
+    return FileResponse("frontend/index.html")
+
+
+@app.get("/api/ihsg")
+async def api_ihsg():
+    """Ambil data real-time IHSG dari Sectors MCP."""
+    data = await get_realtime_ihsg()
+    return JSONResponse(data)
+
+
+@app.get("/api/news")
+async def api_news():
+    """Ambil berita & company filings terkini dari Sectors MCP beserta skor sentimen."""
+    items = await get_latest_news_and_filings()
+    return JSONResponse(items)
+
+
+@app.get("/paper.pdf")
+async def serve_paper():
+    """Download/baca draf paper PDF jika ada."""
+    for f in os.listdir("."):
+        if f.lower().endswith(".pdf"):
+            return FileResponse(f)
+    return JSONResponse({"message": "Draf paper PDF belum tersedia di root folder."}, status_code=404)
 
 
 # ------------------------------------------------------------------ #
@@ -108,6 +144,21 @@ async def ws_endpoint(websocket: WebSocket) -> None:
             if cmd == "inject_rumor":
                 market.inject_rumor(float(msg.get("strength", 1.0)))
 
+            elif cmd == "inject_news_sentiment":
+                # Injeksi sentimen berdasarkan berita nyata
+                strength = float(msg.get("strength", 1.0))
+                title = msg.get("title", "Berita IDX")
+                if strength >= 0:
+                    market.inject_rumor(strength)
+                else:
+                    market.inject_panic(abs(strength))
+                await broadcast({
+                    "event": "news_injected",
+                    "title": title,
+                    "strength": strength,
+                    "sentiment": market.sentiment
+                })
+
             elif cmd == "inject_panic":
                 market.inject_panic(float(msg.get("strength", 1.0)))
 
@@ -131,6 +182,11 @@ async def ws_endpoint(websocket: WebSocket) -> None:
                 market.reset()
                 await broadcast(market.get_state())
 
+            elif cmd == "set_fundamental":
+                fund_val = float(msg.get("fundamental", 100.0))
+                market.set_fundamental(fund_val)
+                await broadcast(market.get_state())
+
             elif cmd == "set_psych":
                 market.set_psych(
                     float(msg.get("disciplined", 0.34)),
@@ -152,11 +208,13 @@ async def ws_endpoint(websocket: WebSocket) -> None:
 
 
 # ------------------------------------------------------------------ #
-#  Static frontend                                                    #
+#  Static Routes & Landing Page                                       #
 # ------------------------------------------------------------------ #
 
-app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+app.mount("/", StaticFiles(directory="landing", html=True), name="landing")
 
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=False)
+

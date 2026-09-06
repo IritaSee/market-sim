@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "sectors": {
+      "type": "http",
+      "url": "https://sectors-mcp.supertype.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:sectors-api-key}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "sectors-api-key",
+      "description": "Your Sectors Financial API key",
+      "password": true
+    }
+  ]
+}

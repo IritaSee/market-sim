@@ -135,6 +135,18 @@ class Market:
         self.params["bagholder_ratio"]   = bagholder
         self.agents = self._make_agents()
 
+    def set_fundamental(self, fundamental: float) -> None:
+        """Update fundamental baseline price (misal disinkronkan dengan IHSG riil)."""
+        if fundamental <= 0:
+            return
+        self.fundamental = fundamental
+        self.price = fundamental
+        self.price_history = [fundamental]
+        self.tick = 0
+        self.sentiment = 0.0
+        self._order_log = []
+        self.agents = self._make_agents()
+
     def reset(self, seed: int | None = None) -> None:
         if seed is not None:
             self._seed = seed

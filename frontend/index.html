@@ -3,378 +3,754 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SimPasar IDX</title>
+  <title>SimPasar IDX — TradingView Pro Sandbox</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:       #0d1117;
-      --surface:  #161b22;
-      --border:   #30363d;
-      --text:     #c9d1d9;
-      --text-dim: #8b949e;
-      --green:    #3fb950;
-      --red:      #f85149;
-      --blue:     #58a6ff;
-      --purple:   #bc8cff;
-      --orange:   #f0883e;
-      --yellow:   #e3b341;
-      --teal:     #39d353;
+      --tv-bg:        #131722;
+      --tv-panel:     #1e222d;
+      --tv-surface:   #181c27;
+      --tv-border:    #2a2e39;
+      --tv-border-sub:#242731;
+      --tv-text:      #d1d4dc;
+      --tv-text-dim:  #787b86;
+      --tv-text-mute: #50535e;
+      --tv-blue:      #2962ff;
+      --tv-blue-hover:#1e53e5;
+      --tv-cyan:      #00bcd4;
+      --tv-green:     #089981;
+      --tv-green-dim: rgba(8, 153, 129, 0.18);
+      --tv-red:       #f23645;
+      --tv-red-dim:   rgba(242, 54, 69, 0.18);
+      --tv-amber:     #ff9800;
+      --tv-purple:    #9c27b0;
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text);
-                 font-family: 'SF Mono','Cascadia Code','Fira Code',monospace;
-                 font-size: 13px; overflow: hidden; }
-    #app { display: flex; flex-direction: column; height: 100vh; }
-
-    /* ── Header ── */
-    #header {
-      display: flex; align-items: center; gap: 14px; padding: 7px 16px;
-      background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--tv-bg);
+      color: var(--tv-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+      overflow: hidden;
+      user-select: none;
     }
-    #logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-    #logo span { color: var(--blue); }
-    #status-badge {
-      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-      letter-spacing: 0.5px; transition: all 0.4s;
+    .mono { font-family: 'JetBrains Mono', 'SF Mono', Cascadia Code, monospace; }
+    #app { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+
+    /* ── TradingView Top Header Bar ── */
+    #tv-header {
+      height: 44px;
+      background: var(--tv-panel);
+      border-bottom: 1px solid var(--tv-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      flex-shrink: 0;
+      gap: 10px;
     }
-    .badge-normal { background:#1f3a1f; color:var(--green);  border:1px solid var(--green); }
-    .badge-bubble { background:#3a2a00; color:var(--yellow); border:1px solid var(--yellow); }
-    .badge-crash  { background:#3a0f0f; color:var(--red);    border:1px solid var(--red); }
-    #price-display { font-size: 18px; font-weight: 700; min-width: 80px; text-align: right; }
-    #tick-counter { color: var(--text-dim); font-size: 11px; margin-left: auto; }
-    #conn-dot { width: 8px; height: 8px; border-radius: 50%;
-                background: var(--red); transition: background 0.3s; }
-    #conn-dot.connected { background: var(--green); }
-
-    /* ── Main ── */
-    #main { display: flex; flex: 1; overflow: hidden; }
-
-    /* ── Left panel ── */
-    #left-panel {
-      width: 240px; flex-shrink: 0; display: flex; flex-direction: column;
-      background: var(--surface); border-right: 1px solid var(--border);
-      padding: 10px; gap: 10px; overflow-y: auto;
+    .tv-head-left, .tv-head-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .section-title {
-      font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+    .tv-back-btn {
+      color: var(--tv-text-dim);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border: 1px solid var(--tv-border);
+      border-radius: 4px;
+      background: var(--tv-surface);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .tv-back-btn:hover { color: #fff; border-color: var(--tv-blue); background: rgba(41, 98, 255, 0.1); }
+    .tv-symbol-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      border-radius: 4px;
+      font-weight: 700;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tv-symbol-pill span.sub {
+      color: var(--tv-text-dim);
+      font-weight: 400;
+      font-size: 10px;
+      background: rgba(255,255,255,0.06);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+    .tv-tf-group {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      border-left: 1px solid var(--tv-border);
+      padding-left: 8px;
+      margin-left: 4px;
+    }
+    .tv-tf-btn {
+      padding: 4px 7px;
+      color: var(--tv-text-dim);
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .tv-tf-btn:hover { color: #fff; background: var(--tv-surface); }
+    .tv-tf-btn.active { color: var(--tv-blue); background: rgba(41, 98, 255, 0.15); }
+    .tv-divider-v { width: 1px; height: 20px; background: var(--tv-border); margin: 0 4px; }
+
+    .tv-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .status-normal { background: var(--tv-green-dim); color: var(--tv-green); border: 1px solid var(--tv-green); }
+    .status-bubble { background: rgba(255, 152, 0, 0.18); color: var(--tv-amber); border: 1px solid var(--tv-amber); }
+    .status-crash  { background: var(--tv-red-dim); color: var(--tv-red); border: 1px solid var(--tv-red); }
+
+    /* Sectors Live Header Widget */
+    .tv-sectors-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .tv-sectors-btn {
+      background: var(--tv-blue);
+      color: #fff;
+      border: none;
+      padding: 2px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tv-sectors-btn:hover { background: var(--tv-blue-hover); }
+
+    /* Date & Clock */
+    .tv-datetime {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--tv-text-dim);
+      font-size: 11px;
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      padding: 3px 8px;
+      border-radius: 4px;
     }
 
-    /* Agent grid */
-    #agentCanvas { width: 216px; height: 216px; border: 1px solid var(--border); border-radius: 4px; }
+    /* ── Main Layout ── */
+    #tv-main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
 
-    /* Legend */
-    .legend { display: flex; flex-direction: column; gap: 3px; }
-    .legend-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); }
-    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .sq  { width: 9px; height: 9px; flex-shrink: 0; }
+    /* Left panel: Agents & Psychology */
+    #tv-left {
+      width: 230px;
+      background: var(--tv-panel);
+      border-right: 1px solid var(--tv-border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 10px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .tv-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--tv-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #agentCanvas {
+      width: 208px;
+      height: 208px;
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      border-radius: 4px;
+      display: block;
+    }
 
-    /* Info-style bar */
+    .legend { display: flex; flex-direction: column; gap: 2px; }
+    .legend-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--tv-text-dim); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .sq  { width: 8px; height: 8px; flex-shrink: 0; }
+
+    /* Pop / Info style bars */
     .pop-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
-    .pop-label { width: 80px; }
-    .pop-bar-wrap { flex:1; height:5px; background:#21262d; border-radius:3px; overflow:hidden; }
-    .pop-bar { height:100%; border-radius:3px; transition: width 0.3s; }
-    .pop-pct { width:28px; text-align:right; font-size:10px; }
+    .pop-label { width: 75px; font-size: 10px; }
+    .pop-bar-wrap { flex: 1; height: 4px; background: #262b3d; border-radius: 2px; overflow: hidden; }
+    .pop-bar { height: 100%; border-radius: 2px; transition: width 0.3s; }
+    .pop-pct { width: 28px; text-align: right; font-size: 10px; color: var(--tv-text); }
 
-    /* P&L overview */
-    #pnl-section { display:flex; flex-direction:column; gap:5px; }
-    .pnl-row { display:flex; justify-content:space-between; font-size:11px; }
-    .pnl-label { color: var(--text-dim); }
-    .pnl-val   { font-weight:600; }
-    #pnl-pain-bar-wrap { height:6px; background:#21262d; border-radius:3px; overflow:hidden; }
-    #pnl-pain-bar { height:100%; background:var(--red); border-radius:3px; transition:width 0.3s; }
-
-    /* Psych profile bar */
-    #psych-section { display:flex; flex-direction:column; gap:4px; }
+    /* P&L Overview */
+    .pnl-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--tv-text-dim); }
+    .pnl-val { font-weight: 600; color: var(--tv-text); }
+    #pnl-pain-bar-wrap { height: 5px; background: #262b3d; border-radius: 3px; overflow: hidden; margin-top: 2px; }
+    #pnl-pain-bar { height: 100%; background: var(--tv-red); border-radius: 3px; transition: width 0.3s; }
 
     /* Sentiment */
-    #sentiment-bar-wrap {
-      height:7px; background:#21262d; border-radius:4px; overflow:hidden; position:relative;
+    #sentiment-bar-wrap { height: 6px; background: #262b3d; border-radius: 3px; overflow: hidden; position: relative; }
+    #sentiment-bar { height: 100%; border-radius: 3px; transition: width 0.2s, background 0.2s; position: absolute; left: 50%; }
+
+    /* Center Panel: TradingView Chart */
+    #tv-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--tv-bg);
+      min-width: 0;
+      position: relative;
     }
-    #sentiment-bar {
-      height:100%; border-radius:4px; transition:width 0.2s,background 0.2s;
-      position:absolute; left:50%;
+    .tv-chart-topbar {
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--tv-border-sub);
+      background: rgba(19, 23, 34, 0.6);
+      flex-shrink: 0;
+    }
+    .tv-ohlc-legend {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .tv-ohlc-symbol { font-weight: 700; color: #fff; }
+    .tv-ohlc-item span.label { color: var(--tv-text-dim); margin-right: 3px; }
+    .tv-ohlc-item span.val { font-weight: 600; }
+    .tv-chart-wrapper {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      padding: 8px 12px 4px 12px;
+    }
+    #priceChart { width: 100%; height: 100%; }
+
+    /* Right Panel: Stream Ritel IDX */
+    #tv-right {
+      width: 280px;
+      background: var(--tv-panel);
+      border-left: 1px solid var(--tv-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .tv-feed-head {
+      height: 34px;
+      background: var(--tv-surface);
+      border-bottom: 1px solid var(--tv-border);
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .tv-feed-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--tv-green);
+      box-shadow: 0 0 6px var(--tv-green);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    #feed-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+    .feed-item {
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      animation: fadeInMsg 0.25s ease-out;
+      transition: all 0.15s;
+    }
+    .feed-item:hover { border-color: var(--tv-blue); background: rgba(41, 98, 255, 0.05); }
+    .feed-item-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .feed-user-wrap { display: flex; align-items: center; gap: 5px; min-width: 0; }
+    .feed-avatar {
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; font-weight: bold; color: #fff; flex-shrink: 0;
+    }
+    .feed-username { font-size: 10px; font-weight: 600; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-badge {
+      font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px;
+      text-transform: uppercase; flex-shrink: 0;
+    }
+    .badge-fomo { background: rgba(255, 152, 0, 0.2); color: var(--tv-amber); border: 1px solid rgba(255, 152, 0, 0.4); }
+    .badge-cl { background: var(--tv-red-dim); color: var(--tv-red); border: 1px solid rgba(242, 54, 69, 0.4); }
+    .badge-tp { background: var(--tv-green-dim); color: var(--tv-green); border: 1px solid rgba(8, 153, 129, 0.4); }
+    .badge-bandar { background: rgba(156, 39, 176, 0.2); color: var(--tv-purple); border: 1px solid rgba(156, 39, 176, 0.4); }
+    .badge-nyangkut { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.4); }
+    .feed-time { font-size: 9px; color: var(--tv-text-mute); margin-left: auto; flex-shrink: 0; }
+    .feed-text { font-size: 10.5px; color: #c9d1d9; line-height: 1.35; word-break: break-word; }
+    @keyframes fadeInMsg { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── TradingView Bottom Control Bar (Dock Station) ── */
+    #tv-dock {
+      background: var(--tv-panel);
+      border-top: 1px solid var(--tv-border);
+      padding: 8px 12px;
+      display: grid;
+      grid-template-columns: minmax(340px, 1.6fr) auto auto 1.3fr;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .dock-card {
+      background: var(--tv-surface);
+      border: 1px solid var(--tv-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .dock-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--tv-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    /* ── Right panel ── */
-    #right-panel { flex:1; display:flex; flex-direction:column; padding:10px; gap:8px; min-width:0; }
-    #chart-title { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
-    #price-stats { display:flex; gap:18px; flex-shrink:0; }
-    .stat-item { display:flex; flex-direction:column; gap:1px; }
-    .stat-label { font-size:10px; color:var(--text-dim); }
-    .stat-value { font-size:13px; font-weight:600; }
-    #chartWrap { flex:1; min-height:0; position:relative; }
-    #priceChart { width:100%; height:100%; }
+    /* News card */
+    .dock-news { border-color: rgba(41, 98, 255, 0.4); background: linear-gradient(135deg, rgba(41, 98, 255, 0.08) 0%, rgba(30, 34, 45, 0.95) 100%); }
+    .news-input-row { display: flex; gap: 6px; align-items: center; }
+    #news-select {
+      flex: 1;
+      background: var(--tv-bg);
+      color: #fff;
+      border: 1px solid var(--tv-border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 11px;
+      outline: none;
+      min-width: 0;
+      cursor: pointer;
+    }
+    #news-select:focus { border-color: var(--tv-blue); }
+    #btn-inject-news {
+      background: var(--tv-blue);
+      color: #fff;
+      border: 1px solid #4582ff;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(41, 98, 255, 0.3);
+    }
+    #btn-inject-news:hover { background: var(--tv-blue-hover); transform: translateY(-1px); }
+    #btn-inject-news:active { transform: translateY(0); }
 
-    /* ── Controls ── */
-    #controls {
-      flex-shrink:0; background:var(--surface); border-top:1px solid var(--border);
-      padding:8px 14px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;
+    /* Market Actions */
+    .btn-action-row { display: flex; gap: 4px; }
+    .btn-act {
+      border: 1px solid var(--tv-border);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      background: var(--tv-bg);
+      color: var(--tv-text);
+      white-space: nowrap;
     }
-    .ctrl-group { display:flex; flex-direction:column; gap:4px; }
-    .ctrl-label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
-    button {
-      cursor:pointer; border:none; border-radius:6px; padding:5px 12px;
-      font-family:inherit; font-size:11px; font-weight:600; transition:all 0.15s;
+    .btn-act:hover { filter: brightness(1.2); }
+    #btn-rumor { background: rgba(255, 152, 0, 0.15); border-color: var(--tv-amber); color: var(--tv-amber); }
+    #btn-panic { background: var(--tv-red-dim); border-color: var(--tv-red); color: var(--tv-red); }
+    #btn-pause { background: var(--tv-surface); }
+    #btn-reset { background: var(--tv-surface); color: var(--tv-text-dim); }
+
+    /* Speed Pills */
+    .speed-pills { display: flex; gap: 3px; align-items: center; }
+    .speed-btn {
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid var(--tv-border);
+      background: var(--tv-bg);
+      color: var(--tv-text-dim);
+      cursor: pointer;
+      transition: all 0.15s;
     }
-    #btn-rumor { background:var(--yellow); color:#000; }
-    #btn-rumor:hover { filter:brightness(1.15); }
-    #btn-panic { background:var(--red); color:#fff; }
-    #btn-panic:hover { filter:brightness(1.2); }
-    #btn-pause { background:#21262d; color:var(--text); border:1px solid var(--border); }
-    #btn-pause:hover { background:#30363d; }
-    #btn-reset { background:#21262d; color:var(--text-dim); border:1px solid var(--border); }
-    #btn-reset:hover { background:#30363d; color:var(--text); }
-    .btn-row { display:flex; gap:5px; }
-    .divider { width:1px; height:38px; background:var(--border); margin:0 2px; }
-    .slider-row { display:flex; align-items:center; gap:7px; }
-    .slider-row label { font-size:10px; color:var(--text-dim); width:82px; }
+    .speed-btn:hover { color: #fff; border-color: var(--tv-text-dim); }
+    .speed-btn.active {
+      background: var(--tv-blue);
+      border-color: #4582ff;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 8px rgba(41, 98, 255, 0.4);
+    }
+
+    /* Sliders grid */
+    .sliders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+    .slider-row { display: flex; align-items: center; gap: 5px; }
+    .slider-row label { font-size: 9.5px; color: var(--tv-text-dim); width: 62px; }
     input[type=range] {
-      -webkit-appearance:none; appearance:none; width:100px; height:4px;
-      background:#30363d; border-radius:2px; outline:none; cursor:pointer;
+      -webkit-appearance: none; appearance: none; flex: 1; height: 3px;
+      background: #2a2e39; border-radius: 2px; outline: none; cursor: pointer;
     }
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
-      background:var(--blue); cursor:pointer;
+      -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--tv-blue); cursor: pointer;
     }
-    .slider-val { font-size:10px; color:var(--text); width:30px; text-align:right; }
+    .slider-val { font-size: 9.5px; color: var(--tv-text); width: 26px; text-align: right; }
 
     /* Tooltip */
     #agent-tooltip {
-      position:fixed; background:var(--surface); border:1px solid var(--border);
-      border-radius:6px; padding:6px 10px; font-size:11px; color:var(--text);
-      pointer-events:none; display:none; z-index:100; line-height:1.6;
+      position: fixed; background: var(--tv-surface); border: 1px solid var(--tv-border);
+      border-radius: 6px; padding: 6px 10px; font-size: 11px; color: var(--tv-text);
+      pointer-events: none; display: none; z-index: 100; line-height: 1.5;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 <body>
 <div id="app">
-  <!-- Header -->
-  <div id="header">
-    <div id="logo">Sim<span>Pasar</span> IDX</div>
-    <div id="status-badge" class="badge-normal">NORMAL</div>
-    <div id="price-display">100.00</div>
-    <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
-      <div id="conn-dot"></div>
-      <span id="tick-counter">Tick: 0</span>
+
+  <!-- ── 1. TradingView Top Header Bar ── -->
+  <header id="tv-header">
+    <div class="tv-head-left">
+      <a href="/" class="tv-back-btn">← Landing</a>
+      <div class="tv-symbol-pill">
+        <span>COMPOSITE</span>
+        <span class="sub">IHSG · IDX</span>
+      </div>
+      <div class="tv-tf-group">
+        <button class="tv-tf-btn">1s</button>
+        <button class="tv-tf-btn active">1D</button>
+        <button class="tv-tf-btn">1W</button>
+        <button class="tv-tf-btn">1M</button>
+        <button class="tv-tf-btn">fx Indikator</button>
+      </div>
+      <div class="tv-divider-v"></div>
+      <div id="status-badge" class="tv-status-badge status-normal">● NORMAL</div>
     </div>
-  </div>
 
-  <!-- Main -->
-  <div id="main">
-    <!-- Left panel -->
-    <div id="left-panel">
+    <div class="tv-head-right">
+      <!-- Sectors Live IHSG -->
+      <div class="tv-sectors-pill">
+        <span style="color:var(--tv-text-dim);">IHSG Sectors:</span>
+        <strong id="sim-ihsg-val" class="mono" style="color:#fff;">Loading...</strong>
+        <span id="sim-ihsg-chg" class="mono" style="font-size:10px;"></span>
+        <button id="btn-use-ihsg" class="tv-sectors-btn" title="Set fundamental sesuai IHSG Sectors terkini">Terapkan</button>
+      </div>
 
-      <!-- Agent grid -->
-      <div class="section-title">AGEN (100)</div>
-      <canvas id="agentCanvas" width="216" height="216"></canvas>
+      <!-- Real Date & Clock -->
+      <div class="tv-datetime mono">
+        <span id="live-date">06 Sep 2026</span>
+        <span style="color:var(--tv-border);">|</span>
+        <span id="live-clock" style="color:#fff;">19:00:00</span>
+        <span style="font-size:9px;color:var(--tv-text-mute);">WIB</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:5px;margin-left:4px;">
+        <span id="tick-counter" class="mono" style="color:var(--tv-text-dim);font-size:11px;">Tick: 0</span>
+        <div id="conn-dot" style="width:7px;height:7px;border-radius:50%;background:var(--tv-green);"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 2. Main Workspace (Left Monitor + Center Chart + Right Feed) ── -->
+  <div id="tv-main">
+
+    <!-- Left Panel: Agent Population & Psych Monitor -->
+    <aside id="tv-left">
+      <div class="tv-section-title">
+        <span>AGEN MONITOR (100)</span>
+        <span style="color:var(--tv-blue);font-size:9px;">ABM ENGINE</span>
+      </div>
+      <canvas id="agentCanvas" width="208" height="208"></canvas>
 
       <!-- Legend info-style × action -->
       <div class="legend">
-        <div class="legend-row"><div class="dot" style="background:#3fb950"></div>Beli — Fundamental</div>
-        <div class="legend-row"><div class="dot" style="background:#56d364"></div>Beli — Chartist</div>
-        <div class="legend-row"><div class="dot" style="background:#8ee8a4"></div>Beli — Noise</div>
-        <div class="legend-row"><div class="dot" style="background:#f85149"></div>Jual — Fundamental</div>
-        <div class="legend-row"><div class="dot" style="background:#ff7b72"></div>Jual — Chartist</div>
-        <div class="legend-row"><div class="dot" style="background:#fca5a5"></div>Jual — Noise</div>
-        <div class="legend-row" style="margin-top:3px">
-          <div class="sq" style="background:#21262d;border:1px dashed #58a6ff"></div>Disciplined
-          <div class="sq" style="background:#21262d;border:1px dashed #bc8cff;margin-left:4px"></div>Bagholder
-          <div class="sq" style="background:#21262d;border:1px dashed #f0883e;margin-left:4px"></div>Averager
+        <div class="legend-row"><div class="dot" style="background:#089981"></div>Beli — Fundamental</div>
+        <div class="legend-row"><div class="dot" style="background:#26a69a"></div>Beli — Chartist</div>
+        <div class="legend-row"><div class="dot" style="background:#4db6ac"></div>Beli — Noise</div>
+        <div class="legend-row"><div class="dot" style="background:#f23645"></div>Jual — Fundamental</div>
+        <div class="legend-row"><div class="dot" style="background:#ef5350"></div>Jual — Chartist</div>
+        <div class="legend-row"><div class="dot" style="background:#e57373"></div>Jual — Noise</div>
+        <div class="legend-row" style="margin-top:2px">
+          <div class="sq" style="background:#181c27;border:1px dashed #2962ff"></div>Disciplined
+          <div class="sq" style="background:#181c27;border:1px dashed #9c27b0;margin-left:4px"></div>Bagholder
+          <div class="sq" style="background:#181c27;border:1px dashed #ff9800;margin-left:4px"></div>Averager
         </div>
       </div>
 
-      <!-- Info-style composition -->
+      <!-- Info-style breakdown -->
       <div>
-        <div class="section-title" style="margin-bottom:4px">KOMPOSISI INFO-STYLE</div>
+        <div class="tv-section-title" style="margin-bottom:3px">INFO-STYLE</div>
         <div class="pop-row">
-          <span class="pop-label" style="color:var(--blue)">Fundamental</span>
-          <div class="pop-bar-wrap"><div id="bar-f" class="pop-bar" style="background:var(--blue);width:30%"></div></div>
-          <span class="pop-pct" id="pct-f">30%</span>
+          <span class="pop-label" style="color:var(--tv-blue)">Fundamental</span>
+          <div class="pop-bar-wrap"><div id="bar-f" class="pop-bar" style="background:var(--tv-blue);width:30%"></div></div>
+          <span class="pop-pct mono" id="pct-f">30%</span>
         </div>
         <div class="pop-row">
-          <span class="pop-label" style="color:var(--purple)">Chartist</span>
-          <div class="pop-bar-wrap"><div id="bar-c" class="pop-bar" style="background:var(--purple);width:50%"></div></div>
-          <span class="pop-pct" id="pct-c">50%</span>
+          <span class="pop-label" style="color:var(--tv-purple)">Chartist</span>
+          <div class="pop-bar-wrap"><div id="bar-c" class="pop-bar" style="background:var(--tv-purple);width:50%"></div></div>
+          <span class="pop-pct mono" id="pct-c">50%</span>
         </div>
         <div class="pop-row">
-          <span class="pop-label" style="color:var(--orange)">Noise</span>
-          <div class="pop-bar-wrap"><div id="bar-n" class="pop-bar" style="background:var(--orange);width:20%"></div></div>
-          <span class="pop-pct" id="pct-n">20%</span>
+          <span class="pop-label" style="color:var(--tv-amber)">Noise</span>
+          <div class="pop-bar-wrap"><div id="bar-n" class="pop-bar" style="background:var(--tv-amber);width:20%"></div></div>
+          <span class="pop-pct mono" id="pct-n">20%</span>
         </div>
       </div>
 
-      <!-- Psych profile composition -->
-      <div id="psych-section">
-        <div class="section-title" style="margin-bottom:4px">PSYCH PROFILE</div>
-        <div class="pop-row">
-          <span class="pop-label" style="color:#58a6ff">Disciplined</span>
-          <div class="pop-bar-wrap"><div id="bar-d" class="pop-bar" style="background:#58a6ff;width:34%"></div></div>
-          <span class="pop-pct" id="pct-d">34%</span>
-        </div>
-        <div class="pop-row">
-          <span class="pop-label" style="color:#bc8cff">Bagholder</span>
-          <div class="pop-bar-wrap"><div id="bar-b" class="pop-bar" style="background:#bc8cff;width:33%"></div></div>
-          <span class="pop-pct" id="pct-b">33%</span>
-        </div>
-        <div class="pop-row">
-          <span class="pop-label" style="color:#f0883e">Averager</span>
-          <div class="pop-bar-wrap"><div id="bar-a" class="pop-bar" style="background:#f0883e;width:33%"></div></div>
-          <span class="pop-pct" id="pct-a">33%</span>
-        </div>
-      </div>
-
-      <!-- P&L overview -->
-      <div id="pnl-section">
-        <div class="section-title" style="margin-bottom:4px">P&amp;L OVERVIEW</div>
-        <div class="pnl-row">
-          <span class="pnl-label">Punya posisi</span>
-          <span class="pnl-val" id="pnl-in-pos" style="color:var(--text)">—</span>
-        </div>
-        <div class="pnl-row">
-          <span class="pnl-label">Dalam pain 🔴</span>
-          <span class="pnl-val" id="pnl-in-pain" style="color:var(--red)">—</span>
-        </div>
-        <div class="pnl-row">
-          <span class="pnl-label">Sedang averaging ↗</span>
-          <span class="pnl-val" id="pnl-averaging" style="color:var(--orange)">—</span>
-        </div>
-        <div class="pnl-row">
-          <span class="pnl-label">Avg P&L</span>
-          <span class="pnl-val" id="pnl-avg" style="color:var(--text-dim)">—</span>
-        </div>
-        <!-- Pain meter -->
-        <div id="pnl-pain-bar-wrap">
-          <div id="pnl-pain-bar" style="width:0%"></div>
-        </div>
-      </div>
-
-      <!-- Sentiment -->
+      <!-- Psych breakdown -->
       <div>
-        <div class="section-title" style="margin-bottom:4px">SENTIMEN PASAR</div>
+        <div class="tv-section-title" style="margin-bottom:3px">PSYCH PROFILE</div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#2962ff">Disciplined</span>
+          <div class="pop-bar-wrap"><div id="bar-d" class="pop-bar" style="background:#2962ff;width:34%"></div></div>
+          <span class="pop-pct mono" id="pct-d">34%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#9c27b0">Bagholder</span>
+          <div class="pop-bar-wrap"><div id="bar-b" class="pop-bar" style="background:#9c27b0;width:33%"></div></div>
+          <span class="pop-pct mono" id="pct-b">33%</span>
+        </div>
+        <div class="pop-row">
+          <span class="pop-label" style="color:#ff9800">Averager</span>
+          <div class="pop-bar-wrap"><div id="bar-a" class="pop-bar" style="background:#ff9800;width:33%"></div></div>
+          <span class="pop-pct mono" id="pct-a">33%</span>
+        </div>
+      </div>
+
+      <!-- P&L & Sentiment -->
+      <div>
+        <div class="tv-section-title" style="margin-bottom:3px">P&amp;L OVERVIEW</div>
+        <div class="pnl-row"><span>Punya posisi</span><span id="pnl-in-pos" class="pnl-val mono">—</span></div>
+        <div class="pnl-row"><span>Dalam pain 🔴</span><span id="pnl-in-pain" class="pnl-val mono" style="color:var(--tv-red)">—</span></div>
+        <div class="pnl-row"><span>Averaging ↗</span><span id="pnl-averaging" class="pnl-val mono" style="color:var(--tv-amber)">—</span></div>
+        <div class="pnl-row"><span>Avg P&amp;L</span><span id="pnl-avg" class="pnl-val mono">—</span></div>
+        <div id="pnl-pain-bar-wrap"><div id="pnl-pain-bar" style="width:0%"></div></div>
+      </div>
+
+      <div>
+        <div class="tv-section-title" style="margin-bottom:3px">
+          <span>SENTIMEN PASAR</span>
+          <span id="sentiment-val" class="mono" style="color:var(--tv-text-dim)">0.000</span>
+        </div>
         <div id="sentiment-bar-wrap">
-          <div id="sentiment-bar" style="width:0%;background:var(--green)"></div>
+          <div id="sentiment-bar" style="width:0%;background:var(--tv-green)"></div>
         </div>
-        <div id="sentiment-val" style="font-size:10px;color:var(--text-dim);text-align:center">0.000</div>
+      </div>
+    </aside>
+
+    <!-- Center: TradingView Chart Canvas -->
+    <main id="tv-center">
+      <div class="tv-chart-topbar">
+        <div class="tv-ohlc-legend mono">
+          <span class="tv-ohlc-symbol">IDX:COMPOSITE</span>
+          <span class="tv-ohlc-item"><span class="label">Harga:</span><span id="stat-price" class="val" style="color:#fff;">—</span></span>
+          <span class="tv-ohlc-item"><span class="label">Fundamental:</span><span id="stat-fundamental" class="val" style="color:var(--tv-blue);">—</span></span>
+          <span class="tv-ohlc-item"><span class="label">Deviasi:</span><span id="stat-dev" class="val">+0.0%</span></span>
+          <span class="tv-ohlc-item"><span class="label">High:</span><span id="stat-max" class="val" style="color:var(--tv-green);">—</span></span>
+          <span class="tv-ohlc-item"><span class="label">Low:</span><span id="stat-min" class="val" style="color:var(--tv-red);">—</span></span>
+        </div>
+        <div style="font-size:10px;color:var(--tv-text-mute);" class="mono">Real-time Order Book Aggregation</div>
+      </div>
+
+      <div class="tv-chart-wrapper">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </main>
+
+    <!-- Right: TradingView Ideas / Retail Stream Feed -->
+    <aside id="tv-right">
+      <div class="tv-feed-head">
+        <div class="tv-feed-title">
+          <span class="pulse-dot"></span>
+          <span>STREAM RITEL IDX</span>
+        </div>
+        <span style="font-size:9.5px;color:var(--tv-green);" class="mono">14.820 ONLINE</span>
+      </div>
+      <div id="feed-list">
+        <!-- Live community messages generated here -->
+      </div>
+    </aside>
+  </div>
+
+  <!-- ── 3. TradingView Bottom Control Dock Station (No Overflow / No Collision) ── -->
+  <footer id="tv-dock">
+
+    <!-- Card 1: Live News & Filings -->
+    <div class="dock-card dock-news">
+      <div class="dock-label">
+        <span style="color:#60a5fa;">📰 SUNTIK BERITA &amp; FILINGS (SECTORS MCP)</span>
+        <span style="font-size:8.5px;color:#93c5fd;">Sentimen Riil Emiten IDX</span>
+      </div>
+      <div class="news-input-row">
+        <select id="news-select">
+          <option value="">Memuat berita &amp; keterbukaan IDX...</option>
+        </select>
+        <button id="btn-inject-news">⚡ SUNTIK</button>
       </div>
     </div>
 
-    <!-- Right panel -->
-    <div id="right-panel">
-      <div class="section-title">CHART HARGA vs FUNDAMENTAL</div>
-      <div id="price-stats">
-        <div class="stat-item">
-          <span class="stat-label">Harga</span>
-          <span class="stat-value" id="stat-price" style="color:var(--text)">100.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Fundamental</span>
-          <span class="stat-value" style="color:var(--blue)">100.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Deviasi</span>
-          <span class="stat-value" id="stat-dev">+0.0%</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Maks</span>
-          <span class="stat-value" id="stat-max" style="color:var(--green)">100.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Min</span>
-          <span class="stat-value" id="stat-min" style="color:var(--red)">100.00</span>
-        </div>
+    <!-- Card 2: Market Intervention -->
+    <div class="dock-card">
+      <div class="dock-label">AKSI PASAR MANUAL</div>
+      <div class="btn-action-row">
+        <button id="btn-rumor" class="btn-act">📢 Rumor (+)</button>
+        <button id="btn-panic" class="btn-act">📉 Bad News (-)</button>
+        <button id="btn-pause" class="btn-act">⏸ Pause</button>
+        <button id="btn-reset" class="btn-act">↺ Reset</button>
       </div>
-      <div id="chartWrap"><canvas id="priceChart"></canvas></div>
     </div>
-  </div>
 
-  <!-- Controls -->
-  <div id="controls">
-    <div class="ctrl-group">
-      <div class="ctrl-label">Aksi Pasar</div>
-      <div class="btn-row">
-        <button id="btn-rumor">📢 Inject Rumor</button>
-        <button id="btn-panic">📉 Bad News</button>
-        <button id="btn-pause">⏸ Pause</button>
-        <button id="btn-reset">↺ Reset</button>
+    <!-- Card 3: Speed Multiplier Controls (0.5x, 1x, 2x, 3x, 5x) -->
+    <div class="dock-card">
+      <div class="dock-label">KECEPATAN SIMULASI</div>
+      <div class="speed-pills">
+        <button class="speed-btn" data-speed="0.5">0.5x</button>
+        <button class="speed-btn active" data-speed="1.0">1x (Normal)</button>
+        <button class="speed-btn" data-speed="2.0">2x</button>
+        <button class="speed-btn" data-speed="3.0">3x</button>
+        <button class="speed-btn" data-speed="5.0">5x</button>
       </div>
     </div>
-    <div class="divider"></div>
-    <!-- Info-style sliders -->
-    <div class="ctrl-group">
-      <div class="ctrl-label">Info-Style</div>
-      <div class="slider-row">
-        <label style="color:var(--blue)">Fundamental</label>
-        <input type="range" id="sl-f" min="0" max="100" value="30" step="5" />
-        <span class="slider-val" id="lbl-f">30%</span>
+
+    <!-- Card 4: Agent Population Sliders -->
+    <div class="dock-card">
+      <div class="dock-label">
+        <span>KOMPOSISI INVESTOR</span>
+        <span style="font-size:9px;color:var(--tv-text-dim);">F / C / N</span>
       </div>
-      <div class="slider-row">
-        <label style="color:var(--purple)">Chartist</label>
-        <input type="range" id="sl-c" min="0" max="100" value="50" step="5" />
-        <span class="slider-val" id="lbl-c">50%</span>
-      </div>
-      <div class="slider-row">
-        <label style="color:var(--orange)">Noise</label>
-        <input type="range" id="sl-n" min="0" max="100" value="20" step="5" />
-        <span class="slider-val" id="lbl-n">20%</span>
-      </div>
-    </div>
-    <div class="divider"></div>
-    <!-- Psych sliders -->
-    <div class="ctrl-group">
-      <div class="ctrl-label">Psych Profile</div>
-      <div class="slider-row">
-        <label style="color:#58a6ff">Disciplined</label>
-        <input type="range" id="sl-d" min="0" max="100" value="34" step="5" />
-        <span class="slider-val" id="lbl-d">34%</span>
-      </div>
-      <div class="slider-row">
-        <label style="color:#bc8cff">Bagholder</label>
-        <input type="range" id="sl-b" min="0" max="100" value="33" step="5" />
-        <span class="slider-val" id="lbl-b">33%</span>
-      </div>
-      <div class="slider-row">
-        <label style="color:#f0883e">Averager</label>
-        <input type="range" id="sl-a" min="0" max="100" value="33" step="5" readonly disabled
-               style="opacity:0.5;cursor:default" />
-        <span class="slider-val" id="lbl-a" style="color:var(--text-dim)">33%</span>
+      <div class="sliders-grid">
+        <div class="slider-row">
+          <label style="color:var(--tv-blue)">Fundam.</label>
+          <input type="range" id="sl-f" min="0" max="100" value="30" step="5" />
+          <span class="slider-val mono" id="lbl-f">30%</span>
+        </div>
+        <div class="slider-row">
+          <label style="color:#2962ff">Discipl.</label>
+          <input type="range" id="sl-d" min="0" max="100" value="34" step="5" />
+          <span class="slider-val mono" id="lbl-d">34%</span>
+        </div>
+        <div class="slider-row">
+          <label style="color:var(--tv-purple)">Chartist</label>
+          <input type="range" id="sl-c" min="0" max="100" value="50" step="5" />
+          <span class="slider-val mono" id="lbl-c">50%</span>
+        </div>
+        <div class="slider-row">
+          <label style="color:#9c27b0">Bagholder</label>
+          <input type="range" id="sl-b" min="0" max="100" value="33" step="5" />
+          <span class="slider-val mono" id="lbl-b">33%</span>
+        </div>
       </div>
     </div>
-    <div class="divider"></div>
-    <!-- Speed + Rumor strength -->
-    <div class="ctrl-group">
-      <div class="ctrl-label">Kecepatan</div>
-      <div class="slider-row">
-        <label id="speed-label">Normal</label>
-        <input type="range" id="sl-speed" min="1" max="9" value="5" step="1" />
-        <span class="slider-val" id="lbl-speed">x1</span>
-      </div>
-    </div>
-    <div class="ctrl-group">
-      <div class="ctrl-label">Kekuatan Rumor</div>
-      <div class="slider-row">
-        <label>Strength</label>
-        <input type="range" id="sl-rumor" min="1" max="30" value="10" step="1" />
-        <span class="slider-val" id="lbl-rumor">1.0</span>
-      </div>
-    </div>
-  </div>
+
+  </footer>
 </div>
 
 <div id="agent-tooltip"></div>
 
 <script>
-// ── WebSocket ──────────────────────────────────────────────────────
+// ── 1. Real Date & Live Clock ─────────────────────────────────────
+function updateLiveClock() {
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = months[now.getMonth()];
+  const year = now.getFullYear();
+
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  const secs = String(now.getSeconds()).padStart(2, '0');
+
+  const dateEl = document.getElementById('live-date');
+  const clockEl = document.getElementById('live-clock');
+  if (dateEl) dateEl.textContent = `${day} ${month} ${year}`;
+  if (clockEl) clockEl.textContent = `${hours}:${mins}:${secs}`;
+}
+setInterval(updateLiveClock, 1000);
+updateLiveClock();
+
+// ── 2. WebSocket Connection ───────────────────────────────────────
 const WS_URL = `ws://${location.host}/ws`;
 let ws, reconnTimer;
 function connect() {
   ws = new WebSocket(WS_URL);
   ws.onopen  = () => {
-    document.getElementById('conn-dot').classList.add('connected');
+    const dot = document.getElementById('conn-dot');
+    if (dot) dot.style.background = 'var(--tv-green)';
     if (reconnTimer) { clearTimeout(reconnTimer); reconnTimer = null; }
   };
   ws.onmessage = e => handleState(JSON.parse(e.data));
   ws.onclose   = () => {
-    document.getElementById('conn-dot').classList.remove('connected');
+    const dot = document.getElementById('conn-dot');
+    if (dot) dot.style.background = 'var(--tv-red)';
     reconnTimer = setTimeout(connect, 2000);
   };
   ws.onerror = () => ws.close();
@@ -383,88 +759,124 @@ function send(obj) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
 
-// ── Chart.js ──────────────────────────────────────────────────────
+// ── 3. TradingView Chart.js Setup ─────────────────────────────────
 const chartCtx = document.getElementById('priceChart').getContext('2d');
 const priceChart = new Chart(chartCtx, {
   type: 'line',
   data: {
     labels: [],
     datasets: [
-      { label:'Harga', data:[], borderColor:'#c9d1d9',
-        backgroundColor:'rgba(201,209,217,0.06)', borderWidth:2,
-        pointRadius:0, tension:0.3, fill:false, order:1 },
-      { label:'Fundamental', data:[], borderColor:'#58a6ff',
-        borderDash:[6,4], borderWidth:1.5, pointRadius:0,
-        tension:0, fill:false, order:2 },
+      {
+        label: 'IHSG Price',
+        data: [],
+        borderColor: '#2962ff',
+        backgroundColor: 'rgba(41, 98, 255, 0.08)',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.25,
+        fill: true,
+        order: 1
+      },
+      {
+        label: 'Fundamental Baseline',
+        data: [],
+        borderColor: '#f59e0b',
+        borderDash: [5, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+        order: 2
+      }
     ]
   },
   options: {
-    responsive:true, maintainAspectRatio:false, animation:{duration:0},
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 0 },
+    interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend:{display:false},
-      tooltip:{
-        mode:'index', intersect:false,
-        backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1,
-        titleColor:'#8b949e', bodyColor:'#c9d1d9',
+      legend: { display: false },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        backgroundColor: '#1e222d',
+        borderColor: '#2a2e39',
+        borderWidth: 1,
+        titleColor: '#787b86',
+        bodyColor: '#d1d4dc',
+        titleFont: { size: 10, family: 'JetBrains Mono' },
+        bodyFont: { size: 11, family: 'JetBrains Mono' },
+        padding: 8,
+        callbacks: {
+          label: function(ctx) {
+            return ` ${ctx.dataset.label}: Rp ${Number(ctx.raw).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+          }
+        }
       }
     },
-    scales:{
-      x:{ ticks:{color:'#8b949e',maxTicksLimit:8,font:{size:9}}, grid:{color:'#21262d'} },
-      y:{ ticks:{color:'#8b949e',font:{size:9}}, grid:{color:'#21262d'}, beginAtZero:false }
+    scales: {
+      x: {
+        ticks: { color: '#787b86', maxTicksLimit: 10, font: { size: 9, family: 'JetBrains Mono' } },
+        grid: { color: 'rgba(42, 46, 57, 0.45)', borderDash: [2, 2] }
+      },
+      y: {
+        position: 'right',
+        ticks: {
+          color: '#787b86',
+          font: { size: 9, family: 'JetBrains Mono' },
+          callback: function(v) { return Number(v).toLocaleString('id-ID', { maximumFractionDigits: 0 }); }
+        },
+        grid: { color: 'rgba(42, 46, 57, 0.45)', borderDash: [2, 2] },
+        beginAtZero: false
+      }
     }
   }
 });
 
-// ── Agent canvas ──────────────────────────────────────────────────
+// ── 4. Agent Canvas Rendering ─────────────────────────────────────
 const canvas  = document.getElementById('agentCanvas');
 const ctx2d   = canvas.getContext('2d');
-const CELL    = 216 / 10;
+const CELL    = 208 / 10;
 let lastAgents = [];
 
-// Warna aksi × info-style
 const ACTION_COLORS = {
-  fundamentalist: { buy:'#3fb950', sell:'#f85149', hold:'#1a2a1a' },
-  chartist:       { buy:'#56d364', sell:'#ff7b72', hold:'#1a1a2a' },
-  noise:          { buy:'#8ee8a4', sell:'#fca5a5', hold:'#21262d' },
+  fundamentalist: { buy: '#089981', sell: '#f23645', hold: '#181c27' },
+  chartist:       { buy: '#26a69a', sell: '#ef5350', hold: '#181c27' },
+  noise:          { buy: '#4db6ac', sell: '#e57373', hold: '#181c27' },
 };
-// Border psych profile
 const PSYCH_BORDER = {
-  disciplined: '#58a6ff',
-  bagholder:   '#bc8cff',
-  averager:    '#f0883e',
+  disciplined: '#2962ff',
+  bagholder:   '#9c27b0',
+  averager:    '#ff9800',
 };
 
 function drawAgents(agents) {
-  ctx2d.clearRect(0, 0, 216, 216);
+  ctx2d.clearRect(0, 0, 208, 208);
   agents.forEach((a, i) => {
     const col = i % 10, row = Math.floor(i / 10);
     const x = col * CELL, y = row * CELL;
 
-    // Isi sel berdasarkan aksi × info_style
     const colors = ACTION_COLORS[a.type] || ACTION_COLORS.noise;
-    // Agen yang "in pain" → isi merah tua (override warna)
     ctx2d.fillStyle = a.pain ? '#4a0f0f' : colors[a.action];
-    ctx2d.fillRect(x+1, y+1, CELL-2, CELL-2);
+    ctx2d.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
 
-    // Border psych profile (1px tipis)
-    ctx2d.strokeStyle = PSYCH_BORDER[a.psych] || '#444';
+    ctx2d.strokeStyle = PSYCH_BORDER[a.psych] || '#333';
     ctx2d.lineWidth = 0.8;
-    ctx2d.strokeRect(x+1.5, y+1.5, CELL-3, CELL-3);
+    ctx2d.strokeRect(x + 1.5, y + 1.5, CELL - 3, CELL - 3);
 
-    // Dot tengah = info_style color
-    ctx2d.fillStyle = a.type==='fundamentalist' ? '#58a6ff'
-                    : a.type==='chartist'       ? '#bc8cff' : '#f0883e';
+    ctx2d.fillStyle = a.type === 'fundamentalist' ? '#2962ff'
+                    : a.type === 'chartist'       ? '#9c27b0' : '#ff9800';
     ctx2d.beginPath();
-    ctx2d.arc(x+CELL/2, y+CELL/2, 1.8, 0, Math.PI*2);
+    ctx2d.arc(x + CELL / 2, y + CELL / 2, 1.6, 0, Math.PI * 2);
     ctx2d.fill();
 
-    // Tanda averaging (▲ kecil di pojok kanan atas saat position > 1.0)
     if (a.psych === 'averager' && a.pos > 1.05) {
-      ctx2d.fillStyle = '#f0883e';
+      ctx2d.fillStyle = '#ff9800';
       ctx2d.beginPath();
-      ctx2d.moveTo(x+CELL-4, y+CELL-1);
-      ctx2d.lineTo(x+CELL-1, y+CELL-1);
-      ctx2d.lineTo(x+CELL-2.5, y+CELL-4);
+      ctx2d.moveTo(x + CELL - 4, y + CELL - 1);
+      ctx2d.lineTo(x + CELL - 1, y + CELL - 1);
+      ctx2d.lineTo(x + CELL - 2.5, y + CELL - 4);
       ctx2d.closePath();
       ctx2d.fill();
     }
@@ -476,7 +888,7 @@ const tooltip = document.getElementById('agent-tooltip');
 canvas.addEventListener('mousemove', e => {
   if (!lastAgents.length) return;
   const rect = canvas.getBoundingClientRect();
-  const sx = 216 / rect.width, sy = 216 / rect.height;
+  const sx = 208 / rect.width, sy = 208 / rect.height;
   const col = Math.floor((e.clientX - rect.left) * sx / CELL);
   const row = Math.floor((e.clientY - rect.top)  * sy / CELL);
   const idx = row * 10 + col;
@@ -485,86 +897,96 @@ canvas.addEventListener('mousemove', e => {
   tooltip.style.display = 'block';
   tooltip.style.left = (e.clientX + 12) + 'px';
   tooltip.style.top  = (e.clientY - 22) + 'px';
-  const pnlColor = a.pnl > 0 ? '#3fb950' : a.pnl < 0 ? '#f85149' : '#8b949e';
+  const pnlColor = a.pnl > 0 ? '#089981' : a.pnl < 0 ? '#f23645' : '#787b86';
   const pnlSign  = a.pnl >= 0 ? '+' : '';
   tooltip.innerHTML = `
-    <b>#${a.id}</b> ${a.type} / <span style="color:${PSYCH_BORDER[a.psych]}">${a.psych}</span><br>
-    Aksi: ${a.action} (${a.order > 0 ? '+' : ''}${a.order})<br>
-    P&L: <span style="color:${pnlColor}">${pnlSign}${a.pnl}%</span>
+    <b>Agent #${a.id}</b> · ${a.type} / <span style="color:${PSYCH_BORDER[a.psych]}">${a.psych}</span><br>
+    Aksi: <b>${a.action.toUpperCase()}</b> (${a.order > 0 ? '+' : ''}${a.order})<br>
+    P&L: <span style="color:${pnlColor};font-weight:700;">${pnlSign}${a.pnl}%</span>
     ${a.pain ? ' 🔴 PAIN' : ''}
     ${a.pos > 1.05 ? ' ↗ avg x'+a.pos.toFixed(1) : ''}
   `.trim();
 });
 canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
 
-// ── State handler ──────────────────────────────────────────────────
-let sesMax = 100, sesMin = 100;
+// ── 5. State Handler & Price Updates ──────────────────────────────
+let sesMax = null, sesMin = null;
+let currentFundamental = 6636.48;
+
+function formatNum(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Number(n).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 function handleState(state) {
-  if (state.event) return;   // pause/resume event
+  if (!state || state.event) return;
 
   const { price, fundamental, tick, status, sentiment } = state;
+  currentFundamental = fundamental;
 
-  // ── Header ──
   document.getElementById('tick-counter').textContent = `Tick: ${tick}`;
-  const priceEl = document.getElementById('price-display');
-  priceEl.textContent = price.toFixed(2);
+  const priceEl = document.getElementById('stat-price');
+  priceEl.textContent = formatNum(price);
 
   const hist = state.price_history || [];
   if (hist.length >= 2) {
     const prev = hist[hist.length - 2];
-    priceEl.style.color = price > prev ? '#3fb950' : price < prev ? '#f85149' : '#c9d1d9';
+    priceEl.style.color = price > prev ? '#089981' : price < prev ? '#f23645' : '#fff';
   }
 
+  // TradingView badge status
   const badge = document.getElementById('status-badge');
   if (status === 'Bubble') {
-    badge.className = 'badge-bubble'; badge.textContent = '▲ BUBBLE';
+    badge.className = 'tv-status-badge status-bubble'; badge.textContent = '▲ BUBBLE RALLY';
   } else if (status === 'Panik-Crash') {
-    badge.className = 'badge-crash'; badge.textContent = '▼ PANIK-CRASH';
+    badge.className = 'tv-status-badge status-crash'; badge.textContent = '▼ PANIK-CRASH';
   } else {
-    badge.className = 'badge-normal'; badge.textContent = '● NORMAL';
+    badge.className = 'tv-status-badge status-normal'; badge.textContent = '● NORMAL';
   }
 
-  // ── Price stats ──
-  if (price > sesMax) sesMax = price;
-  if (price < sesMin) sesMin = price;
-  const dev = ((price - fundamental) / fundamental * 100).toFixed(1);
-  document.getElementById('stat-price').textContent = price.toFixed(2);
-  document.getElementById('stat-price').style.color =
-    price > fundamental ? '#3fb950' : price < fundamental ? '#f85149' : '#c9d1d9';
+  if (sesMax === null || price > sesMax) sesMax = price;
+  if (sesMin === null || price < sesMin) sesMin = price;
+  const dev = ((price - fundamental) / fundamental * 100).toFixed(2);
+  document.getElementById('stat-fundamental').textContent = formatNum(fundamental);
   const devEl = document.getElementById('stat-dev');
   devEl.textContent = (dev > 0 ? '+' : '') + dev + '%';
-  devEl.style.color = dev > 0 ? '#e3b341' : dev < 0 ? '#f85149' : '#8b949e';
-  document.getElementById('stat-max').textContent = sesMax.toFixed(2);
-  document.getElementById('stat-min').textContent = sesMin.toFixed(2);
+  devEl.style.color = dev > 0 ? '#089981' : dev < 0 ? '#f23645' : '#787b86';
+  document.getElementById('stat-max').textContent = formatNum(sesMax);
+  document.getElementById('stat-min').textContent = formatNum(sesMin);
 
-  // ── Price chart ──
+  // Price chart
   if (hist.length) {
     const labels = hist.map((_, i) => tick - hist.length + i + 1);
-    priceChart.data.labels            = labels;
-    priceChart.data.datasets[0].data  = hist;
-    priceChart.data.datasets[1].data  = Array(hist.length).fill(fundamental);
+    priceChart.data.labels = labels;
+    priceChart.data.datasets[0].data = hist;
+    priceChart.data.datasets[1].data = Array(hist.length).fill(fundamental);
+
     const area = priceChart.chartArea;
     if (area) {
       const g = chartCtx.createLinearGradient(0, 0, 0, area.height);
       if (status === 'Bubble') {
-        g.addColorStop(0, 'rgba(227,179,65,0.10)'); g.addColorStop(1, 'rgba(13,17,23,0)');
+        g.addColorStop(0, 'rgba(8, 153, 129, 0.22)');
+        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
+        priceChart.data.datasets[0].borderColor = '#089981';
       } else if (status === 'Panik-Crash') {
-        g.addColorStop(0, 'rgba(13,17,23,0)'); g.addColorStop(1, 'rgba(248,81,73,0.10)');
+        g.addColorStop(0, 'rgba(242, 54, 69, 0.25)');
+        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
+        priceChart.data.datasets[0].borderColor = '#f23645';
       } else {
-        g.addColorStop(0, 'rgba(201,209,217,0.04)'); g.addColorStop(1, 'rgba(13,17,23,0)');
+        g.addColorStop(0, 'rgba(41, 98, 255, 0.18)');
+        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
+        priceChart.data.datasets[0].borderColor = '#2962ff';
       }
       priceChart.data.datasets[0].backgroundColor = g;
     }
     priceChart.update('none');
   }
 
-  // ── Agent grid ──
+  // Agent Grid
   if (state.agents) {
     lastAgents = state.agents;
     drawAgents(state.agents);
 
-    // Info-style bars
     const cnts = { fundamentalist:0, chartist:0, noise:0 };
     state.agents.forEach(a => cnts[a.type] = (cnts[a.type]||0) + 1);
     const tot = state.agents.length;
@@ -575,7 +997,6 @@ function handleState(state) {
       document.getElementById(`pct-${k}`).textContent = pct + '%';
     });
 
-    // Psych profile bars
     const pc = { disciplined:0, bagholder:0, averager:0 };
     state.agents.forEach(a => pc[a.psych] = (pc[a.psych]||0) + 1);
     ['d','b','a'].forEach((k, i) => {
@@ -586,50 +1007,60 @@ function handleState(state) {
     });
   }
 
-  // ── P&L stats ──
+  // P&L Stats
   if (state.psych_stats) {
     const ps = state.psych_stats;
-    document.getElementById('pnl-in-pos').textContent   = ps.in_position;
+    document.getElementById('pnl-in-pos').textContent = ps.in_position;
     const painEl = document.getElementById('pnl-in-pain');
     painEl.textContent = ps.in_pain;
-    painEl.style.color = ps.in_pain > 10 ? '#f85149' : ps.in_pain > 5 ? '#e3b341' : '#8b949e';
+    painEl.style.color = ps.in_pain > 10 ? '#f23645' : ps.in_pain > 5 ? '#ff9800' : '#787b86';
     document.getElementById('pnl-averaging').textContent = ps.averaging;
     const avgPnlEl = document.getElementById('pnl-avg');
     avgPnlEl.textContent = (ps.avg_pnl_pct >= 0 ? '+' : '') + ps.avg_pnl_pct + '%';
-    avgPnlEl.style.color = ps.avg_pnl_pct > 0 ? '#3fb950' : ps.avg_pnl_pct < -3 ? '#f85149' : '#8b949e';
-    // Pain bar: fraction of in_position agents yang in_pain
+    avgPnlEl.style.color = ps.avg_pnl_pct > 0 ? '#089981' : ps.avg_pnl_pct < -3 ? '#f23645' : '#787b86';
     const painFrac = ps.in_position > 0 ? ps.in_pain / ps.in_position : 0;
     document.getElementById('pnl-pain-bar').style.width = (painFrac * 100) + '%';
   }
 
-  // ── Sentiment bar ──
+  // Sentiment bar
   const sent = sentiment || 0;
   const sentBar = document.getElementById('sentiment-bar');
   const spct = Math.min(50, Math.abs(sent) * 15);
   sentBar.style.width = spct + '%';
   sentBar.style.left = '50%';
-  sentBar.style.background = sent > 0 ? '#e3b341' : '#f85149';
+  sentBar.style.background = sent > 0 ? '#ff9800' : '#f23645';
   sentBar.style.transform   = sent >= 0 ? 'none' : 'translateX(-100%)';
   document.getElementById('sentiment-val').textContent = sent.toFixed(3);
 }
 
-// ── Controls ──────────────────────────────────────────────────────
-
-// Rumor strength
-const slRumor = document.getElementById('sl-rumor');
-slRumor.addEventListener('input', () => {
-  document.getElementById('lbl-rumor').textContent = (parseInt(slRumor.value)/10).toFixed(1);
+// ── 6. Speed Multipliers (0.5x, 1x, 2x, 3x, 5x) ───────────────────
+const SPEED_VALUES = {
+  '0.5': 0.50,
+  '1.0': 0.25,
+  '2.0': 0.12,
+  '3.0': 0.06,
+  '5.0': 0.03
+};
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const spd = this.getAttribute('data-speed');
+    const interval = SPEED_VALUES[spd] || 0.25;
+    send({ cmd: 'set_speed', interval: interval });
+  });
 });
+
+// ── 7. Controls & Interventions ───────────────────────────────────
 document.getElementById('btn-rumor').addEventListener('click', () => {
-  send({ cmd:'inject_rumor', strength: parseInt(slRumor.value)/10 });
+  send({ cmd: 'inject_rumor', strength: 1.0 });
   flash('btn-rumor');
 });
 document.getElementById('btn-panic').addEventListener('click', () => {
-  send({ cmd:'inject_panic', strength: parseInt(slRumor.value)/10 });
+  send({ cmd: 'inject_panic', strength: 1.0 });
   flash('btn-panic');
 });
 
-// Pause / Reset
 let paused = false;
 document.getElementById('btn-pause').addEventListener('click', () => {
   paused = !paused;
@@ -637,71 +1068,283 @@ document.getElementById('btn-pause').addEventListener('click', () => {
   document.getElementById('btn-pause').textContent = paused ? '▶ Resume' : '⏸ Pause';
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
-  sesMax = 100; sesMin = 100;
-  send({ cmd:'reset' });
+  sesMax = null; sesMin = null;
+  send({ cmd: 'reset' });
 });
 
-// Info-style sliders
+// Population sliders
 const slF = document.getElementById('sl-f');
 const slC = document.getElementById('sl-c');
-const slN = document.getElementById('sl-n');
 let popTimer = null;
 function onPopChange() {
-  const f = parseInt(slF.value), c = parseInt(slC.value), n = parseInt(slN.value);
+  const f = parseInt(slF.value), c = parseInt(slC.value);
+  const n = Math.max(0, 100 - f - c);
   const t = f + c + n || 1;
   document.getElementById('lbl-f').textContent = Math.round(f/t*100)+'%';
   document.getElementById('lbl-c').textContent = Math.round(c/t*100)+'%';
-  document.getElementById('lbl-n').textContent = Math.round(n/t*100)+'%';
   clearTimeout(popTimer);
   popTimer = setTimeout(() => send({
     cmd:'set_population',
     fundamentalist: f/t, chartist: c/t, noise: n/t,
   }), 400);
 }
-[slF, slC, slN].forEach(s => s.addEventListener('input', onPopChange));
+[slF, slC].forEach(s => s.addEventListener('input', onPopChange));
 
-// Psych sliders (averager = sisa, slider-nya disabled)
 const slD = document.getElementById('sl-d');
 const slB = document.getElementById('sl-b');
-const slA = document.getElementById('sl-a');
 let psychTimer = null;
 function onPsychChange() {
   const d = parseInt(slD.value), b = parseInt(slB.value);
   const t = d + b || 1;
-  const dPct = Math.round(d/t * 100);
-  const bPct = Math.round(b/t * 100);
-  const aRaw = Math.max(0, 100 - d - b);   // sisa untuk averager
-  document.getElementById('lbl-d').textContent = dPct+'%';
-  document.getElementById('lbl-b').textContent = bPct+'%';
-  document.getElementById('lbl-a').textContent = aRaw+'%';
-  slA.value = aRaw;
-  const total = d + b + aRaw || 1;
+  document.getElementById('lbl-d').textContent = Math.round(d/t*100)+'%';
+  document.getElementById('lbl-b').textContent = Math.round(b/t*100)+'%';
   clearTimeout(psychTimer);
   psychTimer = setTimeout(() => send({
     cmd: 'set_psych',
-    disciplined: d/total,
-    bagholder:   b/total,
+    disciplined: d/t,
+    bagholder:   b/t,
   }), 400);
 }
 [slD, slB].forEach(s => s.addEventListener('input', onPsychChange));
 
-// Speed slider
-const SPEED_MAP   = [1.5, 1.0, 0.70, 0.45, 0.20, 0.12, 0.08, 0.05, 0.03];
-const SPEED_NAMES = ['x0.1','x0.2','x0.3','x0.5','x1','x1.5','x2','x3','x5'];
-document.getElementById('sl-speed').addEventListener('input', function() {
-  const idx = parseInt(this.value) - 1;
-  document.getElementById('lbl-speed').textContent  = SPEED_NAMES[idx];
-  document.getElementById('speed-label').textContent = SPEED_NAMES[idx];
-  send({ cmd:'set_speed', interval: SPEED_MAP[idx] });
-});
-
 function flash(id) {
   const b = document.getElementById(id);
-  b.style.filter = 'brightness(2)';
-  setTimeout(() => b.style.filter = '', 200);
+  if (!b) return;
+  b.style.filter = 'brightness(1.6)';
+  setTimeout(() => b.style.filter = '', 180);
 }
+
+// ── 8. Sectors MCP Live IHSG & News ───────────────────────────────
+let realtimeIHSGPrice = null;
+async function fetchIHSGData() {
+  try {
+    const res = await fetch('/api/ihsg');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.price) {
+      realtimeIHSGPrice = data.price;
+      document.getElementById('sim-ihsg-val').textContent = Number(data.price).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    if (data.change_pct !== undefined) {
+      const isPos = data.change_pct >= 0;
+      const chgEl = document.getElementById('sim-ihsg-chg');
+      chgEl.style.color = isPos ? '#089981' : '#f23645';
+      chgEl.textContent = `${isPos ? '+' : ''}${data.change_pct.toFixed(2)}%`;
+    }
+  } catch (e) {
+    console.warn('Gagal memuat IHSG:', e);
+  }
+}
+fetchIHSGData();
+
+document.getElementById('btn-use-ihsg').addEventListener('click', () => {
+  if (realtimeIHSGPrice) {
+    sesMax = realtimeIHSGPrice;
+    sesMin = realtimeIHSGPrice;
+    send({ cmd: 'set_fundamental', fundamental: realtimeIHSGPrice });
+    flash('btn-use-ihsg');
+  }
+});
+
+let loadedNewsList = [];
+async function fetchNewsData() {
+  try {
+    const res = await fetch('/api/news');
+    if (!res.ok) return;
+    const items = await res.json();
+    loadedNewsList = items;
+    const sel = document.getElementById('news-select');
+    sel.innerHTML = '';
+    if (!items || !items.length) {
+      sel.innerHTML = '<option value="">Tidak ada berita baru</option>';
+      return;
+    }
+    items.forEach((item, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      const typeTag = item.type === 'filing' ? '[Filing IDX]' : '[News]';
+      opt.textContent = `${item.sentiment_label} ${typeTag} ${item.title}`;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.warn('Gagal memuat berita:', e);
+  }
+}
+fetchNewsData();
+
+document.getElementById('btn-inject-news').addEventListener('click', () => {
+  const sel = document.getElementById('news-select');
+  const idx = parseInt(sel.value);
+  if (!isNaN(idx) && loadedNewsList[idx]) {
+    const item = loadedNewsList[idx];
+    send({
+      cmd: 'inject_news_sentiment',
+      title: item.title,
+      strength: item.sentiment_impact || 1.0,
+    });
+    flash('btn-inject-news');
+
+    const isBull = (item.sentiment_impact || 0) >= 0;
+    addChatMessage(
+      isBull ? 'ScalperGarisKeras' : 'PrajuritCutloss',
+      isBull ? 'HAKA 🚀' : 'HAKI 🚨',
+      isBull ? 'badge-tp' : 'badge-cl',
+      isBull
+        ? `🔥 BREAKING NEWS: "${item.title.substring(0, 65)}..." HAKA berjamaah capt!!`
+        : `🚨 BAD NEWS ALERT: "${item.title.substring(0, 65)}..." Buang kiri woy sebelum ARB!`
+    );
+  }
+});
+
+// ── 9. Retail Stream Bot Community ────────────────────────────────
+const USER_PROFILES = [
+  { name: 'ScalperGarisKeras', badge: 'HAKA 🚀', badgeClass: 'badge-tp', color: '#089981' },
+  { name: 'NyangkutDiPucuk',   badge: 'NYANGKUT 😭', badgeClass: 'badge-nyangkut', color: '#f59e0b' },
+  { name: 'PrajuritCutloss',   badge: 'CUT LOSS ✂️', badgeClass: 'badge-cl', color: '#f23645' },
+  { name: 'SultanSenopati',    badge: 'WHALE 🐋', badgeClass: 'badge-bandar', color: '#8b5cf6' },
+  { name: 'PejuangDividen',    badge: 'HOLD 💎', badgeClass: 'badge-fomo', color: '#2962ff' },
+  { name: 'BandarGhaib',       badge: 'BANDAR 😈', badgeClass: 'badge-bandar', color: '#ec4899' },
+  { name: 'RitelPasrah',       badge: 'FOMO 🤡', badgeClass: 'badge-fomo', color: '#f97316' },
+  { name: 'DokterSaham',       badge: 'ANALIS 📊', badgeClass: 'badge-fomo', color: '#06b6d4' },
+  { name: 'BocilCrypto',       badge: 'FOMO 🚀', badgeClass: 'badge-fomo', color: '#f43f5e' },
+  { name: 'TuruBerjamaah',     badge: 'PASRAH 🗿', badgeClass: 'badge-cl', color: '#64748b' },
+  { name: 'KangCopetIDX',      badge: 'SCALPER ⚡', badgeClass: 'badge-tp', color: '#14b8a6' },
+];
+
+const CHAT_POOLS = {
+  crash: [
+    "Waduh cut loss massal nih guys! Stop loss jebol parah 💀",
+    "Nyangkut di pucuk jemput woyy, dingin banget di atas 😭😭",
+    "Siapa yang jualan barbar woy?! Bandar buang barang ini mah!",
+    "Porto kebakaran gaes, menu makan sebulan fix Indomie polos 🍜",
+    "ARB berjilid-jilid ini mah, pasrah hapus aplikasi dulu 🗿",
+    "Titip sendal dulu nunggu pantulan di dasar palung mariana 🩴",
+    "Halo OJK tolong gembok emiten ini please, gak kuat liatnya 😭",
+    "Niat scalping 5 menit malah jadi investor jangka panjang 10 tahun 🧓",
+    "Serok bawah apa nangkep pisau jatuh nih gan? 🔪",
+    "Cut loss adalah koentji keselamatan porto... hiks ✂️"
+  ],
+  bubble: [
+    "TO THE MOON CAPT! ARA-kan jangan kasih kendorrr 🚀🚀",
+    "HAKA (Hajar Kanan) full margin! Jangan sampai ketinggalan kereta! 🔥",
+    "Malam ini makan enak resto bintang 5 all in Wagyu A5 🥩",
+    "Gokil bandar lagi baik hati bagi-bagi THR lebaran awal! 😎",
+    "Terbanggg tinggi! Hold terus jangan goyang jempol lemas! 💎🙌",
+    "TP (Take Profit) bertahap gaes, amankan cuan bungkus dulu! 💰",
+    "Yang kemarin cut loss di bawah pasti lagi nangis di pojokan wkwk 😂",
+    "Pucuk masih jauh, target multi-bagger gas pol terus! 📈",
+    "Candle-nya hijau pekat mantap, bandar akumulasi besar-besaran! 🟩"
+  ],
+  averaging: [
+    "Malah averaging down, peluru udah abis tinggal modal doa wkwk 💸",
+    "Averaging down terus sampai jadi pemegang saham pengendali 🗿",
+    "Tenang gaes, fundamentalnya bagus kok... kata influencer di X wkwk",
+    "Turun terus serok terus, dompet yang boncos wkwk 😂"
+  ],
+  normal: [
+    "Market lagi adem ayem nih, cocok buat scalping santai ☕",
+    "Volume transaksi mulai rame, ada tarikan halus dari broker asing.",
+    "IHSG sideways dulu ya, mantau bid-offer sambil ngopi santai.",
+    "Chart time-frame 15 menit ada sinyal reversal nih capt 📊",
+    "Titip sendal dulu di support kuat 🩴",
+    "Asing mulai net buy tipis-tipis di sektor perbankan nih 👀",
+    "Sabar itu subur, jangan fomo ngejar candle pucuk ya gaes."
+  ]
+};
+
+const feedListEl = document.getElementById('feed-list');
+let lastChatState = 'Normal';
+let lastChatTick = 0;
+
+function addChatMessage(userName, badgeText, badgeClass, text) {
+  if (!feedListEl) return;
+  const user = USER_PROFILES.find(u => u.name === userName) || USER_PROFILES[Math.floor(Math.random() * USER_PROFILES.length)];
+  const initial = user.name.charAt(0).toUpperCase();
+
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  item.innerHTML = `
+    <div class="feed-item-top">
+      <div class="feed-user-wrap">
+        <div class="feed-avatar" style="background:${user.color};">${initial}</div>
+        <span class="feed-username">@${user.name}</span>
+        <span class="feed-badge ${badgeClass || user.badgeClass}">${badgeText || user.badge}</span>
+      </div>
+      <span class="feed-time mono">${timeStr}</span>
+    </div>
+    <div class="feed-text">${text}</div>
+  `;
+
+  feedListEl.appendChild(item);
+  while (feedListEl.children.length > 35) {
+    feedListEl.removeChild(feedListEl.firstChild);
+  }
+  feedListEl.scrollTop = feedListEl.scrollHeight;
+}
+
+function initStreamMessages() {
+  const initialMessages = [
+    { u: 'DokterSaham', text: 'Selamat pagi trader IDX! Pantau pergerakan harga vs fundamental IHSG real-time hari ini 📈' },
+    { u: 'ScalperGarisKeras', text: 'Pagi capt! Siap HAKA saham yang punya momentum kenceng hari ini 🔥' },
+    { u: 'NyangkutDiPucuk', text: 'Semoga hari ini IHSG hijau royo-royo biar jemputan datang 😭' },
+    { u: 'BandarGhaib', text: 'Barang sudah terkumpul rapi di bawah, siap-siap ya ritel tersayang 😈' }
+  ];
+  initialMessages.forEach((m, i) => {
+    setTimeout(() => {
+      addChatMessage(m.u, null, null, m.text);
+    }, i * 250);
+  });
+}
+initStreamMessages();
+
+setInterval(() => {
+  if (Math.random() > 0.45) {
+    const user = USER_PROFILES[Math.floor(Math.random() * USER_PROFILES.length)];
+    const text = CHAT_POOLS.normal[Math.floor(Math.random() * CHAT_POOLS.normal.length)];
+    addChatMessage(user.name, user.badge, user.badgeClass, text);
+  }
+}, 5000);
+
+const origHandleState = handleState;
+handleState = function(state) {
+  origHandleState(state);
+  if (!state || state.event) return;
+
+  const { status, tick, psych_stats } = state;
+
+  if (status !== lastChatState && tick - lastChatTick > 15) {
+    lastChatState = status;
+    lastChatTick = tick;
+
+    if (status === 'Panik-Crash') {
+      const u1 = USER_PROFILES.find(u => u.name === 'PrajuritCutloss');
+      const u2 = USER_PROFILES.find(u => u.name === 'NyangkutDiPucuk');
+      addChatMessage(u1.name, 'PANIK CRASH 🔴', 'badge-cl', CHAT_POOLS.crash[Math.floor(Math.random() * CHAT_POOLS.crash.length)]);
+      setTimeout(() => {
+        addChatMessage(u2.name, 'NYANGKUT 😭', 'badge-nyangkut', CHAT_POOLS.crash[Math.floor(Math.random() * CHAT_POOLS.crash.length)]);
+      }, 600);
+    } else if (status === 'Bubble') {
+      const u1 = USER_PROFILES.find(u => u.name === 'ScalperGarisKeras');
+      const u2 = USER_PROFILES.find(u => u.name === 'BocilCrypto');
+      addChatMessage(u1.name, 'BUBBLE RALLY 🚀', 'badge-tp', CHAT_POOLS.bubble[Math.floor(Math.random() * CHAT_POOLS.bubble.length)]);
+      setTimeout(() => {
+        addChatMessage(u2.name, 'TO THE MOON 🌕', 'badge-fomo', CHAT_POOLS.bubble[Math.floor(Math.random() * CHAT_POOLS.bubble.length)]);
+      }, 600);
+    }
+  }
+
+  if (psych_stats && psych_stats.averaging > 0 && Math.random() < 0.12 && tick - lastChatTick > 10) {
+    lastChatTick = tick;
+    const u = USER_PROFILES.find(u => u.name === 'PejuangDividen');
+    addChatMessage(u.name, 'AVG DOWN ↗️', 'badge-nyangkut', CHAT_POOLS.averaging[Math.floor(Math.random() * CHAT_POOLS.averaging.length)]);
+  }
+};
 
 connect();
 </script>
 </body>
 </html>
+

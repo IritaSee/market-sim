@@ -355,4 +355,30 @@
   pushLog(`<b>tick 0</b> · 100 agen dibangun · seed ${market.seed}`);
   render(market.getState());
   start();
+
+  // ── Fetch Real-time IHSG from Sectors MCP ──
+  async function fetchLiveIHSG() {
+    try {
+      const res = await fetch("/api/ihsg");
+      if (!res.ok) return;
+      const data = await res.json();
+      const valEl = $("#ihsg-val");
+      const chgEl = $("#ihsg-change");
+      const dateEl = $("#ihsg-date");
+      if (valEl && data.price) {
+        valEl.textContent = Number(data.price).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      if (chgEl && data.change_pct !== undefined) {
+        const isPos = data.change_pct >= 0;
+        chgEl.style.color = isPos ? "#3fb950" : "#f85149";
+        chgEl.textContent = `${isPos ? "+" : ""}${data.change_pct.toFixed(2)}% (${isPos ? "+" : ""}${data.change_pts})`;
+      }
+      if (dateEl && data.date) {
+        dateEl.textContent = `• ${data.date}`;
+      }
+    } catch (err) {
+      console.warn("IHSG ticker fetch error:", err);
+    }
+  }
+  fetchLiveIHSG();
 })();
