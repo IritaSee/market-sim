@@ -3,12 +3,18 @@ Agen-agen pasar modal — dua sumbu:
   - info_style   : cara baca informasi pasar (fundamentalist / chartist / noise)
   - psych_profile: respons psikologis terhadap P&L (disciplined / bagholder / averager)
 
-Psych profile MENG-OVERRIDE sinyal info_style saat threshold P&L terlewati.
-pain_threshold & greed_threshold di-SAMPLE RANDOM per agen → mencegah gelombang
-aksi serentak yang terlalu sempurna.
+Psych profile MENG-OVERRIDE sinyal info_style saat agen sedang punya posisi.
+Override ini didorong oleh LLM yang benar-benar berperan sebagai persona
+psikologis agen (lihat _PERSONA_DESCRIPTIONS) — bukan cuma mengulang rumus
+threshold, tapi menimbang mood, keraguan, dan konteks momen itu sendiri.
+pain_threshold & greed_threshold di-SAMPLE RANDOM per agen dan hanya jadi
+referensi longgar buat LLM (bukan garis pemicu keras) → mencegah gelombang
+aksi serentak yang terlalu sempurna. Fallback deterministik (dipakai kalau
+LLM tidak tersedia) juga sengaja diberi jitter, bukan step function murni.
 """
 from __future__ import annotations
 import os
+import json
 from google import genai
 
 _gemini_client = None
@@ -33,6 +39,36 @@ AgentType   = Literal["fundamentalist", "chartist", "noise"]
 PsychProfile = Literal["disciplined", "bagholder", "averager"]
 Action       = Literal["buy", "sell", "hold"]
 
+# ── Personas fed to the LLM — deep behavioral traits, not formulas ─────
+# Deliberately avoids hard "if loss > X then sell" language so the model
+# reasons about the person's psychology instead of re-deriving the old
+# deterministic rule in prose.
+_PERSONA_DESCRIPTIONS: dict[str, str] = {
+    "disciplined": (
+        "A systematic trader who genuinely tries to follow a plan. You're not a robot, though — "
+        "doubt creeps in as losses linger, and impatience creeps in as gains linger. You lean "
+        "toward cutting losers and banking winners once the discomfort gets real, but the exact "
+        "moment you finally act depends on your mood, how the price has been moving, and whether "
+        "today you're feeling confident or shaky."
+    ),
+    "bagholder": (
+        "Someone who hates admitting a trade was wrong. When a position turns red you rationalize — "
+        "'it'll bounce back', 'I'm not selling at a loss', 'this is just noise'. You anchor hard to "
+        "your entry price, as if that's what the stock 'should' be worth. Mostly you freeze and hold, "
+        "maybe trimming a sliver to ease the anxiety, but if the pain becomes truly unbearable you can "
+        "suddenly capitulate and dump far more than usual — panic-selling near the bottom. When you're "
+        "finally green, you grab the profit fast and with relief, sometimes too early, because you "
+        "remember exactly what holding a loser felt like."
+    ),
+    "averager": (
+        "A conviction investor who sees dips as a discount, not a warning — 'more shares, lower "
+        "average'. You genuinely believe in the trade. But you're not infinitely confident: as losses "
+        "deepen and your dry powder runs low, doubt creeps in and you buy smaller, more hesitant "
+        "amounts, or stop averaging altogether once capital is scarce. When the trade finally turns "
+        "profitable, you take the win — averaging down was stressful and you want the relief."
+    ),
+}
+
 
 @dataclass
 class Agent:
@@ -53,6 +89,7 @@ class Agent:
     # ── State terakhir ────────────────────────────────────────────────
     last_order:  float  = 0.0
     last_action: Action = "hold"
+    last_reason: str    = ""   # alasan singkat dari LLM (kosong kalau fallback)
     pnl_pct:     float  = 0.0   # untuk visualisasi
     in_pain:     bool   = False
 
@@ -90,26 +127,37 @@ class Agent:
             return base_order
 
         self.in_pain = bool(pnl < -self.pain_threshold)
+        self.last_reason = ""
 
         client = get_gemini_client()
         if client is not None:
             try:
+                persona = _PERSONA_DESCRIPTIONS[self.psych_profile]
                 prompt = (
-                    f"Investor psych profile: '{self.psych_profile}', strategy: '{self.agent_type}'.\n"
-                    f"Current state:\n"
-                    f"- Price: {price}\n"
-                    f"- Entry Price: {self.entry_price}\n"
-                    f"- PnL: {pnl * 100:.2f}%\n"
-                    f"- Position: {self.position}\n"
-                    f"- Capital Remaining: {self.capital_remaining}\n"
-                    f"- Pain Threshold: {self.pain_threshold * 100:.2f}%\n"
-                    f"- Greed Threshold: {self.greed_threshold * 100:.2f}%\n"
-                    f"- Base Signal: {base_order}\n\n"
-                    f"Profiles:\n"
-                    f"- disciplined: Cut loss strictly when loss < -pain_threshold, take profit when PnL > greed_threshold.\n"
-                    f"- bagholder: Refuses to cut loss, holds or sells very small fraction, ignores loss to wait for recovery.\n"
-                    f"- averager: Buys more (averaging down) when loss < -pain_threshold if capital remains, takes profit when PnL > greed_threshold.\n\n"
-                    f"Output ONLY a single float number between -1.5 and 1.5 representing the final order."
+                    f"You are role-playing as one individual retail investor inside a stock-market "
+                    f"simulation. Think and react as this specific person would — not as a formula.\n\n"
+                    f"Who you are: {persona}\n\n"
+                    f"Your trading style is '{self.agent_type}', which just produced a cold, rational "
+                    f"base signal of {base_order:+.3f} (range -1.5 = strong sell, +1.5 = strong buy) "
+                    f"before your feelings about your own position get involved.\n\n"
+                    f"Your situation right now:\n"
+                    f"- Current price: {price:.2f}\n"
+                    f"- Your average entry price: {self.entry_price:.2f}\n"
+                    f"- Unrealized P&L: {pnl * 100:+.2f}%\n"
+                    f"- Position size: {self.position:.2f} (1.0 = one full position)\n"
+                    f"- Capital you still have free to deploy: {self.capital_remaining * 100:.0f}%\n"
+                    f"- Roughly speaking, real pain starts creeping in somewhere around a "
+                    f"{self.pain_threshold * 100:.0f}% loss, and the itch to take profit builds "
+                    f"somewhere around a {self.greed_threshold * 100:.0f}% gain — but these are only "
+                    f"loose feelings, not tripwires. Whether you act earlier out of anxiety, later out "
+                    f"of stubbornness or hope, or not at all, is a judgment call only you would make.\n"
+                    f"- A personal 'gut feeling' seed for this exact moment, just so your reaction isn't "
+                    f"mechanically identical every time you find yourself in a similar spot: "
+                    f"{rng.uniform(0, 1):.3f}\n\n"
+                    f"Given who you are and how this specific moment feels to you, what do you actually "
+                    f"do? Respond with JSON matching the schema: a float 'order' between -1.5 (panic-sell "
+                    f"everything) and +1.5 (buy aggressively), and a short 'reason' (<=15 words) capturing "
+                    f"the feeling behind it."
                 )
 
                 interaction = client.interactions.create(
@@ -118,44 +166,61 @@ class Agent:
                     response_format={
                         "type": "text",
                         "mime_type": "application/json",
-                        "schema": {"type": "number"},
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "order":  {"type": "number"},
+                                "reason": {"type": "string"},
+                            },
+                            "required": ["order"],
+                        },
                     },
                 )
-                val = float(interaction.output_text.strip())
+                data = json.loads(interaction.output_text.strip())
+                self.last_reason = str(data.get("reason", ""))
+                val = float(data["order"])
                 return float(np.clip(val, -1.5, 1.5))
             except Exception:
                 pass
 
+        # ── Fallback rules — only reached if the LLM call is unavailable ──
+        # or errors out. Kept intentionally non-deterministic (severity
+        # scales with distance past threshold, plus per-agent jitter) so a
+        # missing API key doesn't collapse everyone back into a step function.
         if self.psych_profile == "disciplined":
             if pnl < -self.pain_threshold:
-                return -1.5   # CUT LOSS — jual semua
+                severity = 0.5 + min(1.0, (-pnl - self.pain_threshold) / self.pain_threshold)
+                return -1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0))
             if pnl > self.greed_threshold:
-                return -1.5   # TAKE PROFIT — jual semua
+                severity = 0.5 + min(1.0, (pnl - self.greed_threshold) / self.greed_threshold)
+                return -1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0))
 
         elif self.psych_profile == "bagholder":
             if pnl < -self.pain_threshold:
-                # Tahan! Jual hanya 5-20% dari sinyal jual
+                # Tahan! Jual hanya sebagian kecil, kecuali sudah benar-benar tak tertahankan
                 if base_order < 0:
-                    partial = rng.uniform(0.05, 0.20)
+                    capitulate = -pnl > 2 * self.pain_threshold and rng.random() < 0.15
+                    partial = rng.uniform(0.6, 1.0) if capitulate else rng.uniform(0.05, 0.20)
                     return base_order * partial
                 return base_order   # sinyal beli tetap jalan
             if pnl > self.greed_threshold:
-                return -1.5   # Take profit sama seperti disciplined
+                relief = rng.uniform(0.7, 1.0)   # buru-buru ambil untung, kadang terlalu cepat
+                return -1.5 * float(relief)
 
         elif self.psych_profile == "averager":
             if pnl < -self.pain_threshold and self.capital_remaining > 0.15:
-                # AVERAGING DOWN — beli tambahan
-                buy_qty = min(self.capital_remaining * 0.55, 0.8)
-                # Update entry_price ke rata-rata tertimbang baru
+                # AVERAGING DOWN — beli tambahan, makin ragu saat modal menipis
+                confidence = float(np.clip(self.capital_remaining * rng.uniform(0.7, 1.0), 0.15, 1.0))
+                buy_qty = min(self.capital_remaining * 0.55 * confidence, 0.8)
                 total = self.position + buy_qty
                 self.entry_price = (
                     self.entry_price * self.position + price * buy_qty
                 ) / total
                 self.position = min(2.5, total)
                 self.capital_remaining = max(0.0, self.capital_remaining - buy_qty)
-                return 1.5   # STRONG BUY
+                return 1.5 * confidence
             if pnl > self.greed_threshold:
-                return -1.5   # Take profit
+                return -1.5 * float(rng.uniform(0.7, 1.0))
 
         return base_order
 
@@ -194,10 +259,11 @@ class Agent:
         self.last_order  = final
         self.last_action = "buy" if final > 0.05 else "sell" if final < -0.05 else "hold"
 
+        reason_suffix = f" — \"{self.last_reason}\"" if self.last_reason else ""
         print(
             f"[agent {self.id:>3}] {self.agent_type:<14} {self.psych_profile:<11} "
             f"base={base:+.3f} final={final:+.3f} action={self.last_action:<4} "
-            f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}"
+            f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}{reason_suffix}"
         )
 
         return final
@@ -213,6 +279,7 @@ class Agent:
             "pnl":    round(float(self.pnl_pct) * 100, 1),
             "pos":    round(float(self.position), 2),
             "pain":   bool(self.in_pain),
+            "reason": self.last_reason,
         }
 
 
