@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   backend:
+    image: rizkyr/market-sim-backend:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -17,6 +18,7 @@ services:
       - simpasar-net
 
   frontend:
+    image: rizkyr/market-sim-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
