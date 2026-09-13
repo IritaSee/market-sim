@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SimPasar IDX — TradingView Pro Sandbox</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <!-- Chart candlestick + volume bergaya TradingView (tanpa dependensi).
+       File berada di landing/candlechart.js dan dilayani di "/candlechart.js" oleh server.py. -->
+  <script src="/candlechart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -232,6 +234,7 @@
     /* Center Panel: TradingView Chart */
     #tv-center {
       flex: 1;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       background: var(--tv-bg);
@@ -240,6 +243,8 @@
     }
     .tv-chart-topbar {
       padding: 6px 14px;
+      flex-wrap: wrap;
+      gap: 4px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -249,6 +254,7 @@
     }
     .tv-ohlc-legend {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 12px;
       font-size: 11px;
@@ -262,7 +268,7 @@
       position: relative;
       padding: 8px 12px 4px 12px;
     }
-    #priceChart { width: 100%; height: 100%; }
+    #priceChart { display: block; width: 100%; height: 100%; }
 
     /* Right Panel: Stream Ritel IDX */
     #tv-right {
@@ -486,11 +492,11 @@
         <span class="sub">IHSG · IDX</span>
       </div>
       <div class="tv-tf-group">
-        <button class="tv-tf-btn">1s</button>
-        <button class="tv-tf-btn active">1D</button>
-        <button class="tv-tf-btn">1W</button>
-        <button class="tv-tf-btn">1M</button>
-        <button class="tv-tf-btn">fx Indikator</button>
+        <button class="tv-tf-btn" aria-pressed="false" data-period="1" title="1 tick per candle">1T</button>
+        <button class="tv-tf-btn" aria-pressed="false" data-period="3" title="3 tick per candle">3T</button>
+        <button class="tv-tf-btn active" aria-pressed="true" data-period="5" title="5 tick per candle">5T</button>
+        <button class="tv-tf-btn" aria-pressed="false" data-period="10" title="10 tick per candle">10T</button>
+        <button class="tv-tf-btn" aria-pressed="false" data-period="20" title="20 tick per candle">20T</button>
       </div>
       <div class="tv-divider-v"></div>
       <div id="status-badge" class="tv-status-badge status-normal">● NORMAL</div>
@@ -593,6 +599,7 @@
         <div class="pnl-row"><span>Dalam pain 🔴</span><span id="pnl-in-pain" class="pnl-val mono" style="color:var(--tv-red)">—</span></div>
         <div class="pnl-row"><span>Averaging ↗</span><span id="pnl-averaging" class="pnl-val mono" style="color:var(--tv-amber)">—</span></div>
         <div class="pnl-row"><span>Avg P&amp;L</span><span id="pnl-avg" class="pnl-val mono">—</span></div>
+        <div class="pnl-row" title="Keputusan agen yang dibantu Gemini secara asinkron"><span style="white-space:nowrap">Keputusan LLM</span><span id="pnl-llm" class="pnl-val mono" style="color:var(--tv-text-dim);white-space:nowrap">—</span></div>
         <div id="pnl-pain-bar-wrap"><div id="pnl-pain-bar" style="width:0%"></div></div>
       </div>
 
@@ -615,14 +622,14 @@
           <span class="tv-ohlc-item"><span class="label">Harga:</span><span id="stat-price" class="val" style="color:#fff;">—</span></span>
           <span class="tv-ohlc-item"><span class="label">Fundamental:</span><span id="stat-fundamental" class="val" style="color:var(--tv-blue);">—</span></span>
           <span class="tv-ohlc-item"><span class="label">Deviasi:</span><span id="stat-dev" class="val">+0.0%</span></span>
-          <span class="tv-ohlc-item"><span class="label">High:</span><span id="stat-max" class="val" style="color:var(--tv-green);">—</span></span>
-          <span class="tv-ohlc-item"><span class="label">Low:</span><span id="stat-min" class="val" style="color:var(--tv-red);">—</span></span>
+          <span class="tv-ohlc-item"><span class="label">High sesi:</span><span id="stat-max" class="val" style="color:var(--tv-green);">—</span></span>
+          <span class="tv-ohlc-item"><span class="label">Low sesi:</span><span id="stat-min" class="val" style="color:var(--tv-red);">—</span></span>
         </div>
         <div style="font-size:10px;color:var(--tv-text-mute);" class="mono">Real-time Order Book Aggregation</div>
       </div>
 
       <div class="tv-chart-wrapper">
-        <canvas id="priceChart"></canvas>
+        <canvas id="priceChart" role="img" aria-label="Grafik candlestick dan volume harga simulasi"></canvas>
       </div>
     </main>
 
@@ -759,79 +766,39 @@ function send(obj) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
 
-// ── 3. TradingView Chart.js Setup ─────────────────────────────────
-const chartCtx = document.getElementById('priceChart').getContext('2d');
-const priceChart = new Chart(chartCtx, {
-  type: 'line',
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: 'IHSG Price',
-        data: [],
-        borderColor: '#2962ff',
-        backgroundColor: 'rgba(41, 98, 255, 0.08)',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.25,
-        fill: true,
-        order: 1
-      },
-      {
-        label: 'Fundamental Baseline',
-        data: [],
-        borderColor: '#f59e0b',
-        borderDash: [5, 4],
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0,
-        fill: false,
-        order: 2
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 0 },
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: '#1e222d',
-        borderColor: '#2a2e39',
-        borderWidth: 1,
-        titleColor: '#787b86',
-        bodyColor: '#d1d4dc',
-        titleFont: { size: 10, family: 'JetBrains Mono' },
-        bodyFont: { size: 11, family: 'JetBrains Mono' },
-        padding: 8,
-        callbacks: {
-          label: function(ctx) {
-            return ` ${ctx.dataset.label}: Rp ${Number(ctx.raw).toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: { color: '#787b86', maxTicksLimit: 10, font: { size: 9, family: 'JetBrains Mono' } },
-        grid: { color: 'rgba(42, 46, 57, 0.45)', borderDash: [2, 2] }
-      },
-      y: {
-        position: 'right',
-        ticks: {
-          color: '#787b86',
-          font: { size: 9, family: 'JetBrains Mono' },
-          callback: function(v) { return Number(v).toLocaleString('id-ID', { maximumFractionDigits: 0 }); }
-        },
-        grid: { color: 'rgba(42, 46, 57, 0.45)', borderDash: [2, 2] },
-        beginAtZero: false
-      }
-    }
-  }
+// ── 3. Candlestick Chart (TradingView style, /candlechart.js) ─────
+// Formatter angka id-ID dibuat sekali; toLocaleString per panggilan mahal saat chart digambar ulang.
+const NF2 = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const NF1 = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+const NF_AXIS = [0, 1, 2, 3].map(d => new Intl.NumberFormat('id-ID', { minimumFractionDigits: d, maximumFractionDigits: d }));
+const priceChart = window.CandleChart ? CandleChart.create(document.getElementById('priceChart'), {
+  period: 5,
+  symbol: 'SIM IHSG',
+  windowTicks: 400,        // sama dengan HISTORY_WINDOW di sim/market.py
+  maxBarSpacing: 40,
+  minVisibleBars: 12,
+  background: '#131722',
+  upColor: '#089981',
+  downColor: '#f23645',
+  fundamentalColor: '#2962ff',
+  bubbleColor: '#ff9800',
+  crashColor: '#f23645',
+  gridColor: 'rgba(42, 46, 57, 0.6)',
+  axisLineColor: '#2a2e39',
+  crosshairLabelBg: '#363a45',
+  formatPrice: (v) => formatNum(v),
+  formatAxis: (v, d) => NF_AXIS[Math.min(d, 3)].format(v),
+  formatPercent: (v) => NF2.format(v) + '%',
+  formatVolume: (v) => v >= 1000 ? NF1.format(v / 1000) + ' rb' : NF1.format(v),
+}) : null;
+if (!priceChart) console.error('candlechart.js gagal dimuat: chart harga tidak tersedia, kontrol lain tetap berjalan.');
+// Tombol periode candle (tick per candle) di header
+const tfButtons = document.querySelectorAll('.tv-tf-btn[data-period]');
+tfButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (priceChart) priceChart.setPeriod(Number(btn.dataset.period) || 5);
+    tfButtons.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
+  });
 });
 
 // ── 4. Agent Canvas Rendering ─────────────────────────────────────
@@ -839,6 +806,13 @@ const canvas  = document.getElementById('agentCanvas');
 const ctx2d   = canvas.getContext('2d');
 const CELL    = 208 / 10;
 let lastAgents = [];
+// Alasan Gemini terakhir per agen. Disimpan di browser karena server hanya mengirim
+// alasan pada tick ketika jawaban LLM benar-benar dipakai agen.
+const llmReasons = new Map();
+let lastTickSeen = -1;
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
 
 const ACTION_COLORS = {
   fundamentalist: { buy: '#089981', sell: '#f23645', hold: '#181c27' },
@@ -905,6 +879,7 @@ canvas.addEventListener('mousemove', e => {
     P&L: <span style="color:${pnlColor};font-weight:700;">${pnlSign}${a.pnl}%</span>
     ${a.pain ? ' 🔴 PAIN' : ''}
     ${a.pos > 1.05 ? ' ↗ avg x'+a.pos.toFixed(1) : ''}
+    ${llmReasons.has(a.id) ? `<br><span style="color:#b39ddb">🤖 Gemini (tick ${llmReasons.get(a.id).tick}): ${escapeHtml(llmReasons.get(a.id).reason)}</span>` : ''}
   `.trim();
 });
 canvas.addEventListener('mouseleave', () => tooltip.style.display = 'none');
@@ -915,7 +890,7 @@ let currentFundamental = 6636.48;
 
 function formatNum(n) {
   if (n === null || n === undefined || isNaN(n)) return '—';
-  return Number(n).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return NF2.format(Number(n));
 }
 
 function handleState(state) {
@@ -954,37 +929,17 @@ function handleState(state) {
   document.getElementById('stat-max').textContent = formatNum(sesMax);
   document.getElementById('stat-min').textContent = formatNum(sesMin);
 
-  // Price chart
+  // Price chart (candlestick + volume)
   if (hist.length) {
-    const labels = hist.map((_, i) => tick - hist.length + i + 1);
-    priceChart.data.labels = labels;
-    priceChart.data.datasets[0].data = hist;
-    priceChart.data.datasets[1].data = Array(hist.length).fill(fundamental);
-
-    const area = priceChart.chartArea;
-    if (area) {
-      const g = chartCtx.createLinearGradient(0, 0, 0, area.height);
-      if (status === 'Bubble') {
-        g.addColorStop(0, 'rgba(8, 153, 129, 0.22)');
-        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
-        priceChart.data.datasets[0].borderColor = '#089981';
-      } else if (status === 'Panik-Crash') {
-        g.addColorStop(0, 'rgba(242, 54, 69, 0.25)');
-        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
-        priceChart.data.datasets[0].borderColor = '#f23645';
-      } else {
-        g.addColorStop(0, 'rgba(41, 98, 255, 0.18)');
-        g.addColorStop(1, 'rgba(19, 23, 34, 0)');
-        priceChart.data.datasets[0].borderColor = '#2962ff';
-      }
-      priceChart.data.datasets[0].backgroundColor = g;
-    }
-    priceChart.update('none');
+    if (priceChart) priceChart.setData({ tick, prices: hist, volumes: state.volume_history || [], fundamental });
   }
 
   // Agent Grid
   if (state.agents) {
     lastAgents = state.agents;
+    if (typeof tick === 'number' && tick < lastTickSeen) llmReasons.clear();  // reset / set_fundamental
+    lastTickSeen = tick;
+    state.agents.forEach(a => { if (a.reason) llmReasons.set(a.id, { reason: a.reason, tick }); });
     drawAgents(state.agents);
 
     const cnts = { fundamentalist:0, chartist:0, noise:0 };
@@ -1020,6 +975,24 @@ function handleState(state) {
     avgPnlEl.style.color = ps.avg_pnl_pct > 0 ? '#089981' : ps.avg_pnl_pct < -3 ? '#f23645' : '#787b86';
     const painFrac = ps.in_position > 0 ? ps.in_pain / ps.in_position : 0;
     document.getElementById('pnl-pain-bar').style.width = (painFrac * 100) + '%';
+  }
+
+  // Status agen LLM (Gemini): jawaban yang dipakai dan request yang sedang berjalan
+  const llmEl = document.getElementById('pnl-llm');
+  if (llmEl && state.llm) {
+    const l = state.llm;
+    if (l.enabled) {
+      llmEl.textContent = `${l.applied} dipakai`;  // ringkas: kolom kiri sempit
+      llmEl.style.color = l.backoff_s > 0 ? '#ff9800' : '#089981';
+      llmEl.title = `Gemini aktif · ${l.model} · ${l.inflight} sedang berjalan · ${l.requested}${l.max_requests ? '/' + l.max_requests : ''} request (maks ${l.rpm}/menit)` +
+        ` · ${l.discarded} dibuang (situasi berubah) · ${l.errors} error · ${l.input_tokens || 0} token input` + (l.last_error ? ` · ${l.last_error}` : '');
+    } else {
+      const labels = { disabled: 'mati', no_key: 'tanpa kunci', auth_error: 'kunci ditolak', budget_exhausted: 'batas sesi habis', invalid_config: 'konfigurasi salah', closed: 'berhenti' };
+      llmEl.textContent = labels[l.reason] || 'tidak aktif';
+      llmEl.style.color = (l.reason === 'auth_error' || l.reason === 'invalid_config') ? '#f23645' : '#787b86';
+      llmEl.title = 'Agen memakai aturan, Gemini tidak aktif' + (l.reason ? ` (${l.reason})` : '') +
+        (l.requested ? ` · ${l.applied} jawaban dipakai dari ${l.requested} request` : '');
+    }
   }
 
   // Sentiment bar
@@ -1083,7 +1056,7 @@ function onPopChange() {
   document.getElementById('lbl-f').textContent = Math.round(f/t*100)+'%';
   document.getElementById('lbl-c').textContent = Math.round(c/t*100)+'%';
   clearTimeout(popTimer);
-  popTimer = setTimeout(() => send({
+  popTimer = setTimeout(() => llmReasons.clear() || send({  // populasi dibangun ulang: id agen berganti
     cmd:'set_population',
     fundamentalist: f/t, chartist: c/t, noise: n/t,
   }), 400);
@@ -1099,7 +1072,7 @@ function onPsychChange() {
   document.getElementById('lbl-d').textContent = Math.round(d/t*100)+'%';
   document.getElementById('lbl-b').textContent = Math.round(b/t*100)+'%';
   clearTimeout(psychTimer);
-  psychTimer = setTimeout(() => send({
+  psychTimer = setTimeout(() => llmReasons.clear() || send({  // populasi dibangun ulang: id agen berganti
     cmd: 'set_psych',
     disciplined: d/t,
     bagholder:   b/t,

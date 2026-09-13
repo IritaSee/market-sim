@@ -173,6 +173,8 @@
       this.rng = new RNG(this.seed);
       this.price = this.fundamental;
       this.history = [this.fundamental];
+      this.volumes = [0];          // total |order| per tick; tick 0 tanpa transaksi
+      this.volume = 0;
       this.tick = 0;
       this.sentiment = 0;
       this.sentimentDecay = 0.72;
@@ -182,7 +184,7 @@
 
     step() {
       if (this.paused) return this.getState();
-      let sum = 0;
+      let sum = 0, vol = 0;
       for (const a of this.agents) {
         const base = baseSignal(a, this);
         const fin = psychOverride(a, base, this.price, this.rng);
@@ -190,11 +192,15 @@
         a.order = fin;
         a.action = fin > 0.05 ? "buy" : fin < -0.05 ? "sell" : "hold";
         sum += fin;
+        vol += Math.abs(fin);
       }
       const net = sum / this.agents.length;
+      this.volume = vol;
       this.price = Math.max(0.5, this.price * Math.exp(this.params.lambda_price * net));
       this.history.push(this.price);
+      this.volumes.push(vol);
       if (this.history.length > MAX_HISTORY) this.history.shift();
+      if (this.volumes.length > MAX_HISTORY) this.volumes.shift();
       this.sentiment *= this.sentimentDecay;
       if (Math.abs(this.sentiment) < 1e-4) this.sentiment = 0;
       this.tick++;
@@ -234,7 +240,7 @@
       return {
         tick: this.tick, price: this.price, fundamental: this.fundamental,
         status: this.status(), sentiment: this.sentiment, paused: this.paused,
-        agents: this.agents, history: this.history,
+        agents: this.agents, history: this.history, volumes: this.volumes, volume: this.volume,
         stats: { inPosition: inPos.length, inPain, averaging, avgPnlPct: avgPnl * 100, buy, sell, hold },
       };
     }

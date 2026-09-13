@@ -8,7 +8,7 @@ Tidak ada formula "harga = f(sentimen)" langsung — semua lewat agregasi order 
 """
 from __future__ import annotations
 import numpy as np
-from .agents import Agent, build_agents
+from .agents import Agent, build_agents, get_llm_advisor, llm_status
 
 # Parameter default — dioptimasi via tuning/grid_search.py (576 kombinasi × 8 seeds × 600 tick)
 # Target kalibrasi: harga berkisar ~60-190 di sekitar fundamental 100
@@ -33,6 +33,7 @@ DEFAULT_PARAMS: dict = {
 BUBBLE_THRESHOLD = 1.25   # harga > 125% fundamental → Bubble
 CRASH_THRESHOLD  = 0.82   # harga < 82%  fundamental → Panik-Crash
 MAX_HISTORY      = 500
+HISTORY_WINDOW   = 400    # tick terakhir yang dikirim ke klien (harga & volume) untuk candle chart
 
 
 class Market:
@@ -51,6 +52,10 @@ class Market:
 
         self._rng              = np.random.default_rng(seed)
         self.price_history:    list[float] = [fundamental]
+        # Volume = total |order| seluruh agen per tick (intensitas transaksi).
+        # Tick 0 adalah harga awal tanpa transaksi → volume 0.
+        self.volume_history:   list[float] = [0.0]
+        self.volume:           float = 0.0
         self.tick:             int   = 0
         self.sentiment:        float = 0.0
         self.sentiment_decay:  float = 0.72
@@ -90,15 +95,27 @@ class Market:
             )
             orders.append(o)
 
+        # Kirim sebagian kecil permintaan LLM yang ditawarkan agen selama tick ini (non-blocking).
+        # Jawaban baru dipakai saat agen yang sama bereaksi lagi setelah jawaban tiba,
+        # biasanya belasan sampai puluhan tick kemudian, dan hanya bila masih relevan.
+        advisor = get_llm_advisor()
+        if advisor is not None:
+            advisor.end_tick()
+
         net_order = float(np.mean(orders))
         self._order_log.append(net_order)
+        self.volume = float(np.sum(np.abs(orders)))
 
         price_return = self.params["lambda_price"] * net_order
-        self.price   = max(0.5, self.price * np.exp(price_return))
+        # float Python (nilai identik) supaya get_state tidak membulatkan ratusan numpy.float64 tiap tick.
+        self.price   = float(max(0.5, self.price * np.exp(price_return)))
 
         self.price_history.append(self.price)
+        self.volume_history.append(self.volume)
         if len(self.price_history) > MAX_HISTORY:
             self.price_history.pop(0)
+        if len(self.volume_history) > MAX_HISTORY:
+            self.volume_history.pop(0)
 
         self.sentiment *= self.sentiment_decay
         if abs(self.sentiment) < 1e-4:
@@ -142,6 +159,8 @@ class Market:
         self.fundamental = fundamental
         self.price = fundamental
         self.price_history = [fundamental]
+        self.volume_history = [0.0]
+        self.volume = 0.0
         self.tick = 0
         self.sentiment = 0.0
         self._order_log = []
@@ -153,6 +172,8 @@ class Market:
         self._rng          = np.random.default_rng(self._seed)
         self.price         = self.fundamental
         self.price_history = [self.fundamental]
+        self.volume_history = [0.0]
+        self.volume        = 0.0
         self.tick          = 0
         self.sentiment     = 0.0
         self._order_log    = []
@@ -188,8 +209,11 @@ class Market:
             "status":      status,
             "sentiment":   round(self.sentiment, 3),
             "paused":      self.is_paused,
+            "llm":         llm_status(),
+            "volume":      round(self.volume, 2),
             "agents":      [a.to_dict() for a in self.agents],
-            "price_history": [round(p, 2) for p in self.price_history[-120:]],
+            "price_history":  [round(p, 2) for p in self.price_history[-HISTORY_WINDOW:]],
+            "volume_history": [round(v, 2) for v in self.volume_history[-HISTORY_WINDOW:]],
             "params": {
                 "f_ratio": round(self.params["fundamentalist_ratio"], 2),
                 "c_ratio": round(self.params["chartist_ratio"], 2),

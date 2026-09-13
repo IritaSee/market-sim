@@ -8,6 +8,18 @@
       "port": 5173
     },
     {
+      "name": "simulator",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["scripts/dev_server.py"],
+      "port": 8000
+    },
+    {
+      "name": "simulator-nollm",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["scripts/dev_server.py", "--no-llm"],
+      "port": 8000
+    },
+    {
       "name": "simpasar-idx",
       "runtimeExecutable": "/Users/iganarendra/market-sim/.venv/bin/uvicorn",
       "runtimeArgs": ["server:app", "--port", "8000", "--host", "0.0.0.0"],

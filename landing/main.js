@@ -130,7 +130,6 @@
   if (!el.chart || !el.grid) return;
 
   const market = new Market({ nAgents: 100, fundamental: 100, seed: 42 });
-  const CHART_N = 180;
   const TICK_MS = 125;               // ≈ 8 tick/detik (server asli: 10/detik)
   const COLORS = {
     text: "#eef1f6", dim: "#6f7a8c", line: "rgba(255,255,255,0.08)",
@@ -150,81 +149,31 @@
   let visible = true;
   let timer = null;
 
-  // ── Chart ──
-  const cctx = el.chart.getContext("2d");
+  // ── Chart candlestick + volume (TradingView style, landing/candlechart.js) ──
+  const chart = window.CandleChart
+    ? window.CandleChart.create(el.chart, {
+        period: 5,
+        symbol: "SIMPASAR",
+        background: "#0c1119",
+        fundamentalColor: COLORS.blue,
+        bubbleColor: COLORS.amber,
+        crashColor: COLORS.red,
+        gridColor: "rgba(255,255,255,0.05)",
+        formatPrice: (v) => v.toFixed(2),
+        formatAxis: (v, d) => v.toFixed(d),
+      })
+    : null;
   function drawChart(state) {
-    const c = el.chart;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const W = c.clientWidth || 300, H = c.clientHeight || 220;
-    if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
-    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cctx.clearRect(0, 0, W, H);
-
-    const f = state.fundamental;
-    const h = state.history.slice(-CHART_N);
-    const padL = 8, padR = 46, padT = 12, padB = 18;
-    let lo = Math.min(f * 0.85, ...h), hi = Math.max(f * 1.2, ...h);
-    const span = (hi - lo) || 10; lo -= span * 0.08; hi += span * 0.08;
-    const x = (i) => padL + ((i + (CHART_N - h.length)) / (CHART_N - 1)) * (W - padL - padR);
-    const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
-
-    // gridlines + label
-    cctx.font = "10px JetBrains Mono, ui-monospace, monospace";
-    cctx.textAlign = "left"; cctx.textBaseline = "middle";
-    const steps = 4;
-    for (let i = 0; i <= steps; i++) {
-      const v = lo + (hi - lo) * (i / steps);
-      const yy = y(v);
-      cctx.strokeStyle = COLORS.line; cctx.lineWidth = 1;
-      cctx.beginPath(); cctx.moveTo(padL, yy); cctx.lineTo(W - padR, yy); cctx.stroke();
-      cctx.fillStyle = COLORS.dim; cctx.fillText(v.toFixed(0), W - padR + 8, yy);
-    }
-
-    // ambang bubble / crash
-    const band = (v, color, label) => {
-      const yy = y(v);
-      if (yy < padT || yy > H - padB) return;
-      cctx.setLineDash([2, 4]); cctx.strokeStyle = color; cctx.globalAlpha = 0.45;
-      cctx.beginPath(); cctx.moveTo(padL, yy); cctx.lineTo(W - padR, yy); cctx.stroke();
-      cctx.globalAlpha = 1; cctx.setLineDash([]);
-      cctx.fillStyle = color; cctx.globalAlpha = 0.8; cctx.textAlign = "left";
-      cctx.fillText(label, padL + 4, yy - 7); cctx.globalAlpha = 1;
-    };
-    band(f * 1.25, COLORS.amber, "bubble 125%");
-    band(f * 0.82, COLORS.red, "crash 82%");
-
-    // fundamental
-    cctx.setLineDash([6, 4]); cctx.strokeStyle = COLORS.blue; cctx.lineWidth = 1.2; cctx.globalAlpha = 0.9;
-    cctx.beginPath(); cctx.moveTo(padL, y(f)); cctx.lineTo(W - padR, y(f)); cctx.stroke();
-    cctx.setLineDash([]); cctx.globalAlpha = 1;
-    cctx.fillStyle = COLORS.blue; cctx.textAlign = "left"; cctx.fillText("fundamental 100", padL + 4, y(f) + 9);
-
-    if (h.length < 2) return;
-    const lineColor = state.status === "Bubble" ? COLORS.amber : state.status === "Panik-Crash" ? COLORS.red : COLORS.text;
-
-    // area antara harga dan fundamental
-    cctx.beginPath();
-    cctx.moveTo(x(0), y(h[0]));
-    for (let i = 1; i < h.length; i++) cctx.lineTo(x(i), y(h[i]));
-    cctx.lineTo(x(h.length - 1), y(f)); cctx.lineTo(x(0), y(f)); cctx.closePath();
-    cctx.fillStyle = hexToRgba(lineColor, 0.12); cctx.fill();
-
-    // garis harga
-    cctx.beginPath(); cctx.moveTo(x(0), y(h[0]));
-    for (let i = 1; i < h.length; i++) cctx.lineTo(x(i), y(h[i]));
-    cctx.strokeStyle = lineColor; cctx.lineWidth = 2; cctx.lineJoin = "round"; cctx.stroke();
-
-    // titik terakhir
-    const lx = x(h.length - 1), ly = y(h[h.length - 1]);
-    cctx.fillStyle = lineColor; cctx.beginPath(); cctx.arc(lx, ly, 3.2, 0, Math.PI * 2); cctx.fill();
-    cctx.fillStyle = hexToRgba(lineColor, 0.25); cctx.beginPath(); cctx.arc(lx, ly, 8, 0, Math.PI * 2); cctx.fill();
+    if (!chart) return;
+    chart.setData({ tick: state.tick, prices: state.history, volumes: state.volumes, fundamental: state.fundamental });
   }
-
-  function hexToRgba(hex, a) {
-    const m = hex.replace("#", "");
-    const n = parseInt(m.length === 3 ? m.split("").map((ch) => ch + ch).join("") : m, 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-  }
+  // Periode candle (tick per candle)
+  const tfButtons = $$("#simTf button");
+  tfButtons.forEach((b) => b.addEventListener("click", () => {
+    if (!chart) return;
+    chart.setPeriod(Number(b.dataset.period) || 5);
+    tfButtons.forEach((x) => { x.classList.toggle("active", x === b); x.setAttribute("aria-pressed", String(x === b)); });
+  }));
 
   // ── Grid agen ──
   const gctx = el.grid.getContext("2d");

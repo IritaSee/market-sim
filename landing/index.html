@@ -80,6 +80,12 @@
       <div class="sim-bar">
         <span class="sim-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="sim-title mono">simpasar-idx · live sandbox · port ringan di browser</span>
+        <div class="sim-tf mono" id="simTf" role="group" aria-label="Periode candle (tick per candle)">
+          <button type="button" aria-pressed="false" data-period="1" title="1 tick per candle">1T</button>
+          <button type="button" aria-pressed="false" data-period="3" title="3 tick per candle">3T</button>
+          <button type="button" class="active" aria-pressed="true" data-period="5" title="5 tick per candle">5T</button>
+          <button type="button" aria-pressed="false" data-period="10" title="10 tick per candle">10T</button>
+        </div>
         <span class="sim-badge" id="simStatus" data-status="normal">● NORMAL</span>
       </div>
 
@@ -103,7 +109,7 @@
       </div>
 
       <div class="sim-chart-wrap">
-        <canvas id="simChart" class="sim-chart" aria-label="Grafik harga simulasi terhadap nilai fundamental"></canvas>
+        <canvas id="simChart" class="sim-chart" role="img" aria-label="Grafik candlestick dan volume simulasi terhadap nilai fundamental"></canvas>
       </div>
 
       <div class="sim-lower">
@@ -559,7 +565,7 @@
       <span class="stack-item"><b>NumPy</b><small>RNG &amp; agregasi order</small></span>
       <span class="stack-item"><b>FastAPI</b><small>server &amp; static</small></span>
       <span class="stack-item"><b>WebSocket</b><small>stream ≈10 tick/s</small></span>
-      <span class="stack-item"><b>Chart.js + Canvas</b><small>dashboard real-time</small></span>
+      <span class="stack-item"><b>Canvas candlestick</b><small>OHLC + volume tanpa dependensi</small></span>
       <span class="stack-item"><b>Google Gemini</b><small>lapisan agen LLM (opsional)</small></span>
       <span class="stack-item"><b>Grid search headless</b><small>kalibrasi parameter</small></span>
     </div>
@@ -639,6 +645,7 @@ uvicorn server:app --reload --port 8000</pre>
   </div>
 </footer>
 
+<script src="candlechart.js"></script>
 <script src="sim.js"></script>
 <script src="main.js"></script>
 </body>

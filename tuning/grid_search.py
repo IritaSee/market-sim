@@ -21,7 +21,9 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Any
 
-from sim.market import Market, DEFAULT_PARAMS
+# Kalibrasi harus deterministik dan tanpa biaya: agen LLM dimatikan kecuali diminta eksplisit.
+os.environ.setdefault("SIMPASAR_LLM", "off")
+from sim.market import Market, DEFAULT_PARAMS  # noqa: E402
 
 
 # ------------------------------------------------------------------ #
