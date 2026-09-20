@@ -4,32 +4,162 @@ Agen-agen pasar modal — dua sumbu:
   - psych_profile: respons psikologis terhadap P&L (disciplined / bagholder / averager)
 
 Psych profile MENG-OVERRIDE sinyal info_style saat agen sedang punya posisi.
-Override ini didorong oleh LLM yang benar-benar berperan sebagai persona
+Sebagian keputusan override dibantu LLM yang berperan sebagai persona
 psikologis agen (lihat _PERSONA_DESCRIPTIONS) — bukan cuma mengulang rumus
 threshold, tapi menimbang mood, keraguan, dan konteks momen itu sendiri.
 pain_threshold & greed_threshold di-SAMPLE RANDOM per agen dan hanya jadi
 referensi longgar buat LLM (bukan garis pemicu keras) → mencegah gelombang
-aksi serentak yang terlalu sempurna. Fallback deterministik (dipakai kalau
-LLM tidak tersedia) juga sengaja diberi jitter, bukan step function murni.
+aksi serentak yang terlalu sempurna. Aturan fallback (dipakai setiap kali belum
+ada jawaban LLM yang relevan) juga sengaja diberi jitter, bukan step function murni.
+
+Aturan fallback memutuskan secara default. Pemanggilan LLM bersifat asinkron dan
+dibatasi anggaran (lihat sim/llm_advisor.py): tick simulasi tidak pernah menunggu
+jaringan, dan jawaban LLM sesekali meng-override keputusan saat agen yang sama
+bereaksi lagi setelah jawaban tiba, selama situasinya masih relevan.
+Log per agen hanya dicetak saat jawaban LLM dipakai, atau untuk semua keputusan
+bila SIMPASAR_AGENT_LOG=1.
 """
 from __future__ import annotations
+import math
 import os
-import json
+import threading
 from google import genai
+from google.genai import types as genai_types
+
+from .llm_advisor import LLMAdvisor
+
+_DEFAULT_LLM_MODEL = "gemini-3.1-flash-lite"
+_PLACEHOLDER_KEYS = {"your_api_key_here", "your-api-key", "changeme", "<your_api_key>"}
+# Log keputusan setiap agen setiap tick sangat bising (~10 KB/tick); default hanya saat jawaban LLM dipakai.
+_AGENT_LOG = os.environ.get("SIMPASAR_AGENT_LOG", "").strip().lower() in {"1", "on", "true", "yes"}
+_LLM_OFF_VALUES = {"0", "off", "false", "no", "disable", "disabled"}
+
+
+def _env_number(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    try:
+        value = float(raw) if raw else float(default)
+    except ValueError:
+        return float(default)
+    # nan/inf dari env (mis. SIMPASAR_LLM_RPM=inf) kembali ke default, bukan membuat crash.
+    return value if math.isfinite(value) else float(default)
+
+
+def _usable_key(value: str | None) -> str | None:
+    """Kunci API yang layak dipakai, atau None untuk kosong/placeholder dari .env.example."""
+    key = (value or "").strip()
+    return key if key and key.lower() not in _PLACEHOLDER_KEYS else None
+
+
+def _safe_print(line: str) -> None:
+    """print yang tidak pernah melempar karena encoding console (mis. cp1252 di Windows)."""
+    try:
+        print(line, flush=True)
+    except UnicodeEncodeError:
+        print(line.encode("ascii", "replace").decode("ascii"), flush=True)
+
 
 _gemini_client = None
 def get_gemini_client():
     global _gemini_client
     if _gemini_client is None:
-        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-        if api_key:
-            _gemini_client = genai.Client(api_key=api_key)
-        else:
-            try:
-                _gemini_client = genai.Client()
-            except Exception:
-                pass
+        raw_keys = (os.environ.get("GEMINI_API_KEY"), os.environ.get("GOOGLE_API_KEY"))
+        api_key = next((k for k in map(_usable_key, raw_keys) if k), None)
+        try:
+            # Batas waktu per request 1-120 detik supaya worker LLM tidak tertahan terlalu lama.
+            timeout_ms = int(max(1_000, min(120_000, _env_number("SIMPASAR_LLM_TIMEOUT_MS", 25_000))))
+            http_options = genai_types.HttpOptions(
+                timeout=timeout_ms,
+                # Matikan retry status bawaan SDK (599 = kode yang tidak pernah dikirim server), karena
+                # retry SDK tidak terhitung anggaran rpm; 429/5xx ditangani backoff advisor.
+                retry_options=genai_types.HttpRetryOptions(attempts=1, http_status_codes=[599]),
+            )
+        except Exception:
+            http_options = None
+        try:
+            if api_key:
+                _gemini_client = genai.Client(api_key=api_key, http_options=http_options)
+            elif not any((k or "").strip() for k in raw_keys):
+                # Tanpa variabel kunci sama sekali: biarkan SDK memakai kredensial lain (mis. Vertex AI ADC).
+                _gemini_client = genai.Client(http_options=http_options)
+        except Exception:
+            _gemini_client = None
     return _gemini_client
+
+
+def llm_enabled_by_env() -> bool:
+    """False bila SIMPASAR_LLM diset off/0/false (misalnya lewat --no-llm di dev_server)."""
+    return os.environ.get("SIMPASAR_LLM", "on").strip().lower() not in _LLM_OFF_VALUES
+
+
+_llm_advisor: LLMAdvisor | None = None
+_llm_advisor_state = "unresolved"   # unresolved | active | disabled | no_key | invalid_config
+_llm_advisor_lock = threading.Lock()
+
+
+def get_llm_advisor() -> LLMAdvisor | None:
+    """
+    Penasihat LLM bersama untuk semua agen, atau None bila LLM dimatikan atau tidak
+    ada kunci. Konfigurasi dibaca sekali dari environment:
+    SIMPASAR_LLM, SIMPASAR_LLM_MODEL, SIMPASAR_LLM_RPM (default 12),
+    SIMPASAR_LLM_MAX_REQUESTS (default 1000 per proses, 0 = tanpa batas),
+    SIMPASAR_LLM_CONCURRENCY (default 4), SIMPASAR_LLM_TIMEOUT_MS (default 25000).
+    """
+    global _llm_advisor, _llm_advisor_state
+    if _llm_advisor_state != "unresolved":
+        return _llm_advisor
+    with _llm_advisor_lock:
+        if _llm_advisor_state != "unresolved":
+            return _llm_advisor
+        rpm = _env_number("SIMPASAR_LLM_RPM", 12.0)
+        max_requests = max(0, int(_env_number("SIMPASAR_LLM_MAX_REQUESTS", 1000)))
+        concurrency = min(16, int(_env_number("SIMPASAR_LLM_CONCURRENCY", 4)))
+        if not llm_enabled_by_env() or rpm <= 0 or concurrency <= 0:
+            _llm_advisor_state = "disabled"
+            return None
+        try:
+            client = get_gemini_client()
+        except Exception:
+            client = None
+        if client is None:
+            _llm_advisor_state = "no_key"
+            return None
+        secrets = tuple(v for v in (os.environ.get("GEMINI_API_KEY"), os.environ.get("GOOGLE_API_KEY")) if v)
+        try:
+            _llm_advisor = LLMAdvisor(
+                client,
+                model=os.environ.get("SIMPASAR_LLM_MODEL", "").strip() or _DEFAULT_LLM_MODEL,
+                rpm=rpm,
+                concurrency=concurrency,
+                max_requests=max_requests,
+                secrets=secrets,
+                logger=_safe_print,
+            )
+        except Exception as exc:  # konfigurasi rusak tidak boleh menghentikan simulasi
+            _safe_print(f"[llm] agen LLM dimatikan, konfigurasi tidak valid: {type(exc).__name__}: {exc}")
+            _llm_advisor = None
+            _llm_advisor_state = "invalid_config"
+            return None
+        _llm_advisor_state = "active"
+        return _llm_advisor
+
+
+def llm_status() -> dict:
+    """Ringkasan status agen LLM untuk dikirim ke klien (tanpa rahasia)."""
+    advisor = get_llm_advisor()
+    if advisor is not None:
+        return advisor.stats()
+    return {"enabled": False, "reason": _llm_advisor_state}
+
+
+def shutdown_llm_advisor() -> None:
+    """Hentikan advisor dan reset resolusi, sehingga startup berikutnya membuat advisor baru."""
+    global _llm_advisor, _llm_advisor_state
+    with _llm_advisor_lock:
+        if _llm_advisor is not None:
+            _llm_advisor.shutdown()
+        _llm_advisor = None
+        _llm_advisor_state = "unresolved"
 
 import numpy as np
 from dataclasses import dataclass, field
@@ -68,6 +198,38 @@ _PERSONA_DESCRIPTIONS: dict[str, str] = {
         "profitable, you take the win — averaging down was stressful and you want the relief."
     ),
 }
+
+
+def _build_persona_prompt(agent: "Agent", base_order: float, price: float, gut_seed: float) -> str:
+    """Prompt role-play persona agen (teks asli logika LLM tim, dipindah ke fungsi)."""
+    pnl = float((price - agent.entry_price) / agent.entry_price) if agent.entry_price > 0 else 0.0
+    persona = _PERSONA_DESCRIPTIONS[agent.psych_profile]
+    return (
+        f"You are role-playing as one individual retail investor inside a stock-market "
+        f"simulation. Think and react as this specific person would — not as a formula.\n\n"
+        f"Who you are: {persona}\n\n"
+        f"Your trading style is '{agent.agent_type}', which just produced a cold, rational "
+        f"base signal of {base_order:+.3f} (range -1.5 = strong sell, +1.5 = strong buy) "
+        f"before your feelings about your own position get involved.\n\n"
+        f"Your situation right now:\n"
+        f"- Current price: {price:.2f}\n"
+        f"- Your average entry price: {agent.entry_price:.2f}\n"
+        f"- Unrealized P&L: {pnl * 100:+.2f}%\n"
+        f"- Position size: {agent.position:.2f} (1.0 = one full position)\n"
+        f"- Capital you still have free to deploy: {agent.capital_remaining * 100:.0f}%\n"
+        f"- Roughly speaking, real pain starts creeping in somewhere around a "
+        f"{agent.pain_threshold * 100:.0f}% loss, and the itch to take profit builds "
+        f"somewhere around a {agent.greed_threshold * 100:.0f}% gain — but these are only "
+        f"loose feelings, not tripwires. Whether you act earlier out of anxiety, later out "
+        f"of stubbornness or hope, or not at all, is a judgment call only you would make.\n"
+        f"- A personal 'gut feeling' seed for this exact moment, just so your reaction isn't "
+        f"mechanically identical every time you find yourself in a similar spot: "
+        f"{gut_seed:.3f}\n\n"
+        f"Given who you are and how this specific moment feels to you, what do you actually "
+        f"do? Respond with JSON matching the schema: a float 'order' between -1.5 (panic-sell "
+        f"everything) and +1.5 (buy aggressively), and a short 'reason' (<=15 words) capturing "
+        f"the feeling behind it."
+    )
 
 
 @dataclass
@@ -129,62 +291,28 @@ class Agent:
         self.in_pain = bool(pnl < -self.pain_threshold)
         self.last_reason = ""
 
-        client = get_gemini_client()
-        if client is not None:
-            try:
-                persona = _PERSONA_DESCRIPTIONS[self.psych_profile]
-                prompt = (
-                    f"You are role-playing as one individual retail investor inside a stock-market "
-                    f"simulation. Think and react as this specific person would — not as a formula.\n\n"
-                    f"Who you are: {persona}\n\n"
-                    f"Your trading style is '{self.agent_type}', which just produced a cold, rational "
-                    f"base signal of {base_order:+.3f} (range -1.5 = strong sell, +1.5 = strong buy) "
-                    f"before your feelings about your own position get involved.\n\n"
-                    f"Your situation right now:\n"
-                    f"- Current price: {price:.2f}\n"
-                    f"- Your average entry price: {self.entry_price:.2f}\n"
-                    f"- Unrealized P&L: {pnl * 100:+.2f}%\n"
-                    f"- Position size: {self.position:.2f} (1.0 = one full position)\n"
-                    f"- Capital you still have free to deploy: {self.capital_remaining * 100:.0f}%\n"
-                    f"- Roughly speaking, real pain starts creeping in somewhere around a "
-                    f"{self.pain_threshold * 100:.0f}% loss, and the itch to take profit builds "
-                    f"somewhere around a {self.greed_threshold * 100:.0f}% gain — but these are only "
-                    f"loose feelings, not tripwires. Whether you act earlier out of anxiety, later out "
-                    f"of stubbornness or hope, or not at all, is a judgment call only you would make.\n"
-                    f"- A personal 'gut feeling' seed for this exact moment, just so your reaction isn't "
-                    f"mechanically identical every time you find yourself in a similar spot: "
-                    f"{rng.uniform(0, 1):.3f}\n\n"
-                    f"Given who you are and how this specific moment feels to you, what do you actually "
-                    f"do? Respond with JSON matching the schema: a float 'order' between -1.5 (panic-sell "
-                    f"everything) and +1.5 (buy aggressively), and a short 'reason' (<=15 words) capturing "
-                    f"the feeling behind it."
-                )
+        advisor = get_llm_advisor()
+        if advisor is not None:
+            # Jawaban LLM dari permintaan sebelumnya (non-blocking), hanya dipakai bila
+            # masih relevan: belum kedaluwarsa dan P&L agen belum bergeser jauh. Lihat LLMAdvisor.collect.
+            advice = advisor.collect(self, price)
+            if advice is not None:
+                order, reason = advice
+                self.last_reason = reason
+                self._llm_fresh = True   # log agen hanya dicetak pada tick jawaban LLM dipakai
+                return float(np.clip(order, -1.5, 1.5))
+            # Tawarkan agen ini untuk dinilai LLM. Prompt dibangun di akhir tick
+            # (thread simulasi) hanya bila anggaran request masih tersedia.
+            advisor.offer(
+                self,
+                # gut seed dari RNG advisor, bukan RNG pasar: anggaran request tidak menggeser aliran acak simulasi.
+                lambda b=base_order, p=price: _build_persona_prompt(self, b, p, advisor.gut_seed()),
+                price,
+            )
 
-                interaction = client.interactions.create(
-                    model="gemini-3.1-flash-lite",
-                    input=prompt,
-                    response_format={
-                        "type": "text",
-                        "mime_type": "application/json",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "order":  {"type": "number"},
-                                "reason": {"type": "string"},
-                            },
-                            "required": ["order"],
-                        },
-                    },
-                )
-                data = json.loads(interaction.output_text.strip())
-                self.last_reason = str(data.get("reason", ""))
-                val = float(data["order"])
-                return float(np.clip(val, -1.5, 1.5))
-            except Exception:
-                pass
-
-        # ── Fallback rules — only reached if the LLM call is unavailable ──
-        # or errors out. Kept intentionally non-deterministic (severity
+        # ── Fallback rules — used whenever no fresh LLM advice is ready ──
+        # (no key, budget spent, request still in flight, or an error).
+        # Kept intentionally non-deterministic (severity
         # scales with distance past threshold, plus per-agent jitter) so a
         # missing API key doesn't collapse everyone back into a step function.
         if self.psych_profile == "disciplined":
@@ -260,11 +388,13 @@ class Agent:
         self.last_action = "buy" if final > 0.05 else "sell" if final < -0.05 else "hold"
 
         reason_suffix = f" — \"{self.last_reason}\"" if self.last_reason else ""
-        print(
-            f"[agent {self.id:>3}] {self.agent_type:<14} {self.psych_profile:<11} "
-            f"base={base:+.3f} final={final:+.3f} action={self.last_action:<4} "
-            f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}{reason_suffix}"
-        )
+        fresh, self._llm_fresh = getattr(self, "_llm_fresh", False), False
+        if fresh or _AGENT_LOG:
+            _safe_print(
+                f"[agent {self.id:>3}] {self.agent_type:<14} {self.psych_profile:<11} "
+                f"base={base:+.3f} final={final:+.3f} action={self.last_action:<4} "
+                f"pnl={self.pnl_pct * 100:+.2f}% pos={self.position:.2f}{reason_suffix}"
+            )
 
         return final
 

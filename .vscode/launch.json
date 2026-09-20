@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SimPasar: Dev Server (Default)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dev_server.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "SimPasar: Dev Server (No LLM)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dev_server.py",
+      "args": ["--no-llm"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "SimPasar: FastAPI Server (server.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "SimPasar: Landing Static Server (Node.js)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/landing/serve.js",
+      "console": "integratedTerminal"
+    }
+  ]
+}
