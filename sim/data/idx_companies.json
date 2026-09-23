@@ -1,0 +1,5035 @@
+{
+ "source": "Sectors Financial API (Sectors MCP, tool fetch-companies, difilter per sektor IDX-IC)",
+ "snapshot_date": "2026-09-22",
+ "count": 962,
+ "sectors": {
+  "energy": {
+   "name_en": "Energy",
+   "name_id": "Energi",
+   "keywords": [
+    "energi",
+    "energy",
+    "batu bara",
+    "batubara",
+    "coal",
+    "minyak",
+    "oil",
+    "gas",
+    "tambang",
+    "migas",
+    "energi terbarukan",
+    "renewable"
+   ]
+  },
+  "basic-materials": {
+   "name_en": "Basic Materials",
+   "name_id": "Bahan Baku",
+   "keywords": [
+    "bahan baku",
+    "basic materials",
+    "kimia",
+    "chemical",
+    "semen",
+    "cement",
+    "logam",
+    "metal",
+    "nikel",
+    "nickel",
+    "emas",
+    "gold",
+    "tambang",
+    "mining",
+    "baja",
+    "steel",
+    "kertas",
+    "pulp",
+    "petrokimia"
+   ]
+  },
+  "industrials": {
+   "name_en": "Industrials",
+   "name_id": "Perindustrian",
+   "keywords": [
+    "industri",
+    "industrials",
+    "alat berat",
+    "konstruksi",
+    "mesin",
+    "holding",
+    "konglomerat",
+    "industrial"
+   ]
+  },
+  "consumer-non-cyclicals": {
+   "name_en": "Consumer Non-Cyclicals",
+   "name_id": "Konsumen Primer",
+   "keywords": [
+    "konsumen",
+    "consumer",
+    "makanan",
+    "minuman",
+    "food",
+    "beverage",
+    "rokok",
+    "tobacco",
+    "sawit",
+    "cpo",
+    "kelapa sawit",
+    "ritel makanan",
+    "kebutuhan pokok",
+    "fmcg",
+    "peternakan",
+    "unggas",
+    "susu"
+   ]
+  },
+  "consumer-cyclicals": {
+   "name_en": "Consumer Cyclicals",
+   "name_id": "Konsumen Non-Primer",
+   "keywords": [
+    "konsumen",
+    "consumer",
+    "ritel",
+    "retail",
+    "otomotif",
+    "automotive",
+    "mobil",
+    "media",
+    "hiburan",
+    "entertainment",
+    "restoran",
+    "hotel",
+    "pariwisata",
+    "fashion",
+    "pakaian",
+    "apparel",
+    "elektronik"
+   ]
+  },
+  "healthcare": {
+   "name_en": "Healthcare",
+   "name_id": "Kesehatan",
+   "keywords": [
+    "kesehatan",
+    "healthcare",
+    "rumah sakit",
+    "hospital",
+    "farmasi",
+    "pharma",
+    "obat",
+    "klinik",
+    "laboratorium"
+   ]
+  },
+  "financials": {
+   "name_en": "Financials",
+   "name_id": "Keuangan",
+   "keywords": [
+    "keuangan",
+    "finansial",
+    "financial",
+    "bank",
+    "perbankan",
+    "banking",
+    "asuransi",
+    "insurance",
+    "pembiayaan",
+    "multifinance",
+    "leasing",
+    "sekuritas",
+    "investasi",
+    "fintech"
+   ]
+  },
+  "properties-real-estate": {
+   "name_en": "Properties & Real Estate",
+   "name_id": "Properti & Real Estat",
+   "keywords": [
+    "properti",
+    "property",
+    "real estat",
+    "real estate",
+    "perumahan",
+    "apartemen",
+    "developer",
+    "pengembang",
+    "kawasan industri",
+    "mall"
+   ]
+  },
+  "technology": {
+   "name_en": "Technology",
+   "name_id": "Teknologi",
+   "keywords": [
+    "teknologi",
+    "technology",
+    "tech",
+    "software",
+    "it",
+    "digital",
+    "internet",
+    "e-commerce",
+    "ecommerce",
+    "data center",
+    "startup",
+    "aplikasi"
+   ]
+  },
+  "infrastructures": {
+   "name_en": "Infrastructures",
+   "name_id": "Infrastruktur",
+   "keywords": [
+    "infrastruktur",
+    "infrastructure",
+    "telekomunikasi",
+    "telco",
+    "telekom",
+    "menara",
+    "tower",
+    "jalan tol",
+    "tol",
+    "utilitas",
+    "listrik",
+    "pelabuhan",
+    "bandara",
+    "konstruksi",
+    "energi listrik",
+    "air"
+   ]
+  },
+  "transportation-logistic": {
+   "name_en": "Transportation & Logistic",
+   "name_id": "Transportasi & Logistik",
+   "keywords": [
+    "transportasi",
+    "transportation",
+    "logistik",
+    "logistics",
+    "pengiriman",
+    "kargo",
+    "cargo",
+    "pelayaran",
+    "shipping",
+    "kapal",
+    "penerbangan",
+    "airline",
+    "maskapai",
+    "taksi",
+    "truk",
+    "ekspedisi"
+   ]
+  }
+ },
+ "companies": [
+  {
+   "symbol": "AADI",
+   "name": "PT Adaro Andalan Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "AALI",
+   "name": "Astra Agro Lestari Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ABBA",
+   "name": "Mahaka Media Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ABDA",
+   "name": "Asuransi Bina Dana Arta Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ABMM",
+   "name": "ABM Investama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ACES",
+   "name": "PT Aspirasi Hidup Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ACRO",
+   "name": "PT Samcro Hyosung Adilestari Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ACST",
+   "name": "PT Acset Indonusa Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ADCP",
+   "name": "PT Adhi Commuter Properti Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ADES",
+   "name": "Akasha Wira International Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ADHI",
+   "name": "PT Adhi Karya (Persero) Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ADMF",
+   "name": "Adira Dinamika Multi Finance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ADMG",
+   "name": "Polychem Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ADMR",
+   "name": "PT Alamtri Minerals Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ADRO",
+   "name": "Alamtri Resources Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "AEGS",
+   "name": "PT Anugerah Spareparts Sejahtera Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "AGAR",
+   "name": "PT Asia Sejahtera Mina Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "AGII",
+   "name": "PT Samator Indo Gas Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "AGRO",
+   "name": "PT Bank Raya Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AGRS",
+   "name": "PT Bank IBK Indonesia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AHAP",
+   "name": "Asuransi Harta Aman Pratama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AIMS",
+   "name": "PT Artha Mahiya Investama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "AISA",
+   "name": "PT FKS Food Sejahtera Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "AKKU",
+   "name": "PT Anugerah Kagum Karya Utama Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "AKPI",
+   "name": "Argha Karya Prima Ind. Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "AKRA",
+   "name": "PT AKR Corporindo Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "AKSI",
+   "name": "PT Mineral Sumberdaya Mandiri Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "ALDO",
+   "name": "Alkindo Naratama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ALII",
+   "name": "PT Ancara Logistics Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ALKA",
+   "name": "Alakasa Industrindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ALMI",
+   "name": "Alumindo Light Metal Industry Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ALTO",
+   "name": "Tri Banyan Tirta Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "AMAG",
+   "name": "Asuransi Multi Artha Guna Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AMAN",
+   "name": "PT Makmur Berkah Amanda Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "AMAR",
+   "name": "PT Bank Amar Indonesia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AMFG",
+   "name": "Asahimas Flat Glass Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "AMIN",
+   "name": "PT Ateliers Mecaniques D Indonesie Tbk.",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "AMMN",
+   "name": "PT Amman Mineral Internasional Tbk.",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "AMMS",
+   "name": "PT Agung Menjangan Mas Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "AMOR",
+   "name": "PT Ashmore Asset Management Indonesia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "AMRT",
+   "name": "PT Sumber Alfaria Trijaya Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ANDI",
+   "name": "PT Andira Agro Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ANJT",
+   "name": "PT Austindo Nusantara Jaya Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ANTM",
+   "name": "Aneka Tambang Tbk.",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "APEX",
+   "name": "Apexindo Pratama Duta Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "APIC",
+   "name": "Pacific Strategic Financial Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "APII",
+   "name": "PT Arita Prima Indonesia Tbk.",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "APLI",
+   "name": "Asiaplast Industries Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "APLN",
+   "name": "PT Agung Podomoro Land Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ARCI",
+   "name": "PT Archi Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "AREA",
+   "name": "PT Dunia Virtual Online Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ARGO",
+   "name": "Argo Pantes Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ARII",
+   "name": "Atlas Resources Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ARKA",
+   "name": "PT Arkha Jayanti Persada Tbk.",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "ARKO",
+   "name": "PT Arkora Hydro Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ARMY",
+   "name": "PT Armidian Karyatama Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ARNA",
+   "name": "Arwana Citramulia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "ARTA",
+   "name": "Arthavest Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ARTI",
+   "name": "Ratu Prabu Energi Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ARTO",
+   "name": "PT Bank Jago Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASBI",
+   "name": "Asuransi Bintang Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASDM",
+   "name": "Asuransi Dayin Mitra Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASGR",
+   "name": "Astra Graphia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "ASHA",
+   "name": "PT Cilacap Samudera Fishing Industry Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ASII",
+   "name": "Astra International Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "ASJT",
+   "name": "Asuransi Jasa Tania Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASLC",
+   "name": "PT Autopedia Sukses Lestari Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ASLI",
+   "name": "PT Asri Karya Lestari Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ASMI",
+   "name": "PT Asuransi Maximus Graha Persada Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASPI",
+   "name": "PT Andalan Sakti Primaindo Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ASPR",
+   "name": "PT Asia Pramulia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ASRI",
+   "name": "Alam Sutera Realty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ASRM",
+   "name": "Asuransi Ramayana Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "ASSA",
+   "name": "Adi Sarana Armada Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "ATAP",
+   "name": "PT Trimitra Prawara Goldland Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "ATIC",
+   "name": "PT Anabatic Technologies Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ATLA",
+   "name": "PT Atlantis Subsea Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "AUTO",
+   "name": "Astra Otoparts Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "AVIA",
+   "name": "PT Avia Avian Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "AWAN",
+   "name": "PT Era Digital Media Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "AXIO",
+   "name": "PT Tera Data Indonusa Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "AYAM",
+   "name": "PT Janu Putra Sejahtera Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "AYLS",
+   "name": "PT Agro Yasa Lestari Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BABP",
+   "name": "PT Bank MNC Internasional Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BABY",
+   "name": "PT Multitrend Indo Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BACA",
+   "name": "PT Bank Capital Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BACH",
+   "name": "PT Bach Multi Global Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "BAIK",
+   "name": "PT Bersama Mencapai Puncak Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BAJA",
+   "name": "Saranacentral Bajatama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BALI",
+   "name": "PT Bali Towerindo Sentra Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "BANK",
+   "name": "PT Bank Aladin Syariah Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BAPA",
+   "name": "Bekasi Asri Pemula Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BAPI",
+   "name": "PT Bhakti Agung Propertindo Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BATA",
+   "name": "Sepatu Bata Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BATR",
+   "name": "PT Benteng Api Technic Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BAUT",
+   "name": "PT Mitra Angkasa Sejahtera Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BAYU",
+   "name": "Bayu Buana Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BBCA",
+   "name": "PT Bank Central Asia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBHI",
+   "name": "PT Allo Bank Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBKP",
+   "name": "PT Bank KB Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBLD",
+   "name": "Buana Finance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBMD",
+   "name": "PT Bank Mestika Dharma Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBNI",
+   "name": "PT Bank Negara Indonesia (Persero) Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBRI",
+   "name": "PT Bank Rakyat Indonesia (Persero) Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBRM",
+   "name": "Pelayaran Nasional Bina Buana Raya Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BBSI",
+   "name": "PT Krom Bank Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBSS",
+   "name": "PT Bumi Benowo Sukses Sejahtera Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BBTN",
+   "name": "PT Bank Tabungan Negara (Persero) Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BBYB",
+   "name": "PT Bank Neo Commerce Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BCAP",
+   "name": "MNC Kapital Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BCIC",
+   "name": "PT Bank JTrust Indonesia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BCIP",
+   "name": "Bumi Citra Permai Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BDKR",
+   "name": "PT Berdikari Pondasi Perkasa Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "BDMN",
+   "name": "PT Bank Danamon Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BEBS",
+   "name": "PT Berkah Beton Sadaya Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BEEF",
+   "name": "PT Estika Tata Tiara Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BEER",
+   "name": "PT Jobubu Jarum Minahasa Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BEKS",
+   "name": "PT Bank Pembangunan Daerah Banten Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BELI",
+   "name": "PT Global Digital Niaga Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "BELL",
+   "name": "PT Trisula Textile Industries Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BESS",
+   "name": "PT Batulicin Nusantara Maritim Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BEST",
+   "name": "Bekasi Fajar Industrial Estate Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BFIN",
+   "name": "BFI Finance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BGTG",
+   "name": "PT Bank Ganesha Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BHAT",
+   "name": "PT Bhakti Multi Artha Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BHIT",
+   "name": "PT MNC Asia Holding Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "BIKA",
+   "name": "PT Binakarya Jaya Abadi Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BIKE",
+   "name": "PT Sepeda Bersama Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BIMA",
+   "name": "Primarindo Asia Infrastructure Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BINA",
+   "name": "PT Bank Ina Perdana Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BINO",
+   "name": "PT Perma Plasindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "BIPI",
+   "name": "PT Astrindo Nusantara Infrastruktur Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BIPP",
+   "name": "Bhuwanatala Indah Permai Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BIRD",
+   "name": "PT Blue Bird Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "BISI",
+   "name": "BISI INTERNATIONAL Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BJBR",
+   "name": "Bank Pembangunan Daerah Jawa Barat dan Banten Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BJTM",
+   "name": "Bank Pembangunan Daerah Jawa Timur Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BKDP",
+   "name": "Bukit Darmo Property Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BKSL",
+   "name": "Sentul City Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BKSW",
+   "name": "PT Bank QNB Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BLES",
+   "name": "PT Superior Prima Sukses Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BLOG",
+   "name": "PT Trimitra Trans Persada Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "BLTA",
+   "name": "Berlian Laju Tanker Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "BLTZ",
+   "name": "PT Graha Layar Prima Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BLUE",
+   "name": "PT Berkah Prima Perkasa Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "BMAS",
+   "name": "PT Bank Maspion Indonesia Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BMBL",
+   "name": "PT Lavender Bina Cendikia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BMHS",
+   "name": "PT Bundamedik Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "BMRI",
+   "name": "PT Bank Mandiri (Persero) Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BMSR",
+   "name": "Bintang Mitra Semestaraya Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BMTR",
+   "name": "PT Global Mediacom Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BNBA",
+   "name": "Bank Bumi Arta Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BNBR",
+   "name": "Bakrie & Brothers Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "BNGA",
+   "name": "PT Bank CIMB Niaga Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BNII",
+   "name": "PT Bank Maybank Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BNLI",
+   "name": "Bank Permata Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BOAT",
+   "name": "PT Newport Marine Services Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BOBA",
+   "name": "PT Formosa Ingredient Factory Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BOGA",
+   "name": "PT Apollo Global Interactive Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BOLA",
+   "name": "PT Bali Bintang Sejahtera Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BOLT",
+   "name": "PT Garuda Metalindo Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BOSS",
+   "name": "PT Borneo Olah Sarana Sukses Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BPFI",
+   "name": "PT Woori Finance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BPII",
+   "name": "PT Batavia Prosperindo Internasional Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BPTR",
+   "name": "PT Batavia Prosperindo Trans Tbk.",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "BRAM",
+   "name": "Indo Kordsa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BREN",
+   "name": "PT Barito Renewables Energy Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "BRIS",
+   "name": "PT Bank Syariah Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BRMS",
+   "name": "Bumi Resources Minerals Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BRNA",
+   "name": "Berlina Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BRPT",
+   "name": "Barito Pacific Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BRRC",
+   "name": "PT Raja Roti Cemerlang Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BSBK",
+   "name": "PT Wulandari Bangun Laksana Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BSDE",
+   "name": "PT Bumi Serpong Damai Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "BSIM",
+   "name": "Bank Sinarmas Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BSML",
+   "name": "PT Bintang Samudera Mandiri Lines Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BSSR",
+   "name": "Baramulti Suksessarana Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BSWD",
+   "name": "Bank of India Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BTEK",
+   "name": "Bumi Teknokultura Unggul Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BTEL",
+   "name": "Bakrie Telecom Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "BTON",
+   "name": "Betonjaya Manunggal Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "BTPN",
+   "name": "PT Bank SMBC Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BTPS",
+   "name": "PT Bank BTPN Syariah Tbk.",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BUAH",
+   "name": "PT Segar Kumala Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BUDI",
+   "name": "PT Budi Starch & Sweetener Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BUKA",
+   "name": "PT Bukalapak.com Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "BUKK",
+   "name": "Bukaka Teknik Utama Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "BULL",
+   "name": "PT Buana Lintas Lautan Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BUMI",
+   "name": "Bumi Resources Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "BUVA",
+   "name": "PT Bukit Uluwatu Villa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "BVIC",
+   "name": "Bank Victoria International Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "BWPT",
+   "name": "Eagle High Plantations Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "BYAN",
+   "name": "Bayan Resources Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CAKK",
+   "name": "PT Cahayaputra Asa Keramik Tbk.",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "CAMP",
+   "name": "PT Campina Ice Cream Industry Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CANI",
+   "name": "PT Capitol Nusantara Indonesia Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CARE",
+   "name": "PT Metro Healthcare Indonesia Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "CARS",
+   "name": "PT Industri dan Perdagangan Bintraco Dharma Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CASA",
+   "name": "PT Capital Financial Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "CASH",
+   "name": "PT Cashlez Worldwide Indonesia Tbk.",
+   "sector": "technology"
+  },
+  {
+   "symbol": "CASS",
+   "name": "Cahaya Aero Services Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "CBDK",
+   "name": "PT Bangun Kosambi Sukses Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CBMF",
+   "name": "PT Cahaya Bintang Medan Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CBPE",
+   "name": "PT Citra Buana Prasida Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CBRE",
+   "name": "PT Cakra Buana Resources Energi Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CBUT",
+   "name": "PT Citra Borneo Utama Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CCSI",
+   "name": "PT Communication Cable Systems Indonesia Tbk.",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "CDIA",
+   "name": "PT Chandra Daya Investasi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "CEKA",
+   "name": "PT Wilmar Cahaya Indonesia Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CENT",
+   "name": "PT Centratama Telekomunikasi Indonesia Tbk.",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "CFIN",
+   "name": "Clipan Finance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "CGAS",
+   "name": "PT Citra Nusantara Gemilang Tbk.",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CHEK",
+   "name": "PT Diastika Biotekindo Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "CHEM",
+   "name": "PT Chemstar Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "CHIP",
+   "name": "PT Pelita Teknologi Global Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "CINT",
+   "name": "PT Chitose Internasional Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CITA",
+   "name": "Cita Mineral Investindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "CITY",
+   "name": "PT Natura City Developments Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CLAY",
+   "name": "PT Citra Putra Realty Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CLEO",
+   "name": "PT Sariguna Primatirta Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CLPI",
+   "name": "Colorpak Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "CMNP",
+   "name": "Citra Marga Nusaphala Persada Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "CMNT",
+   "name": "PT Cemindo Gemilang Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "CMPP",
+   "name": "PT AirAsia Indonesia Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "CMRY",
+   "name": "PT Cisarua Mountain Dairy Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CNKO",
+   "name": "Exploitasi Energi Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CNMA",
+   "name": "PT Nusantara Sejahtera Raya Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "COAL",
+   "name": "PT Black Diamond Resources Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "COCO",
+   "name": "PT Wahana Interfood Nusantara Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "COIN",
+   "name": "PT Indokripto Koin Semesta Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "COWL",
+   "name": "Cowell Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CPIN",
+   "name": "Charoen Pokphand Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CPRI",
+   "name": "PT Capri Nusa Satu Properti Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CPRO",
+   "name": "Central Proteina Prima Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CRAB",
+   "name": "PT Toba Surimi Industries Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CRSN",
+   "name": "PT Carsurin Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "CSAP",
+   "name": "Catur Sentosa Adiprana Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CSIS",
+   "name": "PT Cahayasakti Investindo Sukses Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CSMI",
+   "name": "PT Cipta Selera Murni Tbk.",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "CSRA",
+   "name": "PT Cisadane Sawit Raya Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "CTBN",
+   "name": "Citra Tubindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "CTRA",
+   "name": "Ciputra Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "CTTH",
+   "name": "Citatah Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "CUAN",
+   "name": "PT Petrindo Jaya Kreasi Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "CYBR",
+   "name": "PT ITSEC Asia Tbk.",
+   "sector": "technology"
+  },
+  {
+   "symbol": "DAAZ",
+   "name": "PT Daaz Bara Lestari Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "DADA",
+   "name": "PT Diamond Citra Propertindo Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "DART",
+   "name": "Duta Anggada Realty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "DATA",
+   "name": "PT Remala Abadi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "DAYA",
+   "name": "PT Duta Intidaya Tbk.",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DCII",
+   "name": "PT DCI Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "DEAL",
+   "name": "PT Dewata Freightinternational Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "DEFI",
+   "name": "Danasupra Erapacific Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "DEPO",
+   "name": "PT Caturkarda Depo Bangunan Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DEWA",
+   "name": "Darma Henwa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "DEWI",
+   "name": "PT Dewi Shri Farmindo Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DFAM",
+   "name": "PT Dafam Property Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DGIK",
+   "name": "Nusa Konstruksi Enjiniring  Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "DGNS",
+   "name": "PT Diagnos Laboratorium Utama Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "DGWG",
+   "name": "PT Delta Giri Wacana Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "DIGI",
+   "name": "PT Arkadia Digital Media Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DILD",
+   "name": "Intiland Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "DIVA",
+   "name": "PT Distribusi Voucher Nusantara Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "DKFT",
+   "name": "Central Omega Resources Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "DKHH",
+   "name": "PT Cipta Sarana Medika Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "DLTA",
+   "name": "Delta Djakarta Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DMAS",
+   "name": "PT Puradelta Lestari Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "DMMX",
+   "name": "PT Digital Mediatama Maxima Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "DMND",
+   "name": "PT Diamond Food Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DNAR",
+   "name": "PT Bank Oke Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "DNET",
+   "name": "PT Indoritel Makmur Internasional Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "DOID",
+   "name": "PT BUMA Internasional Grup Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "DOOH",
+   "name": "PT Era Media Sejahtera Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DOSS",
+   "name": "PT Global Sukses Digital Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DPNS",
+   "name": "Duta Pertiwi Nusantara Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "DPUM",
+   "name": "PT Dua Putra Utama Makmur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DRMA",
+   "name": "PT Dharma Polimetal Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DSFI",
+   "name": "Dharma Samudera Fishing Ind. Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DSNG",
+   "name": "PT Dharma Satya Nusantara Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "DSSA",
+   "name": "Dian Swastatika Sentosa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "DUCK",
+   "name": "PT Jaya Bersama Indo Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "DUTI",
+   "name": "Duta Pertiwi Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "DVLA",
+   "name": "Darya-Varia Laboratoria Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "DWGL",
+   "name": "PT Dwi Guna Laksana Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "DYAN",
+   "name": "PT Dyandra Media International Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "EAST",
+   "name": "PT Eastparc Hotel Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ECII",
+   "name": "PT Electronic City Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "EDGE",
+   "name": "PT Indointernet Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "EKAD",
+   "name": "Ekadharma International Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ELIT",
+   "name": "PT Data Sinergitama Jaya Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ELPI",
+   "name": "PT Pelayaran Nasional Ekalya Purnamasari Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "ELSA",
+   "name": "Elnusa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ELTY",
+   "name": "Bakrieland Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "EMAS",
+   "name": "PT Merdeka Gold Resources Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "EMDE",
+   "name": "Megapolitan Developments Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "EMMI",
+   "name": "PT Esa Medika Mandiri Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "EMTK",
+   "name": "Elang Mahkota Teknologi Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ENAK",
+   "name": "PT Champ Resto Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ENRG",
+   "name": "Energi Mega Persada Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ENVY",
+   "name": "PT Envy Technologies Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ENZO",
+   "name": "PT Morenzo Abadi Perkasa Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "EPAC",
+   "name": "PT Megalestari Epack Sentosaraya Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "EPMT",
+   "name": "Enseval Putera Megatrading Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ERAA",
+   "name": "Erajaya Swasembada Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ERAL",
+   "name": "PT Sinar Eka Selaras Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ERTX",
+   "name": "Eratex Djaja Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ESIP",
+   "name": "PT Sinergi Inti Plastindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ESSA",
+   "name": "ESSA Industries Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ESTA",
+   "name": "PT Esta Multi Usaha Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ESTI",
+   "name": "Ever Shine Textile Industry Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ETWA",
+   "name": "Eterindo Wahanatama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "EURO",
+   "name": "PT Estee Gold Feet Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "EXCL",
+   "name": "PT XLSMART Telecom Sejahtera Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "FAPA",
+   "name": "PT FAP Agri Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "FAST",
+   "name": "PT Fast Food Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "FASW",
+   "name": "Fajar Surya Wisesa Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "FILM",
+   "name": "PT MD Entertainment Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "FIMP",
+   "name": "PT Fimperkasa Utama Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "FIRE",
+   "name": "PT Alfa Energi Investama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "FISH",
+   "name": "FKS Multi Agro Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "FITT",
+   "name": "PT Hotel Fitra International Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "FLMC",
+   "name": "PT Falmaco Nonwoven Industri Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "FMII",
+   "name": "Fortune Mate Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "FOLK",
+   "name": "PT Multi Garam Utama Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "FOOD",
+   "name": "PT Sentra Food Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "FORE",
+   "name": "PT Fore Kopi Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "FORU",
+   "name": "Fortune Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "FPNI",
+   "name": "PT Lotte Chemical Titan Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "FUJI",
+   "name": "PT Fuji Finance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "FUTR",
+   "name": "PT Futura Energi Global Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "FWCT",
+   "name": "PT Wijaya Cahaya Timber Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "GAMA",
+   "name": "Aksara Global Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "GDST",
+   "name": "Gunawan Dianjaya Steel Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "GDYR",
+   "name": "Goodyear Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GEMA",
+   "name": "Gema Grahasarana Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GEMS",
+   "name": "Golden Energy Mines Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "GGRM",
+   "name": "Gudang Garam Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GGRP",
+   "name": "PT Gunung Raja Paksi Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "GHON",
+   "name": "PT Gihon Telekomunikasi Indonesia Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "GIAA",
+   "name": "Garuda Indonesia (Persero) Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "GJTL",
+   "name": "Gajah Tunggal Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GLOB",
+   "name": "PT Globe Kita Terang Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GLVA",
+   "name": "PT Galva Technologies Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "GMFI",
+   "name": "PT Garuda Maintenance Facility Aero Asia Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "GMTD",
+   "name": "Gowa Makassar Tourism Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "GOLD",
+   "name": "PT Visi Telekomunikasi Infrastruktur Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "GOLF",
+   "name": "PT Intra GolfLink Resorts Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GOLL",
+   "name": "PT Golden Plantation Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GOOD",
+   "name": "PT Garudafood Putra Putri Jaya Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GOTO",
+   "name": "PT GoTo Gojek Tokopedia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "GPRA",
+   "name": "Perdana Gapura Prima Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "GPSO",
+   "name": "PT Geoprima Solusi Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "GRIA",
+   "name": "PT Ingria Pratama Capitalindo Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "GRPH",
+   "name": "PT Griptha Putra Persada Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GRPM",
+   "name": "PT Graha Prima Mentari Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GSMF",
+   "name": "Equity Development Investment Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "GTBO",
+   "name": "Garda Tujuh Buana Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "GTRA",
+   "name": "PT Grahaprima Suksesmandiri Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "GTSI",
+   "name": "PT GTS Internasional Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "GULA",
+   "name": "PT Aman Agrindo Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GUNA",
+   "name": "PT Gunanusa Eramandiri Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "GWSA",
+   "name": "PT Greenwood Sejahtera Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "GZCO",
+   "name": "Gozco Plantations Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "HADE",
+   "name": "PT Himalaya Energi Perkasa Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "HAIS",
+   "name": "PT Hasnur Internasional Shipping Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "HAJJ",
+   "name": "PT Arsy Buana Travelindo Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "HALO",
+   "name": "PT Haloni Jane Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "HATM",
+   "name": "PT Habco Trans Maritima Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "HBAT",
+   "name": "PT Minahasa Membangun Hebat Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "HDFA",
+   "name": "Radana Bhaskara Finance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "HDIT",
+   "name": "PT Hensel Davest Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "HEAL",
+   "name": "PT Medikaloka Hermina Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "HELI",
+   "name": "PT Jaya Trishindo Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "HERO",
+   "name": "Hero Supermarket Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "HEXA",
+   "name": "Hexindo Adiperkasa Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "HGII",
+   "name": "PT Hero Global Investment Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "HILL",
+   "name": "PT Hillcon Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "HITS",
+   "name": "Humpuss Intermoda Transportasi Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "HKMU",
+   "name": "PT HK Metals Utama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "HMSP",
+   "name": "HM Sampoerna Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "HOKI",
+   "name": "PT Buyung Poetra Sembada Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "HOME",
+   "name": "Hotel Mandarine Regency Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "HOMI",
+   "name": "PT Grand House Mulia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "HOPE",
+   "name": "PT Harapan Duta Pertiwi Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "HOTL",
+   "name": "Saraswati Griya Lestari Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "HRME",
+   "name": "PT Menteng Heritage Realty Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "HRTA",
+   "name": "PT Hartadinata Abadi Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "HRUM",
+   "name": "Harum Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "HUMI",
+   "name": "PT Humpuss Maritim Internasional Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "HYGN",
+   "name": "PT Ecocare Indo Pasifik Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "IATA",
+   "name": "PT MNC Energy Investments Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "IBFN",
+   "name": "PT Intan Baru Prana Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "IBOS",
+   "name": "PT Indo Boga Sukses Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "IBST",
+   "name": "Inti Bangun Sejahtera Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ICBP",
+   "name": "Indofood CBP Sukses Makmur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ICON",
+   "name": "Island Concepts Indonesia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "IDEA",
+   "name": "PT Idea Indonesia Akademi Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "IDPR",
+   "name": "PT Indonesia Pondasi Raya Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "IFII",
+   "name": "PT Indonesia Fibreboard Industry Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "IFSH",
+   "name": "PT Ifishdeco Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "IGAR",
+   "name": "Champion Pacific Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "IIKP",
+   "name": "Inti Agri Resources Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "IKAI",
+   "name": "Intikeramik Alamasri Industri Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "IKAN",
+   "name": "PT Era Mandiri Cemerlang Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "IKBI",
+   "name": "Sumi Indo Kabel Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "IKPM",
+   "name": "PT Ikapharmindo Putramas Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "IMAS",
+   "name": "Indomobil Sukses Internasional Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "IMJS",
+   "name": "PT Indomobil Multi Jasa Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "IMPC",
+   "name": "PT Impack Pratama Industri Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "INAF",
+   "name": "Indofarma Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "INAI",
+   "name": "Indal Aluminium Industry Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INCF",
+   "name": "PT Indo Komoditi Korpora Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INCI",
+   "name": "Intanwijaya Internasional Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INCO",
+   "name": "Vale Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INDF",
+   "name": "Indofood Sukses Makmur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "INDO",
+   "name": "PT Royalindo Investa Wijaya Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "INDR",
+   "name": "PT Indo-Rama Synthetics Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "INDS",
+   "name": "Indospring Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "INDX",
+   "name": "Tanah Laut Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "INDY",
+   "name": "Indika Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "INET",
+   "name": "PT Sinergi Inti Andalan Prima Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "INKP",
+   "name": "Indah Kiat Pulp & Paper Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INOV",
+   "name": "PT Inocycle Technology Group Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "INPC",
+   "name": "Bank Artha Graha Internasional Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "INPP",
+   "name": "Indonesian Paradise Property Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "INPS",
+   "name": "PT Indah Prakasa Sentosa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "INRU",
+   "name": "Toba Pulp Lestari Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INTA",
+   "name": "Intraco Penta Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "INTD",
+   "name": "Inter-Delta Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "INTP",
+   "name": "Indocement Tunggal Prakarsa Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "IOTF",
+   "name": "PT Sumber Sinergi Makmur Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "IPAC",
+   "name": "PT Era Graharealty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "IPCC",
+   "name": "PT Indonesia Kendaraan Terminal Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "IPCM",
+   "name": "PT Jasa Armada Indonesia Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "IPOL",
+   "name": "Indopoly Swakarsa Industry Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "IPPE",
+   "name": "PT Indo Pureco Pratama Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "IPTV",
+   "name": "PT MNC Vision Networks Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "IRRA",
+   "name": "PT Itama Ranoraya Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "IRSX",
+   "name": "PT Folago Global Nusantara Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "ISAP",
+   "name": "PT Isra Presisi Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ISAT",
+   "name": "PT Indosat Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ISEA",
+   "name": "PT Indo American Seafoods Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ISSP",
+   "name": "PT Steel Pipe Industry of Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ITIC",
+   "name": "PT Indonesian Tobacco Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ITMA",
+   "name": "Sumber Energi Andalan Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ITMG",
+   "name": "Indo Tambangraya Megah Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "JARR",
+   "name": "PT Jhonlin Agro Raya Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "JAST",
+   "name": "PT Jasnita Telekomindo Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "JATI",
+   "name": "PT Informasi Teknologi Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "JAWA",
+   "name": "Jaya Agra Wattie Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "JAYA",
+   "name": "PT Armada Berjaya Trans Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "JECC",
+   "name": "Jembo Cable Company Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "JECX",
+   "name": "PT Nitrasanata Dharma Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "JELI",
+   "name": "PT Niramas Utama Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "JGLE",
+   "name": "PT Graha Andrasentra Propertindo Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "JIHD",
+   "name": "Jakarta International Hotels & Development Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "JKON",
+   "name": "Jaya Konstruksi Manggala Pratama Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "JMAS",
+   "name": "PT Asuransi Jiwa Syariah Jasa Mitra Abadi Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "JPFA",
+   "name": "JAPFA Comfeed Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "JRPT",
+   "name": "Jaya Real Property Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "JSKY",
+   "name": "PT Sky Energy Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "JSMR",
+   "name": "PT Jasa Marga Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "JSPT",
+   "name": "Jakarta Setiabudi Internasional Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "JTPE",
+   "name": "Jasuindo Tiga Perkasa Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KAEF",
+   "name": "Kimia Farma Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "KAQI",
+   "name": "PT Jantra Grupo Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KARW",
+   "name": "Meratus Jasa Prima Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KAYU",
+   "name": "PT Darmi Bersaudara Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KBAG",
+   "name": "PT Karya Bersama Anugerah Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "KBLI",
+   "name": "KMI Wire and Cable Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KBLM",
+   "name": "Kabelindo Murni Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KBLV",
+   "name": "First Media Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KBRI",
+   "name": "Kertas Basuki Rachmat Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KDSI",
+   "name": "Kedawung Setia Industrial Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KDTN",
+   "name": "PT Puri Sentul Permai Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KEEN",
+   "name": "PT Kencana Energi Lestari Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KEJU",
+   "name": "PT Mulia Boga Raya Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "KETR",
+   "name": "PT Ketrosden Triasmitra Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KIAS",
+   "name": "Keramika Indonesia Assosiasi Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KICI",
+   "name": "Kedaung Indah Can Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KIJA",
+   "name": "Kawasan Industri Jababeka Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "KING",
+   "name": "PT Hoffmen Cleanindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KINO",
+   "name": "PT Kino Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "KIOS",
+   "name": "PT Kioson Komersial Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "KJEN",
+   "name": "PT Krida Jaringan Nusantara Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "KKES",
+   "name": "PT Kusuma Kemindo Sentosa Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KKGI",
+   "name": "Resource Alam Indonesia Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "KLAS",
+   "name": "PT Pelayaran Kurnia Lautan Semesta Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "KLBF",
+   "name": "Kalbe Farma Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "KLIN",
+   "name": "PT Klinko Karya Imaji Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KMDS",
+   "name": "PT Kurniamitra Duta Sentosa Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "KMTR",
+   "name": "PT Kirana Megatara Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KOBX",
+   "name": "Kobexindo Tractors Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KOCI",
+   "name": "PT Kokoh Exa Nusantara",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "KOIN",
+   "name": "Kokoh Inti Arebama Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KOKA",
+   "name": "PT Koka Indonesia Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KONI",
+   "name": "Perdana Bangun Pusaka Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "KOPI",
+   "name": "PT Mitra Energi Persada Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "KOTA",
+   "name": "PT DMS Propertindo Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KPIG",
+   "name": "MNC Tourism Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "KRAS",
+   "name": "Krakatau Steel (Persero) Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "KREN",
+   "name": "PT Quantum Clovera Investama Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "KRYA",
+   "name": "PT Bangun Karya Perkasa Jaya Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "KSIX",
+   "name": "PT Kentanix Supra International Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "KUAS",
+   "name": "PT Ace Oldfields Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "LABA",
+   "name": "PT Green Power Group Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "LABS",
+   "name": "PT UBC Medical Indonesia Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "LAJU",
+   "name": "PT Jasa Berdikari Logistics Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "LAND",
+   "name": "PT Trimitra Propertindo Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "LAPD",
+   "name": "Leyand International Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "LCGP",
+   "name": "PT Eureka Prima Jakarta Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "LCKM",
+   "name": "PT LCK Global Kedaton Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "LEAD",
+   "name": "PT Logindo Samudramakmur Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "LFLO",
+   "name": "PT Imago Mulia Persada Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LIFE",
+   "name": "PT MSIG Life Insurance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "LINK",
+   "name": "PT Link Net Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "LION",
+   "name": "Lion Metal Works Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "LIVE",
+   "name": "PT Homeco Victoria Makmur Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LMAS",
+   "name": "Limas Indonesia Makmur Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "LMAX",
+   "name": "PT Lupromax Pelumas Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LMPI",
+   "name": "Langgeng Makmur Industri Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LMSH",
+   "name": "Lionmesh Prima Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "LOPI",
+   "name": "PT Logisticsplus International Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "LPCK",
+   "name": "Lippo Cikarang Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "LPGI",
+   "name": "Lippo General Insurance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "LPIN",
+   "name": "Multi Prima Sejahtera Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LPKR",
+   "name": "Lippo Karawaci Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "LPLI",
+   "name": "Star Pacific Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "LPPF",
+   "name": "PT MDS Retailing Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "LPPS",
+   "name": "PT Lenox Pasifik Investama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "LRNA",
+   "name": "PT Eka Sari Lorena Transport Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "LSIP",
+   "name": "PP London Sumatra Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "LTLS",
+   "name": "PT Lautan Luas Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "LUCK",
+   "name": "PT Sentral Mitra Informatika Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "LUCY",
+   "name": "PT Lima Dua Lima Tiga Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MABA",
+   "name": "PT Marga Abhinaya Abadi Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MAGP",
+   "name": "Multi Agro Gemilang Plantation Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MAHA",
+   "name": "PT Mandiri Herindo Adiperkasa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MAIN",
+   "name": "Malindo Feedmill Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MANG",
+   "name": "PT Manggung Polahraya Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MAPA",
+   "name": "PT MAP Aktif Adiperkasa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MAPB",
+   "name": "PT MAP Boga Adiperkasa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MAPI",
+   "name": "Mitra Adiperkasa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MARI",
+   "name": "PT Mahaka Radio Integra Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MARK",
+   "name": "PT Mark Dynamics Indonesia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MASB",
+   "name": "PT Bank Multiarta Sentosa Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MAXI",
+   "name": "PT Maxindo Karya Anugerah Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MAYA",
+   "name": "PT Bank Mayapada Internasional Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MBAP",
+   "name": "PT Mitrabara Adiperdana Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MBMA",
+   "name": "PT Merdeka Battery Materials Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "MBSS",
+   "name": "Mitrabahtera Segara Sejati Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MBTO",
+   "name": "Martina Berto Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MCAS",
+   "name": "PT M Cash Integrasi Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MCOL",
+   "name": "PT Prima Andalan Mandiri Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MCOR",
+   "name": "PT Bank China Construction Bank Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MDIA",
+   "name": "PT Intermedia Capital Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MDIY",
+   "name": "PT Daya Intiguna Yasa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MDKA",
+   "name": "PT Merdeka Copper Gold Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "MDKI",
+   "name": "PT Emdeki Utama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "MDLA",
+   "name": "PT Medela Potentia Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "MDLN",
+   "name": "PT Modernland Realty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MDRN",
+   "name": "Modern Internasional Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MEDC",
+   "name": "PT Medco Energi Internasional Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MEDS",
+   "name": "PT Hetzer Medical Indonesia Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "MEGA",
+   "name": "Bank Mega Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MEJA",
+   "name": "PT Harta Djaya Karya Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MENN",
+   "name": "PT Menn Teknologi Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MERI",
+   "name": "PT Merry Riana Edukasi Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MERK",
+   "name": "Merck Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "META",
+   "name": "Nusantara Infrastructure Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MFMI",
+   "name": "Multifiling Mitra Indonesia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MGLV",
+   "name": "PT Panca Anugrah Wisesa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MGNA",
+   "name": "PT Magna Investama Mandiri Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MGRO",
+   "name": "PT Mahkota Group Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MHKI",
+   "name": "PT Multi Hanna Kreasindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MICE",
+   "name": "Multi Indocitra Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MIDI",
+   "name": "Midi Utama Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MIKA",
+   "name": "PT Mitra Keluarga Karyasehat Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "MINA",
+   "name": "PT Sanurhasta Mitra Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MINE",
+   "name": "PT Sinar Terang Mandiri Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "MIRA",
+   "name": "Mitra International Resources Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "MITI",
+   "name": "Mitra Investindo Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "MKAP",
+   "name": "PT Multikarya Asia Pasifik Raya Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MKNT",
+   "name": "PT Mitra Komunikasi Nusantara Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MKPI",
+   "name": "Metropolitan Kentjana Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MKTR",
+   "name": "PT Menthobi Karyatama Raya Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MLBI",
+   "name": "Multi Bintang Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MLIA",
+   "name": "Mulia Industrindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MLPL",
+   "name": "Multipolar Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MLPT",
+   "name": "PT Multipolar Technology Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MMIX",
+   "name": "PT Multi Medika Internasional Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "MMLP",
+   "name": "PT Mega Manunggal Property Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MNCN",
+   "name": "Media Nusantara Citra Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MOLI",
+   "name": "PT Madusari Murni Indah Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "MORA",
+   "name": "PT Ekamas Mora Republik Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MPIX",
+   "name": "PT Mitra Pedagang Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MPMX",
+   "name": "PT Mitra Pinasthika Mustika Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MPOW",
+   "name": "PT Megapower Makmur Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MPPA",
+   "name": "Matahari Putra Prima Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MPRO",
+   "name": "PT Maha Properti Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MPXL",
+   "name": "PT MPX Logistics International Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "MRAT",
+   "name": "Mustika Ratu Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MREI",
+   "name": "Maskapai Reasuransi Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MSIE",
+   "name": "PT Multisarana Intan Eduka Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MSIN",
+   "name": "PT MNC Digital Entertainment Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MSJA",
+   "name": "PT Multi Spunindo Jaya Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MSKY",
+   "name": "MNC Sky Vision Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "MSTI",
+   "name": "PT Mastersystem Infotama Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MTDL",
+   "name": "Metrodata Electronics Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "MTEL",
+   "name": "PT Dayamitra Telekomunikasi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MTFN",
+   "name": "Capitalinc Investment Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MTLA",
+   "name": "Metropolitan Land Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MTMH",
+   "name": "PT Murni Sadar Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "MTPS",
+   "name": "PT Meta Epsi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MTRA",
+   "name": "PT Mitra Pemuda Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "MTSM",
+   "name": "Metro Realty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "MTWI",
+   "name": "PT Malacca Trust Wuwungan Insurance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "MUTU",
+   "name": "PT Mutuagung Lestari Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "MYOH",
+   "name": "Samindo Resources Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "MYOR",
+   "name": "Mayora Indah Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "MYTX",
+   "name": "PT Asia Pacific Investama Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "NAIK",
+   "name": "PT Adiwarna Anugerah Abadi Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "NANO",
+   "name": "PT Nanotech Indonesia Global Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "NASA",
+   "name": "PT Andalan Perkasa Abadi Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "NASI",
+   "name": "PT Wahana Inti Makmur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "NATO",
+   "name": "PT Olympus Strategic Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "NAYZ",
+   "name": "PT Hassana Boga Sejahtera Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "NCKL",
+   "name": "PT Trimegah Bangun Persada Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "NELY",
+   "name": "Pelayaran Nelly Dwi Putri Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "NEST",
+   "name": "PT Esta Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "NETV",
+   "name": "PT MDTV Media Technologies Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "NFCX",
+   "name": "PT NFC Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "NICE",
+   "name": "PT Adhi Kartiko Pratama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "NICK",
+   "name": "PT Charnic Capital Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "NICL",
+   "name": "PT PAM Mineral Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "NIKL",
+   "name": "Pelat Timah Nusantara Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "NINE",
+   "name": "PT Techno9 Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "NIRO",
+   "name": "City Retail Developments Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "NISP",
+   "name": "PT Bank OCBC NISP Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "NOBU",
+   "name": "PT Bank Nationalnobu Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "NPGF",
+   "name": "PT Nusa Palapa Gemilang Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "NRCA",
+   "name": "PT Nusa Raya Cipta Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "NSSS",
+   "name": "PT Nusantara Sawit Sejahtera Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "NTBK",
+   "name": "PT Nusatama Berkah Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "NUSA",
+   "name": "PT Sinergi Megah Internusa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "NZIA",
+   "name": "PT Nusantara Almazia, Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "OASA",
+   "name": "PT Maharaksa Biru Energi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "OBAT",
+   "name": "PT Brigit Biofarmaka Teknologi Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "OBMD",
+   "name": "PT OBM Drilchem Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "OCAP",
+   "name": "Onix Capital Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "OILS",
+   "name": "PT Indo Oil Perkasa Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "OKAS",
+   "name": "Ancora Indonesia Resources Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "OLIV",
+   "name": "PT Oscar Mitra Sukses Sejahtera Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "OMED",
+   "name": "PT Jayamas Medica Industri Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "OMRE",
+   "name": "Indonesia Prima Property Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "OPMS",
+   "name": "PT Optima Prima Metal Sinergi Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PACK",
+   "name": "PT Abadi Nusantara Hijau Investama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PADA",
+   "name": "PT Personel Alih Daya Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "PADI",
+   "name": "Minna Padi Investama Sekuritas Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PALM",
+   "name": "PT Provident Investasi Bersama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PAMG",
+   "name": "PT Bima Sakti Pertiwi Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PANI",
+   "name": "PT Pantai Indah Kapuk Dua Tbk.",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PANR",
+   "name": "Panorama Sentrawisata Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PANS",
+   "name": "Panin Sekuritas Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PART",
+   "name": "PT Cipta Perdana Lancar Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PBID",
+   "name": "PT Panca Budi Idaman Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PBRX",
+   "name": "Pan Brothers Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PBSA",
+   "name": "PT Paramita Bangun Sarana Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PCAR",
+   "name": "PT Prima Cakrawala Abadi Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PDES",
+   "name": "Destinasi Tirta Nusantara Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PDPP",
+   "name": "PT Primadaya Plastisindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PEGE",
+   "name": "PT Panca Global Kapital Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PEHA",
+   "name": "PT Phapros Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PEVE",
+   "name": "PT Penta Valent Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PGAS",
+   "name": "PT Perusahaan Gas Negara Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PGEO",
+   "name": "PT Pertamina Geothermal Energy Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PGJO",
+   "name": "PT Bahtera Bumi Raya Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "PGLI",
+   "name": "Pembangunan Graha Lestari Indah Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PGUN",
+   "name": "PT Pradiksi Gunatama Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PICO",
+   "name": "Pelangi Indah Canindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PIPA",
+   "name": "PT Multi Makmur Lemindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "PJAA",
+   "name": "Pembangunan Jaya Ancol Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PJHB",
+   "name": "PT Pelayaran Jaya Hidup Baru Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "PKPK",
+   "name": "Perdana Karya Perkasa Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PLAN",
+   "name": "PT Planet Properindo Jaya Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PLAS",
+   "name": "Polaris Investama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PLIN",
+   "name": "Plaza Indonesia Realty Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PMJS",
+   "name": "PT Putra Mandiri Jembar Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PMMP",
+   "name": "PT Panca Mitra Multiperdana Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PMUI",
+   "name": "PT Prima Multi Usaha Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PNBN",
+   "name": "Bank Pan Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PNBS",
+   "name": "PT Bank Panin Dubai Syariah Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PNGO",
+   "name": "PT Pinago Utama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PNIN",
+   "name": "Paninvest Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PNLF",
+   "name": "Panin Financial Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PNSE",
+   "name": "Pudjiadi & Sons Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "POLA",
+   "name": "PT Pool Advista Finance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "POLI",
+   "name": "PT Pollux Hotels Group Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "POLL",
+   "name": "PT Pollux Properties Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "POLU",
+   "name": "PT Golden Flower Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "POLY",
+   "name": "Asia Pacific Fibers Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "POOL",
+   "name": "Pool Advista Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "PORT",
+   "name": "PT Nusantara Pelabuhan Handal Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "POSA",
+   "name": "PT Bliss Properti Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "POWR",
+   "name": "PT Cikarang Listrindo Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PPGL",
+   "name": "PT Prima Globalindo Logistik Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "PPRE",
+   "name": "PT PP Presisi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PPRI",
+   "name": "PT Paperocks Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PPRO",
+   "name": "PT PP Properti Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PRAY",
+   "name": "PT Famon Awal Bros Sedaya Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PRDA",
+   "name": "PT Prodia Widyahusada Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PRDL",
+   "name": "PT Prodia Diagnostic Line Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PRIM",
+   "name": "PT Royal Prima Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PSAB",
+   "name": "J Resources Asia Pasifik Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PSAT",
+   "name": "PT Pancaran Samudera Transport Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PSDN",
+   "name": "Prasidha Aneka Niaga Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PSGO",
+   "name": "PT Palma Serasih Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PSKT",
+   "name": "PT Red Planet Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PSSI",
+   "name": "PT IMC Pelita Logistik Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PTBA",
+   "name": "Bukit Asam Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PTDU",
+   "name": "PT Djasa Ubersakti Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PTIS",
+   "name": "Indo Straits Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PTMP",
+   "name": "PT Mitra Pack Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "PTMR",
+   "name": "PT Master Print Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PTPP",
+   "name": "PP (Persero) Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PTPS",
+   "name": "PT Pulau Subur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "PTPW",
+   "name": "PT Pratama Widya Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "PTRO",
+   "name": "Petrosea Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "PTSN",
+   "name": "Sat Nusapersada Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "PTSP",
+   "name": "Pioneerindo Gourmet International Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "PUDP",
+   "name": "Pudjiadi Prestige Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PURA",
+   "name": "PT Putra Rajawali Kencana Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "PURE",
+   "name": "PT Trinitan Metals and Minerals Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "PURI",
+   "name": "PT Puri Global Sukses Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PWON",
+   "name": "Pakuwon Jati Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "PYFA",
+   "name": "PT Pyridam Farma Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "PZZA",
+   "name": "PT Sarimelati Kencana Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RAAM",
+   "name": "PT Tripar Multivision Plus Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RAFI",
+   "name": "PT Sari Kreasi Boga Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RAJA",
+   "name": "Rukun Raharja Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RALS",
+   "name": "Ramayana Lestari Sentosa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RANC",
+   "name": "Supra Boga Lestari Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "RANS",
+   "name": "PT Rans Entertainmen Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RATU",
+   "name": "PT Raharja Energi Cepu Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RBMS",
+   "name": "Ristia Bintang Mahkotasejati Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RCCC",
+   "name": "PT Utama Radar Cahaya Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "RDTX",
+   "name": "Roda Vivatex Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "REAL",
+   "name": "PT Repower Asia Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RELF",
+   "name": "PT Graha Mitra Asia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RELI",
+   "name": "Reliance Sekuritas Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "RGAS",
+   "name": "PT Kian Santang Muliatama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RICY",
+   "name": "Ricky Putra Globalindo Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "RIGS",
+   "name": "Rig Tenders Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RIMO",
+   "name": "PT Rimo International Lestari Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RISE",
+   "name": "PT Jaya Sukses Makmur Sentosa Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RLCO",
+   "name": "PT Abadi Lestari Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "RMKE",
+   "name": "PT RMK Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RMKO",
+   "name": "PT Royaltama Mulia Kontraktorindo Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "ROCK",
+   "name": "PT Rockfields Properti Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RODA",
+   "name": "Pikko Land Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "RONY",
+   "name": "PT Aracord Nusantara Group Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "ROTI",
+   "name": "PT Nippon Indosari Corpindo Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "RSCH",
+   "name": "PT Charlie Hospital Semarang Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "RSGK",
+   "name": "PT Kedoya Adyaraya Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "RUIS",
+   "name": "Radiant Utama Interinsco Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "RUNS",
+   "name": "PT Global Sukses Solusi Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "SAFE",
+   "name": "Steady Safe Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "SAGE",
+   "name": "PT Saptausaha Gemilangindah Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "SAME",
+   "name": "Sarana Meditama Metropolitan Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SAMF",
+   "name": "PT Saraswanti Anugerah Makmur Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SAPX",
+   "name": "PT Satria Antaran Prima Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "SATU",
+   "name": "PT Kota Satu Properti Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "SBAT",
+   "name": "PT Sejahtera Bintang Abadi Textile Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SBMA",
+   "name": "PT Surya Biru Murni Acetylene Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SCCO",
+   "name": "PT Supreme Cable Manufacturing & Commerce Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SCMA",
+   "name": "Surya Citra Media Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SCNP",
+   "name": "PT Selaras Citra Nusantara Perkasa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SCPI",
+   "name": "PT Organon Pharma Indonesia Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SDMU",
+   "name": "Sidomulyo Selaras Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "SDPC",
+   "name": "Millennium Pharmacon International Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SDRA",
+   "name": "PT Bank Woori Saudara Indonesia 1906 Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "SEMA",
+   "name": "PT Semacom Integrated Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SFAN",
+   "name": "PT Surya Fajar Capital Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "SGER",
+   "name": "PT Sumber Global Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SGRO",
+   "name": "PT Prime Agri Resources Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SHID",
+   "name": "Hotel Sahid Jaya Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SHIP",
+   "name": "PT Sillo Maritime Perdana Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SICO",
+   "name": "PT Sigma Energy Compressindo Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SIDO",
+   "name": "PT Industri Jamu Dan Farmasi Sido Muncul Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SILO",
+   "name": "PT Siloam International Hospitals Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SIMA",
+   "name": "Siwani Makmur Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SIMP",
+   "name": "Salim Ivomas Pratama Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SINI",
+   "name": "PT Singaraja Putra Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SIPD",
+   "name": "PT Sreeya Sewu Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SKBM",
+   "name": "Sekar Bumi Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SKLT",
+   "name": "Sekar Laut Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SKRN",
+   "name": "PT Superkrane Mitra Utama Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SKYB",
+   "name": "PT Northcliff Citranusa Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "SLIS",
+   "name": "PT Gaya Abadi Sempurna Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SMAR",
+   "name": "PT Sinar Mas Agro Resources and Technology Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SMBR",
+   "name": "PT Semen Baturaja Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMCB",
+   "name": "PT Solusi Bangun Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMDM",
+   "name": "Suryamas Dutamakmur Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "SMDR",
+   "name": "Samudera Indonesia Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "SMGA",
+   "name": "PT Sumber Mineral Global Abadi Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMGR",
+   "name": "Semen Indonesia (Persero) Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMIL",
+   "name": "PT Sarana Mitra Luas Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SMKL",
+   "name": "PT Satyamitra Kemas Lestari Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMKM",
+   "name": "PT Sumber Mas Konstruksi Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "SMLE",
+   "name": "PT Sinergi Multi Lestarindo Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SMMA",
+   "name": "PT Sinar Mas Multiartha Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "SMMT",
+   "name": "Golden Eagle Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SMRA",
+   "name": "PT Summarecon Agung Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "SMRU",
+   "name": "SMR Utama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SMSM",
+   "name": "Selamat Sempurna Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SNLK",
+   "name": "PT Sunter Lakeside Hotel Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SOCI",
+   "name": "PT Soechi Lines Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SOFA",
+   "name": "PT Solusi Environment Asia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SOHO",
+   "name": "PT Soho Global Health Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SOLA",
+   "name": "PT Xolare RCR Energy Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SONA",
+   "name": "Sona Topas Tourism Industry Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SOSS",
+   "name": "PT Shield On Service Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SOTS",
+   "name": "PT Satria Mega Kencana Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SOUL",
+   "name": "PT Mitra Tirta Buwana Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SPMA",
+   "name": "Suparma Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SPRE",
+   "name": "PT Soraya Berjaya Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SPTO",
+   "name": "PT Surya Pertiwi Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "SQMI",
+   "name": "Wilton Makmur Indonesia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SRAJ",
+   "name": "Sejahteraraya Anugrahjaya Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SRIL",
+   "name": "PT Sri Rejeki Isman Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "SRSN",
+   "name": "Indo Acidatama Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SRTG",
+   "name": "PT Saratoga Investama Sedaya Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "SSIA",
+   "name": "PT Surya Semesta Internusa Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "SSMS",
+   "name": "PT Sawit Sumbermas Sarana Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SSTM",
+   "name": "Sunson Textile Manufacturer Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "STAA",
+   "name": "PT Sumber Tani Agung Resources Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "STAR",
+   "name": "PT Calculus Global Ventures Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "STRK",
+   "name": "PT Lovina Beach Brewery Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "STTP",
+   "name": "PT Siantar Top Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "SUGI",
+   "name": "Sugih Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SULI",
+   "name": "PT SLJ Global Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SUNI",
+   "name": "PT Sunindo Pratama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SUPA",
+   "name": "PT Super Bank Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "SUPR",
+   "name": "Solusi Tunas Pratama Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "SURE",
+   "name": "PT Super Energy Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "SURI",
+   "name": "PT Maja Agung Latexindo Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "SWAT",
+   "name": "PT Sriwahana Adityakarta Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "SWID",
+   "name": "PT Saraswanti Indoland Development Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "TALF",
+   "name": "PT Tunas Alfin Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TAMA",
+   "name": "PT Lancartama Sejati Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TAMU",
+   "name": "PT Pelayaran Tamarin Samudra Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TAPG",
+   "name": "PT Triputra Agro Persada Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TARA",
+   "name": "PT Agung Semesta Sejahtera Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "TAXI",
+   "name": "Express Transindo Utama Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "TAYS",
+   "name": "PT Jaya Swarasa Agung Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TBIG",
+   "name": "PT Tower Bersama Infrastructure Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TBLA",
+   "name": "Tunas Baru Lampung Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TBMS",
+   "name": "Tembaga Mulia Semanan Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TCID",
+   "name": "Mandom Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TCPI",
+   "name": "PT Transcoal Pacific Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TDPM",
+   "name": "PT Tianrong Chemicals Industry Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TEBE",
+   "name": "PT Dana Brata Luhur Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TECH",
+   "name": "PT Indosterling Technomedia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "TELE",
+   "name": "PT Omni Inovasi Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TFAS",
+   "name": "PT Telefast Indonesia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "TFCO",
+   "name": "Tifico Fiber Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TGKA",
+   "name": "Tigaraksa Satria Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TGRA",
+   "name": "PT Terregra Asia Energy",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TGUK",
+   "name": "PT Platinum Wahab Nusantara Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TIFA",
+   "name": "KDB Tifa Finance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "TINS",
+   "name": "PT Timah Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TIRA",
+   "name": "Tira Austenite Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "TIRT",
+   "name": "Tirta Mahakam Resources Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TKIM",
+   "name": "Pabrik Kertas Tjiwi Kimia Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TLDN",
+   "name": "PT Teladan Prima Agro Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TLKM",
+   "name": "PT Telkom Indonesia (Persero) Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TMAS",
+   "name": "PT Temas Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "TMPO",
+   "name": "Tempo Inti Media Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TNCA",
+   "name": "PT Trimuda Nuansa Citra Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "TOBA",
+   "name": "PT TBS Energi Utama Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TOOL",
+   "name": "PT Rohartindo Nusantara Luas Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TOPS",
+   "name": "PT Totalindo Eka Persada Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TOSK",
+   "name": "PT Topindo Solusi Komunika Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "TOTL",
+   "name": "Total Bangun Persada Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TOTO",
+   "name": "Surya Toto Indonesia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "TOWR",
+   "name": "Sarana Menara Nusantara Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "TOYS",
+   "name": "PT Sunindo Adipersada Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TPIA",
+   "name": "PT Chandra Asri Pacific Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TPMA",
+   "name": "Trans Power Marine Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TRAM",
+   "name": "Trada Alam Minera Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "TRGU",
+   "name": "PT Cerestar Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "TRIL",
+   "name": "Triwira Insanlestari Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "TRIM",
+   "name": "PT Trimegah Sekuritas Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "TRIN",
+   "name": "PT Perintis Triniti Properti Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "TRIO",
+   "name": "Trikomsel Oke Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TRIS",
+   "name": "Trisula International Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "TRJA",
+   "name": "PT Transkon Jaya Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "TRON",
+   "name": "PT Teknologi Karya Digital Nusa Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "TRST",
+   "name": "Trias Sentosa Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "TRUE",
+   "name": "PT Triniti Dinamik Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "TRUK",
+   "name": "PT Guna Timur Raya Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "TRUS",
+   "name": "Trust Finance Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "TSPC",
+   "name": "Tempo Scan Pacific Tbk",
+   "sector": "healthcare"
+  },
+  {
+   "symbol": "TUGU",
+   "name": "PT Asuransi Tugu Pratama Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "TYRE",
+   "name": "PT King Tire Indonesia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "UANG",
+   "name": "PT Pakuan Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "UCID",
+   "name": "PT Uni-Charm Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "UDNG",
+   "name": "PT Agro Bahari Nusantara Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "UFOE",
+   "name": "PT Damai Sejahtera Abadi Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ULTJ",
+   "name": "PT Ultrajaya Milk Industry & Trading Company Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "UNIC",
+   "name": "Unggul Indah Cahaya Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "UNIQ",
+   "name": "PT Ulima Nitra Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "UNIT",
+   "name": "Nusantara Inti Corpora Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "UNSP",
+   "name": "Bakrie Sumatera Plantations Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "UNTD",
+   "name": "PT Terang Dunia Internusa Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "UNTR",
+   "name": "United Tractors Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "UNVR",
+   "name": "Unilever Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "URBN",
+   "name": "PT Urban Jakarta Propertindo Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "UVCR",
+   "name": "PT Trimegah Karya Pratama Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "VAST",
+   "name": "PT Vastland Indonesia Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "VERN",
+   "name": "PT Verona Indah Pictures Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "VICI",
+   "name": "PT Victoria Care Indonesia Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "VICO",
+   "name": "PT Victoria Investama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "VINS",
+   "name": "PT Victoria Insurance Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "VISI",
+   "name": "PT Satu Visi Putra Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "VIVA",
+   "name": "PT Visi Media Asia Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "VKTR",
+   "name": "PT VKTR Teknologi Mobilitas Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "VOKS",
+   "name": "Voksel Electric Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "VRNA",
+   "name": "PT Mizuho Leasing Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "VTNY",
+   "name": "PT Venteny Fortuna International Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "WAPO",
+   "name": "Wahana Pronatural Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WBSA",
+   "name": "PT BSA Logistics Indonesia Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "WEGE",
+   "name": "PT Wijaya Karya Bangunan Gedung Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "WEHA",
+   "name": "PT WEHA Transportasi Indonesia Tbk",
+   "sector": "transportation-logistic"
+  },
+  {
+   "symbol": "WGSH",
+   "name": "PT Wira Global Solusi Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "WICO",
+   "name": "Wicaksana Overseas International Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WIDI",
+   "name": "PT Widiant Jaya Krenindo Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "WIFI",
+   "name": "PT Solusi Sinergi Digital Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "WIIM",
+   "name": "Wismilak Inti Makmur Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WIKA",
+   "name": "PT Wijaya Karya (Persero) Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "WINE",
+   "name": "PT Hatten Bali Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WINR",
+   "name": "PT Winner Nusantara Jaya Tbk",
+   "sector": "properties-real-estate"
+  },
+  {
+   "symbol": "WINS",
+   "name": "Wintermar Offshore Marine Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "WIRG",
+   "name": "PT Wir Asia Tbk",
+   "sector": "technology"
+  },
+  {
+   "symbol": "WMPP",
+   "name": "PT Widodo Makmur Perkasa Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WMUU",
+   "name": "PT Widodo Makmur Unggas Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "WOMF",
+   "name": "PT Wahana Ottomitra Multiartha Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "WOOD",
+   "name": "PT Integra Indocabinet Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "WOWS",
+   "name": "PT Ginting Jaya Energi Tbk",
+   "sector": "energy"
+  },
+  {
+   "symbol": "WSBP",
+   "name": "PT Waskita Beton Precast Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "WSKT",
+   "name": "PT Waskita Karya (Persero) Tbk",
+   "sector": "infrastructures"
+  },
+  {
+   "symbol": "WTON",
+   "name": "Wijaya Karya Beton",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "YELO",
+   "name": "PT Yelooo Integra Datanet Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "YOII",
+   "name": "PT Asuransi Digital Bersama Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "YPAS",
+   "name": "Yanaprima Hastapersada Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "YULE",
+   "name": "Yulie Sekuritas Indonesia Tbk",
+   "sector": "financials"
+  },
+  {
+   "symbol": "YUPI",
+   "name": "PT Yupi Indo Jelly Gum Tbk",
+   "sector": "consumer-non-cyclicals"
+  },
+  {
+   "symbol": "ZATA",
+   "name": "PT Bersama Zatta Jaya Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ZBRA",
+   "name": "PT Dosni Roha Indonesia Tbk",
+   "sector": "industrials"
+  },
+  {
+   "symbol": "ZINC",
+   "name": "PT Kapuas Prima Coal Tbk",
+   "sector": "basic-materials"
+  },
+  {
+   "symbol": "ZONE",
+   "name": "PT Mega Perintis Tbk",
+   "sector": "consumer-cyclicals"
+  },
+  {
+   "symbol": "ZYRX",
+   "name": "PT Zyrexindo Mandiri Buana Tbk",
+   "sector": "technology"
+  }
+ ]
+}

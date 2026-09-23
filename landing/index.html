@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SimPasar IDX — Sandbox Perilaku Pasar Modal Indonesia</title>
-  <meta name="description" content="SimPasar IDX: simulasi pasar modal Indonesia berbasis agen hibrida (rule-based + LLM). Bubble, panic selling, dan herding muncul sendiri dari interaksi 100 agen, bukan dari skenario yang diskrip." />
+  <title>SimPasar IDX — Simulasi Pasar Saham dengan 100 Investor Tiruan</title>
+  <meta name="description" content="Lihat bagaimana rumor dan panik menggerakkan harga saham. SimPasar IDX adalah simulasi pasar saham Indonesia dengan 100 investor tiruan yang punya emosi. Pilih saham BEI apa saja (962 emiten), harga awal dari data Sectors, chart 15 menit. Alat belajar, bukan alat prediksi." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307090e'/%3E%3Cpath d='M8 44 L20 34 L28 40 L40 20 L48 28 L56 12' fill='none' stroke='%23f6b73c' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,17 +27,15 @@
       <span>Sim<b>Pasar</b> IDX</span>
     </a>
     <nav class="nav-links" id="navLinks" aria-label="Navigasi utama">
-      <a href="#proyek">Proyek</a>
-      <a href="#mengapa">Mengapa</a>
-      <a href="#cara-kerja">Cara Kerja</a>
-      <a href="#agen">Agen</a>
-      <a href="#emergent">Emergent</a>
-      <a href="#riset">Riset</a>
-      <a href="#roadmap">Roadmap</a>
+      <a href="#apa-ini">Apa ini</a>
+      <a href="#cara-pakai">Cara pakai</a>
+      <a href="#yang-terlihat">Yang terlihat</a>
+      <a href="#untuk-siapa">Untuk siapa</a>
+      <a href="#lebih-dalam">Lebih dalam</a>
     </nav>
     <div class="nav-cta">
       <a class="btn btn-small btn-ghost" href="/paper.pdf" target="_blank" rel="noopener">Draf paper</a>
-      <a class="btn btn-small btn-amber" href="/simulator" title="Buka Simulator Pasar Interaktif">Buka Simulator ↗</a>
+      <a class="btn btn-small btn-amber" href="/simulator" title="Buka Simulator">Coba simulator ↗</a>
       <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false"><span></span><span></span></button>
     </div>
   </div>
@@ -49,42 +47,40 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="eyebrow reveal"><span class="pulse"></span> Proyek Hackathon 2026 · Agent-Based Market Sandbox</p>
-      <h1 class="reveal" style="--i:1">Laboratorium <em>perilaku</em> pasar modal Indonesia.</h1>
+      <p class="eyebrow reveal"><span class="pulse"></span> Simulasi pasar saham · Bursa Efek Indonesia</p>
+      <h1 class="reveal" style="--i:1">Lihat bagaimana <em>rumor</em> dan <em>panik</em> menggerakkan harga saham.</h1>
       <p class="lede reveal" style="--i:2">
-        SimPasar IDX adalah <strong>sandbox simulasi berbasis agen hibrida</strong>: mayoritas agen
-        <em>rule-based</em> berbiaya rendah dipadukan minoritas agen <em>LLM</em> yang adaptif, saling
-        berinteraksi lewat mekanisme pasar sungguhan. Bubble, panic selling, dan herding
-        <strong>muncul dari interaksi</strong>, bukan dari skenario yang diskrip.
+        SimPasar IDX adalah simulasi pasar saham dengan <strong>100 investor tiruan yang punya emosi</strong>:
+        ada yang disiplin, keras kepala, atau gampang termakan rumor. Pilih saham Bursa Efek Indonesia mana saja,
+        sebar rumor, lalu lihat harganya bergerak: <strong>belajar tanpa uang sungguhan</strong>.
       </p>
       <div class="hero-actions reveal" style="--i:3">
-        <a class="btn btn-amber btn-lg" href="/simulator">▶ Buka Simulator Penuh ↗</a>
-        <a class="btn btn-ghost btn-lg" href="#demo">Lihat demo mini</a>
+        <a class="btn btn-amber btn-lg" href="/simulator">▶ Coba simulator ↗</a>
       </div>
-      <div id="ihsg-ticker" class="reveal mono" style="--i:3.5; margin-top: 14px; font-size: 12px; color: #8b949e; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px;">
-        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950;"></span>
-        <span>IHSG (Sectors Real-time): <strong id="ihsg-val" style="color:#fff;">Loading...</strong></span>
-        <span id="ihsg-change" style="font-weight:600;"></span>
-        <span id="ihsg-date" style="color:#6e7681; font-size:11px;"></span>
+      <div id="ihsg-ticker" class="ihsg-pill reveal mono" style="--i:3.5">
+        <span class="dot" aria-hidden="true"></span>
+        <span><span id="ihsg-label">IHSG penutupan terakhir</span>: <strong id="ihsg-val">memuat…</strong></span>
+        <span id="ihsg-change"></span>
+        <span id="ihsg-date"></span>
       </div>
       <dl class="hero-facts reveal" style="--i:4">
-        <div><dt>Agen</dt><dd>100 heterogen</dd></div>
-        <div><dt>Sumbu perilaku</dt><dd>3 gaya info × 3 psikologi</dd></div>
-        <div><dt>Pembentukan harga</dt><dd>Agregasi order riil</dd></div>
-        <div><dt>Klaim prediktif</dt><dd>Tidak ada, by design</dd></div>
+        <div><dt>Investor tiruan</dt><dd>100, tiap orang punya sifat sendiri</dd></div>
+        <div><dt>Pilihan saham</dt><dd>Semua 962 saham di BEI</dd></div>
+        <div><dt>Harga awal</dt><dd>Harga penutupan terakhir di bursa</dd></div>
+        <div><dt>Prediksi harga?</dt><dd>Bukan. Ini alat belajar</dd></div>
       </dl>
     </div>
 
-    <!-- Live mini-simulation (versi ringan, berjalan di browser) -->
+    <!-- Demo mini (versi ringan, berjalan di browser tanpa server) -->
     <div class="sim reveal" id="demo" style="--i:2">
       <div class="sim-bar">
         <span class="sim-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="sim-title mono">simpasar-idx · live sandbox · port ringan di browser</span>
-        <div class="sim-tf mono" id="simTf" role="group" aria-label="Periode candle (tick per candle)">
-          <button type="button" aria-pressed="false" data-period="1" title="1 tick per candle">1T</button>
-          <button type="button" aria-pressed="false" data-period="3" title="3 tick per candle">3T</button>
-          <button type="button" class="active" aria-pressed="true" data-period="5" title="5 tick per candle">5T</button>
-          <button type="button" aria-pressed="false" data-period="10" title="10 tick per candle">10T</button>
+        <span class="sim-title mono">demo mini · 100 investor tiruan · berjalan di browser-mu</span>
+        <div class="sim-tf mono" id="simTf" role="group" aria-label="Lebar candle (menit bursa per candle)">
+          <button type="button" aria-pressed="false" data-period="1" title="1 menit per candle">1m</button>
+          <button type="button" aria-pressed="false" data-period="5" title="5 menit per candle">5m</button>
+          <button type="button" class="active" aria-pressed="true" data-period="15" title="15 menit per candle">15m</button>
+          <button type="button" aria-pressed="false" data-period="30" title="30 menit per candle">30m</button>
         </div>
         <span class="sim-badge" id="simStatus" data-status="normal">● NORMAL</span>
       </div>
@@ -95,72 +91,72 @@
           <span class="sim-price mono" id="simPrice">100.00</span>
         </div>
         <div class="sim-kpi">
-          <span class="sim-label">vs fundamental (100)</span>
+          <span class="sim-label" title="Nilai wajar = harga yang pantas menurut kondisi perusahaan; di demo ini 100">vs nilai wajar 100</span>
           <span class="sim-dev mono" id="simDev">+0.0%</span>
         </div>
         <div class="sim-kpi">
-          <span class="sim-label">Tick</span>
-          <span class="mono" id="simTick">0</span>
+          <span class="sim-label" title="Setiap langkah simulasi = 1 menit jam bursa">Jam bursa · <span id="simDay">hari 1</span></span>
+          <span class="mono" id="simTick">09:00</span>
         </div>
         <div class="sim-kpi sim-kpi-sent">
-          <span class="sim-label">Sentimen <span class="mono" id="simSentVal">0.000</span></span>
+          <span class="sim-label" title="Sentimen: positif setelah rumor baik, negatif setelah kabar buruk; meluruh sendiri">Mood pasar <span class="mono" id="simSentVal">0.000</span></span>
           <span class="sim-sent"><i id="simSentBar"></i></span>
         </div>
       </div>
 
       <div class="sim-chart-wrap">
-        <canvas id="simChart" class="sim-chart" role="img" aria-label="Grafik candlestick dan volume simulasi terhadap nilai fundamental"></canvas>
+        <canvas id="simChart" class="sim-chart" role="img" aria-label="Grafik candlestick dan volume simulasi terhadap nilai wajar"></canvas>
       </div>
 
       <div class="sim-lower">
         <div class="sim-grid-wrap">
-          <canvas id="simGrid" width="160" height="160" aria-label="Grid 100 agen: warna isi = aksi, garis tepi = profil psikologi"></canvas>
+          <canvas id="simGrid" width="160" height="160" aria-label="Grid 100 investor tiruan: warna isi = aksi, garis tepi = sifat saat rugi"></canvas>
           <div class="sim-legend mono">
             <span><i class="sw" style="background:#3ddc97"></i>beli</span>
             <span><i class="sw" style="background:#ff6b61"></i>jual</span>
-            <span><i class="sw" style="background:#1b2230"></i>hold</span>
-            <span><i class="sw" style="background:#4a0f0f"></i>pain</span>
+            <span><i class="sw" style="background:#1b2230"></i>diam</span>
+            <span><i class="sw" style="background:#4a0f0f"></i>rugi</span>
           </div>
           <div class="sim-legend mono">
-            <span><i class="sw sw-o" style="border-color:#6ea8ff"></i>disciplined</span>
-            <span><i class="sw sw-o" style="border-color:#b98cff"></i>bagholder</span>
-            <span><i class="sw sw-o" style="border-color:#ff9f43"></i>averager</span>
+            <span><i class="sw sw-o" style="border-color:#6ea8ff"></i>disiplin</span>
+            <span><i class="sw sw-o" style="border-color:#b98cff"></i>keras kepala</span>
+            <span><i class="sw sw-o" style="border-color:#ff9f43"></i>suka nambah</span>
           </div>
         </div>
         <div class="sim-stats">
-          <div class="stat"><span>Punya posisi</span><b class="mono" id="stPos">0</b></div>
-          <div class="stat"><span>Dalam pain 🔴</span><b class="mono c-red" id="stPain">0</b></div>
-          <div class="stat"><span>Sedang averaging ↗</span><b class="mono c-orange" id="stAvg">0</b></div>
-          <div class="stat"><span>Beli / Jual / Hold</span><b class="mono" id="stBSH">0 / 0 / 0</b></div>
-          <div class="stat"><span>Avg P&amp;L posisi</span><b class="mono" id="stPnl">+0.0%</b></div>
+          <div class="stat"><span>Sedang pegang saham</span><b class="mono" id="stPos">0</b></div>
+          <div class="stat"><span>Sedang rugi 🔴</span><b class="mono c-red" id="stPain">0</b></div>
+          <div class="stat"><span>Nambah saat rugi ↗</span><b class="mono c-orange" id="stAvg">0</b></div>
+          <div class="stat"><span>Beli / Jual / Diam</span><b class="mono" id="stBSH">0 / 0 / 0</b></div>
+          <div class="stat"><span>Rata-rata untung/rugi</span><b class="mono" id="stPnl">+0.0%</b></div>
           <ul class="sim-log mono" id="simLog" aria-live="polite"></ul>
         </div>
       </div>
 
       <div class="sim-controls">
-        <button class="btn btn-amber btn-small" id="btnRumor" title="Sentimen +1.0 → agen noise condong beli">📢 Inject Rumor</button>
-        <button class="btn btn-red btn-small" id="btnPanic" title="Sentimen −1.0 → agen noise condong jual">📉 Bad News</button>
+        <button class="btn btn-amber btn-small" id="btnRumor" title="Sebar rumor positif: pemburu rumor condong beli">📢 Sebar rumor</button>
+        <button class="btn btn-red btn-small" id="btnPanic" title="Sebar kabar buruk: pemburu rumor condong jual">📉 Kabar buruk</button>
         <label class="sel-wrap">
-          <span class="sim-label">Populasi</span>
-          <select id="selPop" class="sel mono" aria-label="Komposisi gaya informasi">
-            <option value="0.30,0.50,0.20">F30 · C50 · N20 (default)</option>
-            <option value="0.10,0.75,0.15">F10 · C75 · N15 (chartist)</option>
-            <option value="0.60,0.25,0.15">F60 · C25 · N15 (fundamental)</option>
-            <option value="0.20,0.30,0.50">F20 · C30 · N50 (rumor)</option>
+          <span class="sim-label">Cara baca pasar</span>
+          <select id="selPop" class="sel mono" aria-label="Komposisi cara membaca pasar">
+            <option value="0.30,0.50,0.20">Campuran normal (bawaan)</option>
+            <option value="0.10,0.75,0.15">Banyak pengikut tren</option>
+            <option value="0.60,0.25,0.15">Banyak penganut nilai wajar</option>
+            <option value="0.20,0.30,0.50">Banyak pemburu rumor</option>
           </select>
         </label>
         <label class="sel-wrap">
-          <span class="sim-label">Psikologi</span>
-          <select id="selPsych" class="sel mono" aria-label="Komposisi profil psikologi">
-            <option value="0.34,0.33">D34 · B33 · A33 (merata)</option>
-            <option value="0.10,0.70">D10 · B70 · A20 (nyangkut)</option>
-            <option value="0.70,0.15">D70 · B15 · A15 (disiplin)</option>
-            <option value="0.15,0.15">D15 · B15 · A70 (averager)</option>
+          <span class="sim-label">Sifat saat rugi</span>
+          <select id="selPsych" class="sel mono" aria-label="Komposisi sifat saat rugi">
+            <option value="0.34,0.33">Merata (bawaan)</option>
+            <option value="0.10,0.70">Banyak yang keras kepala</option>
+            <option value="0.70,0.15">Banyak yang disiplin</option>
+            <option value="0.15,0.15">Banyak yang suka nambah</option>
           </select>
         </label>
         <div class="sim-controls-right">
           <button class="btn btn-ghost btn-small" id="btnPause" aria-label="Jeda simulasi">⏸</button>
-          <button class="btn btn-ghost btn-small" id="btnReset" aria-label="Reset simulasi">↺</button>
+          <button class="btn btn-ghost btn-small" id="btnReset" aria-label="Ulangi dari awal">↺</button>
         </div>
       </div>
     </div>
@@ -170,462 +166,475 @@
 <!-- ============================== TICKER ============================== -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track mono">
-    <span>100 agen heterogen</span><span>3 gaya informasi × 3 profil psikologi</span><span>harga dari agregasi order, bukan rumus sentimen</span><span>kalibrasi: 576 kombinasi × 8 seed × 600 tick</span><span>rentang emergent 0,60× – 1,88× fundamental</span><span>10 tick / detik via WebSocket</span><span>bukan alat prediksi harga</span><span>studi kasus: Bursa Efek Indonesia</span>
-    <span>100 agen heterogen</span><span>3 gaya informasi × 3 profil psikologi</span><span>harga dari agregasi order, bukan rumus sentimen</span><span>kalibrasi: 576 kombinasi × 8 seed × 600 tick</span><span>rentang emergent 0,60× – 1,88× fundamental</span><span>10 tick / detik via WebSocket</span><span>bukan alat prediksi harga</span><span>studi kasus: Bursa Efek Indonesia</span>
+    <span>100 investor tiruan</span><span>962 saham BEI bisa dipilih</span><span>harga awal dari data bursa terakhir</span><span>chart 15 menit</span><span>jam bursa 09:00–16:00, menit demi menit</span><span>sebar rumor, lihat reaksinya</span><span>bukan prediksi harga</span><span>tanpa uang sungguhan</span>
+    <span>100 investor tiruan</span><span>962 saham BEI bisa dipilih</span><span>harga awal dari data bursa terakhir</span><span>chart 15 menit</span><span>jam bursa 09:00–16:00, menit demi menit</span><span>sebar rumor, lihat reaksinya</span><span>bukan prediksi harga</span><span>tanpa uang sungguhan</span>
   </div>
 </div>
 
-<!-- ============================== 01 PROYEK ============================== -->
-<section class="section" id="proyek" aria-labelledby="h-proyek">
+<!-- ============================== 01 APA INI ============================== -->
+<section class="section" id="apa-ini" aria-labelledby="h-apa">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="num">01 — Proyek apa ini?</p>
-      <h2 id="h-proyek">SimCity untuk pasar saham, dengan investor yang punya <em>ego</em>.</h2>
+      <p class="num">01 — Apa ini, sebenarnya?</p>
+      <h2 id="h-apa">Seperti <em>SimCity</em>, tapi kotanya adalah pasar saham.</h2>
       <p class="sub">
-        Kami membangun dunia digital kecil tempat ratusan investor tiruan membaca harga, menimbang
-        untung-rugi, dan mengirim order. Tidak ada yang memprogram bubble; bubble terjadi karena
-        para agen saling merespons satu sama lain. Paper menyebutnya
-        <em>“agen Minecraft versi pasar finansial”</em>.
+        Bayangkan sebuah akuarium kecil di dalam komputer. Isinya bukan ikan, melainkan
+        100 investor tiruan yang setiap menit melihat harga, menimbang untung-rugi, lalu memutuskan:
+        beli, jual, atau diam. Kamu bisa melempar “umpan” berupa rumor atau kabar buruk, lalu menonton apa yang terjadi.
       </p>
     </div>
 
     <div class="cards-3">
       <article class="card reveal" style="--i:1">
-        <div class="card-icon">📈</div>
-        <h3>Mekanisme pasar sungguhan</h3>
-        <p>Harga <strong>tidak</strong> dihitung dari rumus “harga = f(sentimen)”. Setiap tick, 100 agen mengirim order beli/jual/hold dan harga bergerak murni dari <em>net order flow</em> lewat model market-maker.</p>
-        <code class="formula mono">P(t+1) = P(t) · exp(λ · mean(order))</code>
+        <div class="card-icon">🧑‍🤝‍🧑</div>
+        <h3>Investor tiruan yang punya sifat</h3>
+        <p>Ada <strong>tiga cara membaca pasar</strong>: melihat <strong>nilai wajar</strong> (harga yang “pantas” menurut kondisi perusahaan), mengikuti tren, atau percaya rumor. Lalu ada <strong>tiga sifat saat rugi</strong>: disiplin (berani jual rugi), keras kepala (menahan sampai “nyangkut”), dan suka nambah saat harga turun. Campurannya bisa kamu atur.</p>
       </article>
       <article class="card reveal" style="--i:2">
-        <div class="card-icon">🧠</div>
-        <h3>Populasi agen hibrida</h3>
-        <p>Mayoritas agen <em>rule-based</em>: murah, cepat, dan bisa dikalibrasi. Minoritas agen berbasis <em>LLM</em> (Gemini) yang menimbang konteks dan merefleksikan keputusannya, sehingga populasi tidak terlalu seragam.</p>
+        <div class="card-icon">⚖️</div>
+        <h3>Harga terbentuk dari tawar-menawar</h3>
+        <p>Tidak ada rumus yang menentukan harga. Kalau lebih banyak yang mau beli daripada jual, harga naik. Kalau sebaliknya, turun. <strong>Persis seperti bursa sungguhan</strong>, hanya versi kecilnya.</p>
       </article>
       <article class="card reveal" style="--i:3">
         <div class="card-icon">🌊</div>
-        <h3>Perilaku emergent, bukan skrip</h3>
-        <p>Bubble, crash, “nyangkut”, dan averaging-down muncul sendiri dari interaksi. Target keberhasilan: <strong>plausibilitas dan kekayaan perilaku</strong>, bukan akurasi terhadap harga riil.</p>
+        <h3>Kejadian muncul sendiri</h3>
+        <p>Kami tidak memprogram bubble, panik, atau nyangkut massal. Semua itu <strong>muncul sendiri</strong> karena investor tiruan saling bereaksi terhadap harga yang sama. Itulah yang membuatnya menarik untuk ditonton.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 02 CARA PAKAI ============================== -->
+<section class="section section-alt" id="cara-pakai" aria-labelledby="h-cara">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="num">02 — Cara pakai dalam 3 langkah</p>
+      <h2 id="h-cara">Pilih saham, tekan tombol, lalu <em>tonton</em> kerumunannya.</h2>
+      <p class="sub">Tidak perlu daftar akun, tidak perlu modal. Buka simulator dan ikuti tiga langkah ini.</p>
+    </div>
+
+    <ol class="steps">
+      <li class="step reveal" style="--i:1">
+        <div class="step-head"><span class="step-n mono">1</span><h3>Pilih saham</h3></div>
+        <p>Ketik kode saham seperti <b>BBCA</b>, nama seperti <b>bank bca</b>, atau sektor seperti <b>batu bara</b>. Semua 962 saham di Bursa Efek Indonesia bisa dipilih. Harga awalnya adalah harga penutupan terakhir di bursa, diambil dari Sectors (penyedia data saham Indonesia).</p>
+        <div class="mock mock-search" aria-hidden="true">
+          <div class="mock-input mono"><span class="mock-icon">⌕</span>bank bca<span class="mock-caret"></span></div>
+          <div class="mock-results">
+            <div class="mock-row mock-row-hl"><b class="mono">BBCA</b><span>Bank Central Asia</span><i class="mock-chip">Keuangan</i></div>
+            <div class="mock-row"><b class="mono">BBRI</b><span>Bank Rakyat Indonesia</span><i class="mock-chip">Keuangan</i></div>
+            <div class="mock-row"><b class="mono">BMRI</b><span>Bank Mandiri</span><i class="mock-chip">Keuangan</i></div>
+          </div>
+          <div class="mock-foot mono">962 saham BEI · harga penutupan terakhir</div>
+        </div>
+      </li>
+      <li class="step reveal" style="--i:2">
+        <div class="step-head"><span class="step-n mono">2</span><h3>Ganggu pasarnya</h3></div>
+        <p>Tekan <b>Sebar rumor</b> atau <b>Kabar buruk</b>. Geser komposisi investor: lebih banyak pengikut tren, atau lebih banyak yang keras kepala. Setiap perubahan langsung terasa.</p>
+        <div class="mock mock-controls" aria-hidden="true">
+          <div class="mock-btns">
+            <span class="mock-btn mock-btn-amber">📢 Sebar rumor</span>
+            <span class="mock-btn mock-btn-red">📉 Kabar buruk</span>
+          </div>
+          <div class="mock-slider mono">
+            <span>Pengikut tren</span><b>50%</b>
+            <span class="track"><i style="width:50%"></i><em style="left:50%"></em></span>
+          </div>
+          <div class="mock-slider mono">
+            <span>Keras kepala</span><b>33%</b>
+            <span class="track"><i style="width:33%; background:var(--violet)"></i><em style="left:33%"></em></span>
+          </div>
+        </div>
+      </li>
+      <li class="step reveal" style="--i:3">
+        <div class="step-head"><span class="step-n mono">3</span><h3>Tonton reaksinya</h3></div>
+        <p>Lihat harga bergerak di <b>chart 15 menit</b> (satu batang = 15 menit jam bursa) dan warna <b>100 kotak investor</b> berubah: hijau beli, merah jual, gelap diam, merah tua sedang rugi.</p>
+        <div class="mock mock-chart" aria-hidden="true">
+          <div class="mock-chart-top mono">
+            <span class="mock-sym">BBCA · <span class="mock-tf"><span class="on">15m</span></span></span>
+            <span class="mock-clock">Sen 22 Sep · 09:45</span>
+          </div>
+          <div class="mock-chart-body">
+            <svg class="mock-candles" viewBox="0 0 220 80" preserveAspectRatio="none">
+              <line x1="0" y1="44" x2="220" y2="44" stroke="#6ea8ff" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>
+              <g stroke-width="1.2">
+                <line x1="12" y1="52" x2="12" y2="66" stroke="#ff6b61"/><rect x="8" y="55" width="8" height="8" fill="#ff6b61"/>
+                <line x1="30" y1="46" x2="30" y2="62" stroke="#3ddc97"/><rect x="26" y="49" width="8" height="9" fill="#3ddc97"/>
+                <line x1="48" y1="38" x2="48" y2="54" stroke="#3ddc97"/><rect x="44" y="41" width="8" height="9" fill="#3ddc97"/>
+                <line x1="66" y1="34" x2="66" y2="48" stroke="#3ddc97"/><rect x="62" y="36" width="8" height="8" fill="#3ddc97"/>
+                <line x1="84" y1="22" x2="84" y2="40" stroke="#3ddc97"/><rect x="80" y="25" width="8" height="12" fill="#3ddc97"/>
+                <line x1="102" y1="12" x2="102" y2="30" stroke="#3ddc97"/><rect x="98" y="15" width="8" height="11" fill="#3ddc97"/>
+                <line x1="120" y1="8" x2="120" y2="26" stroke="#ff6b61"/><rect x="116" y="11" width="8" height="10" fill="#ff6b61"/>
+                <line x1="138" y1="16" x2="138" y2="38" stroke="#ff6b61"/><rect x="134" y="19" width="8" height="14" fill="#ff6b61"/>
+                <line x1="156" y1="30" x2="156" y2="50" stroke="#ff6b61"/><rect x="152" y="32" width="8" height="12" fill="#ff6b61"/>
+                <line x1="174" y1="40" x2="174" y2="58" stroke="#ff6b61"/><rect x="170" y="43" width="8" height="10" fill="#ff6b61"/>
+                <line x1="192" y1="42" x2="192" y2="56" stroke="#3ddc97"/><rect x="188" y="46" width="8" height="7" fill="#3ddc97"/>
+                <line x1="210" y1="36" x2="210" y2="52" stroke="#3ddc97"/><rect x="206" y="38" width="8" height="10" fill="#3ddc97"/>
+              </g>
+            </svg>
+            <div class="mock-grid">
+              <i class="g"></i><i></i><i class="r"></i><i class="g"></i><i></i>
+              <i></i><i class="g"></i><i class="p"></i><i></i><i class="r"></i>
+              <i class="r"></i><i></i><i class="g"></i><i></i><i class="p"></i>
+              <i></i><i class="p"></i><i></i><i class="g"></i><i></i>
+              <i class="g"></i><i></i><i class="r"></i><i></i><i class="g"></i>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ol>
+
+    <div class="steps-cta reveal">
+      <a class="btn btn-amber btn-lg" href="/simulator">Coba sekarang, gratis ↗</a>
+      <span class="steps-note">Cukup dibuka lewat browser, tanpa daftar akun dan tanpa uang sungguhan.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 03 YANG TERLIHAT ============================== -->
+<section class="section" id="yang-terlihat" aria-labelledby="h-lihat">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="num">03 — Apa yang akan kamu lihat</p>
+      <h2 id="h-lihat">Enam kejadian yang tidak pernah kami program, tetapi <em>selalu</em> muncul.</h2>
+      <p class="sub">Semua ini lahir dari 100 investor tiruan yang saling bereaksi. Kamu akan mengenalinya dari berita bursa sungguhan.</p>
+    </div>
+    <div class="cards-3 cards-emergent">
+      <article class="card reveal" style="--i:1">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-amber" d="M0 33 C18 31 30 27 44 22 S68 7 84 4 S104 20 120 35"/></svg>
+        <h3>Bubble</h3>
+        <p>Harga naik jauh di atas nilai wajarnya karena pengikut tren dan pemburu rumor saling menyemangati. Naik terus, sampai pembelinya habis.</p>
+      </article>
+      <article class="card reveal" style="--i:2">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-red" d="M0 8 C15 10 26 12 40 15 S58 30 74 36 S100 34 120 31"/></svg>
+        <h3>Panik dan crash</h3>
+        <p>Beberapa investor jual rugi, harga turun, investor lain ikut “sakit” lalu ikut jual. Rantainya berlanjut sampai harga jatuh jauh di bawah nilai wajar.</p>
+      </article>
+      <article class="card reveal" style="--i:3">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-violet" d="M0 10 L28 12 L44 30 L120 33"/></svg>
+        <h3>Nyangkut massal</h3>
+        <p>Investor keras kepala menolak jual rugi. Harga bertahan rendah lama karena tidak ada yang menyerah, dan pulihnya pelan sekali.</p>
+      </article>
+      <article class="card reveal" style="--i:4">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-orange" d="M0 8 L24 16 L44 26 L70 34 L90 24 L120 12"/></svg>
+        <h3>Nambah saat rugi</h3>
+        <p>Sebagian investor menambah beli setiap harga turun supaya harga rata-ratanya ikut turun. Kadang menyelamatkan, kadang justru memperdalam kerugian saat modalnya habis.</p>
+      </article>
+      <article class="card reveal" style="--i:5">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-green" d="M0 20 C10 4 20 4 30 20 S50 36 60 20 S80 4 90 20 S110 36 120 20"/></svg>
+        <h3>Naik-turun yang berulang</h3>
+        <p>Bubble, lalu crash, lalu bubble lagi. Siklus ini muncul terus tanpa kami atur, cukup dari campuran sifat investor yang berbeda-beda.</p>
+      </article>
+      <article class="card reveal" style="--i:6">
+        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-blue" d="M0 30 L40 28 L60 18 L120 6"/><path class="sp sp-blue" d="M0 36 L40 34 L60 20 L120 8" opacity=".55"/><path class="sp sp-blue" d="M0 24 L40 22 L60 16 L120 5" opacity=".35"/></svg>
+        <h3>Ikut-ikutan</h3>
+        <p>Investor tiruan tidak saling mengobrol, tetapi membaca harga yang sama. Itu saja sudah cukup untuk membuat kerumunan bergerak searah.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 04 UNTUK SIAPA ============================== -->
+<section class="section section-alt" id="untuk-siapa" aria-labelledby="h-siapa">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="num">04 — Untuk siapa</p>
+      <h2 id="h-siapa">Untuk yang ingin <em>memahami</em> pasar, bukan menebak harga.</h2>
+    </div>
+
+    <div class="audience reveal">
+      <div class="audience-chips">
+        <span class="chip">🎓 Mahasiswa dan peneliti keuangan perilaku</span>
+        <span class="chip">📚 Investor pemula yang ingin paham psikologi pasar</span>
+        <span class="chip">🏛️ Regulator dan tim komunikasi kebijakan</span>
+        <span class="chip">🤖 Pengembang agen AI yang butuh “dunia uji”</span>
+      </div>
     </div>
 
     <div class="not-but reveal">
       <div class="not">
         <span class="tag tag-red">Ini bukan</span>
         <ul>
-          <li>Bot trading atau penghasil sinyal profit</li>
-          <li>Prediktor IHSG atau harga emiten tertentu</li>
-          <li>Dashboard sentimen yang menampilkan opini</li>
+          <li>Alat prediksi harga saham atau sinyal beli/jual</li>
+          <li>Robot trading atau penghasil cuan</li>
+          <li>Gambaran pasar sungguhan hari ini: harga awal saja yang nyata, sisanya simulasi</li>
         </ul>
       </div>
       <div class="but">
         <span class="tag tag-green">Ini adalah</span>
         <ul>
-          <li>Sandbox <em>counterfactual</em>: suntik skenario, amati reaksi kerumunan</li>
-          <li>Alat belajar tentang psikologi pasar untuk investor retail dan mahasiswa</li>
-          <li>Platform riset perilaku emergent dengan positioning pasar Indonesia</li>
+          <li>Tempat aman untuk bereksperimen: <em>sebar rumor, geser komposisi investor, lihat reaksinya</em></li>
+          <li>Alat belajar psikologi pasar untuk investor pemula dan mahasiswa</li>
+          <li>Arena uji coba untuk riset perilaku pasar dengan konteks Bursa Efek Indonesia</li>
         </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================== 02 MENGAPA ============================== -->
-<section class="section section-alt" id="mengapa" aria-labelledby="h-mengapa">
+<!-- ============================== 05 LEBIH DALAM ============================== -->
+<section class="section" id="lebih-dalam" aria-labelledby="h-dalam">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="num">02 — Kenapa ini penting?</p>
-      <h2 id="h-mengapa">Pasar retail Indonesia digerakkan rumor. Kita belum punya tempat aman untuk <em>mempelajarinya</em>.</h2>
+      <p class="num">05 — Untuk yang ingin lebih dalam</p>
+      <h2 id="h-dalam">Dapur simulasinya, kalau kamu <em>penasaran</em>.</h2>
+      <p class="sub">Bagian ini opsional dan lebih teknis. Buka yang menarik saja.</p>
     </div>
 
-    <div class="reasons">
-      <article class="reason reveal" style="--i:1">
-        <span class="reason-n mono">1</span>
-        <h3>Riset “prediksi harga” sudah sesak dan sulit divalidasi</h3>
-        <p>TradingAgents, StockSim, TwinMarket, dan kerangka Lopez-Lira umumnya diposisikan sebagai alat prediksi atau sinyal trading. Pertanyaan “seberapa serupa simulasi ini dengan pasar riil” tidak punya jawaban yang murah maupun definitif. Kami keluar dari jebakan itu dengan reframing total.</p>
-      </article>
-      <article class="reason reveal" style="--i:2">
-        <span class="reason-n mono">2</span>
-        <h3>IDX adalah kasus studi yang lebih tepat daripada Wall Street</h3>
-        <p>Pasar retail Indonesia dikenal <em>rumor-driven</em> dan <em>retail-dominated</em>: figur influencer, fenomena “saham gorengan”, hingga sanksi OJK terhadap pegiat media sosial (Feb 2026) dan POJK 13/2025 tentang influencer. Literatur global didominasi pasar AS; IDX masih <em>under-explored</em>.</p>
-      </article>
-      <article class="reason reveal" style="--i:3">
-        <span class="reason-n mono">3</span>
-        <h3>Agen LLM punya cacat perilaku yang harus didesain, bukan diasumsikan</h3>
-        <p>Tiga temuan literatur: pasar agen LLM tampak <em>terlalu rasional</em>; persona LLM mengalami <em>belief rigidity</em> (prior di prompt awal mendominasi seluruh sesi); dan agen LLM lebih rentan <em>herding</em> dibanding manusia. Arsitektur kami menjawab ketiganya dengan heterogenitas eksplisit dan langkah refleksi.</p>
-      </article>
-      <article class="reason reveal" style="--i:4">
-        <span class="reason-n mono">4</span>
-        <h3>Komunikasi kebijakan menggerakkan pasar, dan itu bisa disimulasikan</h3>
-        <p>Kasus 2024–2026 menunjukkan pengumuman kebijakan besar tanpa pra-komunikasi memantik penurunan sektoral tajam. Pidato bukan penyebab, tetapi <em>pemantik</em> yang menyulut trust yang sudah menipis. Sandbox memungkinkan menguji “apa jadinya jika” tanpa mempertaruhkan uang sungguhan.</p>
-      </article>
-    </div>
+    <div class="deep reveal">
 
-    <div class="audience reveal">
-      <p class="audience-title">Untuk siapa</p>
-      <div class="audience-chips">
-        <span class="chip">🎓 Peneliti behavioral finance &amp; ABM</span>
-        <span class="chip">📚 Edukator dan komunitas investor retail</span>
-        <span class="chip">🏛️ Regulator dan tim komunikasi kebijakan</span>
-        <span class="chip">🤖 Pengembang agen LLM yang butuh dunia uji</span>
-      </div>
-    </div>
-  </div>
-</section>
+      <details class="deep-item" id="dalam-harga">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">⚙️</span>
+          <span class="deep-title">Bagaimana harga dihitung?<span class="deep-sub">Dari 100 pesanan kecil menjadi satu harga, setiap menit bursa</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <p>Setiap menit bursa simulasi (kami menyebutnya 1 <em>tick</em>), 100 investor tiruan mengirim pesanan: beli, jual, atau diam, dengan kekuatan dari −1,5 (jual habis) sampai +1,5 (beli kuat). Rata-rata pesanan itulah yang menggeser harga:</p>
+          <code class="formula mono">P(t+1) = P(t) · exp(λ · mean(order))</code>
+          <p>λ (lambda) = 0,12 mengatur seberapa peka harga terhadap tekanan beli/jual. Tidak ada rumus “harga = f(sentimen)”. Rumor hanya mengubah suasana pasar (sentimen, dibatasi ±3,0 dan meluruh 28% per tick); yang menggerakkan harga tetap pesanan para investor.</p>
 
-<!-- ============================== 03 CARA KERJA ============================== -->
-<section class="section" id="cara-kerja" aria-labelledby="h-cara">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">03 — Bagaimana cara kerjanya?</p>
-      <h2 id="h-cara">Dari 100 keputusan kecil menjadi <em>satu</em> harga.</h2>
-      <p class="sub">Satu tick adalah satu putaran penuh: setiap agen membaca pasar, menyaring keputusannya lewat psikologi P&amp;L, mengirim order, dan Market Mechanism Engine menerjemahkan agregat order menjadi harga baru yang menjadi input tick berikutnya.</p>
-    </div>
+          <div class="flow" role="img" aria-label="Alur simulasi: baca pasar, saring lewat emosi, kirim pesanan, mesin pasar, harga baru, kembali ke awal">
+            <div class="flow-node">
+              <span class="flow-step mono">1</span>
+              <h4>Baca pasar</h4>
+              <p>Penganut nilai wajar melihat selisih harga dari nilai wajar, pengikut tren melihat arah 8 menit terakhir, pemburu rumor melihat suasana pasar.</p>
+            </div>
+            <div class="flow-arrow" aria-hidden="true">→</div>
+            <div class="flow-node">
+              <span class="flow-step mono">2</span>
+              <h4>Saring lewat emosi</h4>
+              <p>Kalau sedang pegang saham, sifat <em>disiplin / keras kepala / suka nambah</em> bisa mengubah keputusan saat rugi atau untung melewati ambang pribadinya.</p>
+            </div>
+            <div class="flow-arrow" aria-hidden="true">→</div>
+            <div class="flow-node">
+              <span class="flow-step mono">3</span>
+              <h4>Kirim pesanan</h4>
+              <p>Angka −1,5 sampai +1,5. Masuk posisi bila &gt; 0,35; keluar bila &lt; −1,0.</p>
+            </div>
+            <div class="flow-arrow" aria-hidden="true">→</div>
+            <div class="flow-node flow-node-core">
+              <span class="flow-step mono">4</span>
+              <h4>Mesin pasar</h4>
+              <p>Rata-rata pesanan menggeser harga. Status: Normal, <b class="c-amber">Bubble</b> (&gt; 125% nilai wajar), atau <b class="c-red">Panik-Crash</b> (&lt; 82%).</p>
+            </div>
+            <div class="flow-arrow" aria-hidden="true">→</div>
+            <div class="flow-node">
+              <span class="flow-step mono">5</span>
+              <h4>Harga baru</h4>
+              <p>Dikirim ke dashboard lewat WebSocket dan menjadi bahan bacaan investor pada menit berikutnya.</p>
+            </div>
+          </div>
 
-    <div class="flow reveal" role="img" aria-label="Alur simulasi: agen membaca informasi, filter psikologi, order, market mechanism engine, harga baru, kembali ke agen">
-      <div class="flow-node">
-        <span class="flow-step mono">1</span>
-        <h4>Baca informasi</h4>
-        <p>Fundamentalis melihat deviasi dari nilai wajar, chartist melihat momentum 8 tick, noise trader melihat rumor.</p>
-      </div>
-      <div class="flow-arrow" aria-hidden="true">→</div>
-      <div class="flow-node">
-        <span class="flow-step mono">2</span>
-        <h4>Filter psikologi P&amp;L</h4>
-        <p>Jika agen punya posisi, profil <em>disciplined / bagholder / averager</em> boleh meng-override sinyal saat ambang sakit atau ambang serakah terlewati.</p>
-      </div>
-      <div class="flow-arrow" aria-hidden="true">→</div>
-      <div class="flow-node">
-        <span class="flow-step mono">3</span>
-        <h4>Kirim order</h4>
-        <p>Nilai kontinu −1,5 (jual habis) hingga +1,5 (beli kuat). Masuk posisi jika &gt; 0,35; keluar jika &lt; −1,0.</p>
-      </div>
-      <div class="flow-arrow" aria-hidden="true">→</div>
-      <div class="flow-node flow-node-core">
-        <span class="flow-step mono">4</span>
-        <h4>Market Mechanism Engine</h4>
-        <p>Rata-rata net order menggerakkan harga secara eksponensial. Status: Normal, <b class="c-amber">Bubble</b> (&gt;125%), atau <b class="c-red">Panik-Crash</b> (&lt;82%).</p>
-      </div>
-      <div class="flow-arrow" aria-hidden="true">→</div>
-      <div class="flow-node">
-        <span class="flow-step mono">5</span>
-        <h4>Harga baru</h4>
-        <p>Di-broadcast lewat WebSocket ke dashboard (≈10 tick/detik) dan menjadi input untuk tick berikutnya.</p>
-      </div>
-    </div>
-
-    <div class="flow-inputs reveal">
-      <div class="input-node">
-        <span class="tag tag-amber">Input eksternal</span>
-        <p><strong>Rumor &amp; bad news</strong> menaikkan/menurunkan sentimen pasar (dibatasi ±3,0). Sentimen meluruh 28% per tick, sehingga efek rumor tanpa fundamental cepat pudar, sama seperti “janji tanpa data”.</p>
-      </div>
-      <div class="input-node">
-        <span class="tag tag-blue">Knob populasi</span>
-        <p><strong>Rasio gaya informasi</strong> (fundamentalis/chartist/noise) dan <strong>rasio psikologi</strong> (disciplined/bagholder/averager) bisa digeser saat simulasi berjalan; populasi dibangun ulang seketika.</p>
-      </div>
-      <div class="input-node">
-        <span class="tag tag-violet">Kalibrasi</span>
-        <p>Parameter default hasil <strong>grid search headless</strong>: 576 kombinasi × 8 seed × 600 tick. Target: puncak 1,5–2,0× fundamental, lembah 0,55–0,75×, minimal 3 siklus boom-bust, tidak meledak dan tidak kolaps. Hasil: 1,88× / 0,60× / stabil 100%.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== 04 AGEN ============================== -->
-<section class="section section-alt" id="agen" aria-labelledby="h-agen">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">04 — Anatomi agen</p>
-      <h2 id="h-agen">Cara membaca pasar <em>×</em> cara menanggung rugi.</h2>
-      <p class="sub">Kontribusi utama paper: psikologi profit-and-loss diperlakukan sebagai <strong>sumbu independen</strong> di luar gaya membaca informasi. Seorang chartist bisa disiplin atau bisa nyangkut; seorang fundamentalis bisa tenang atau justru averaging-down tanpa henti. Arahkan kursor ke sel untuk melihat kombinasinya.</p>
-    </div>
-
-    <div class="matrix-wrap reveal">
-      <div class="matrix" id="matrix">
-        <div class="mx-corner">
-          <span class="mx-axis mx-axis-x">Gaya informasi →</span>
-          <span class="mx-axis mx-axis-y">↓ Profil psikologi</span>
+          <h4>Waktu dan chart</h4>
+          <ul class="deep-list">
+            <li><strong>1 tick = 1 menit bursa simulasi.</strong> Jam mengikuti sesi BEI: Sesi 1 pukul 09:00–12:00, Sesi 2 pukul 13:30–16:00, total 330 menit per hari bursa. Akhir pekan dilompati.</li>
+            <li>Satu candle = <strong>15 menit</strong> jam bursa. Chart bisa di-zoom (roda mouse / cubit dua jari) dan digeser untuk melihat histori. Sumbu waktu menampilkan jam bursa, bukan nomor tick.</li>
+            <li>Kecepatan simulasi bisa diatur 0,5× sampai 5×, bisa dijeda, dan bisa diulang dari awal. Histori disimpan hingga 2.000 menit (sekitar 6 hari bursa).</li>
+          </ul>
         </div>
-        <div class="mx-head" data-col="0"><b class="c-blue">Fundamentalis</b><small>Mean-revert ke nilai wajar · α = 2,5 · 30%</small></div>
-        <div class="mx-head" data-col="1"><b class="c-violet">Chartist</b><small>Ikut momentum 8 tick · faktor 2,8 · 50%</small></div>
-        <div class="mx-head" data-col="2"><b class="c-orange">Noise trader</b><small>Acak σ = 0,42 + sensitif rumor 1,4 · 20%</small></div>
+      </details>
 
-        <div class="mx-rowhead" data-row="0"><b>Disciplined</b><small>Cut-loss di ambang sakit, take-profit di ambang serakah</small></div>
-        <div class="mx-cell" data-row="0" data-col="0"><p>Beli saat murah, jual saat mahal, dan cut-loss tegas kalau ternyata salah. Penjaga stabilitas.</p></div>
-        <div class="mx-cell" data-row="0" data-col="1"><p>Ikut tren, keluar cepat begitu tren patah. Mesin pembentuk bubble yang rapi.</p></div>
-        <div class="mx-cell" data-row="0" data-col="2"><p>Beli-jual acak dan termakan rumor, tetapi punya rem berupa stop-loss.</p></div>
+      <details class="deep-item" id="dalam-agen">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">🧠</span>
+          <span class="deep-title">Sembilan tipe investor tiruan<span class="deep-sub">3 cara membaca pasar × 3 sifat saat rugi. Arahkan kursor ke sel untuk melihat kombinasinya</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <p>Ide utamanya: <strong>cara membaca pasar</strong> dan <strong>cara menanggung rugi</strong> adalah dua hal yang terpisah. Seorang pengikut tren bisa disiplin atau bisa nyangkut; seorang penganut nilai wajar bisa tenang atau justru nambah terus saat rugi.</p>
+          <div class="matrix-wrap">
+            <div class="matrix" id="matrix">
+              <div class="mx-corner">
+                <span class="mx-axis mx-axis-x">Cara baca pasar →</span>
+                <span class="mx-axis mx-axis-y">↓ Sifat saat rugi</span>
+              </div>
+              <div class="mx-head" data-col="0"><b class="c-blue">Penganut nilai wajar</b><small><em>fundamentalist</em> · tarik ke nilai wajar · α = 2,5 · 30% populasi</small></div>
+              <div class="mx-head" data-col="1"><b class="c-violet">Pengikut tren</b><small><em>chartist</em> · ikut arah 8 menit terakhir · faktor 2,8 · 50%</small></div>
+              <div class="mx-head" data-col="2"><b class="c-orange">Pemburu rumor</b><small><em>noise trader</em> · acak σ = 0,42 · peka rumor 1,4 · 20%</small></div>
 
-        <div class="mx-rowhead" data-row="1"><b>Bagholder</b><small>Menolak cut-loss; hanya jual 5–20% dari sinyal jual saat rugi</small></div>
-        <div class="mx-cell" data-row="1" data-col="0"><p>Yakin “harga pasti balik ke nilai wajar”, lalu nyangkut kalau tidak kembali.</p></div>
-        <div class="mx-cell" data-row="1" data-col="1"><p>Masuk di puncak momentum, menolak jual saat berbalik. Sumber utama drawdown berkepanjangan.</p></div>
-        <div class="mx-cell" data-row="1" data-col="2"><p>Ikut rumor, rugi, lalu berprinsip “belum dijual berarti belum rugi”.</p></div>
+              <div class="mx-rowhead" data-row="0"><b>Disiplin</b><small><em>disciplined</em> · jual rugi di ambang sakit, ambil untung di ambang serakah</small></div>
+              <div class="mx-cell" data-row="0" data-col="0"><p>Beli saat murah, jual saat mahal, dan berani jual rugi kalau ternyata salah. Penjaga kestabilan.</p></div>
+              <div class="mx-cell" data-row="0" data-col="1"><p>Ikut tren, keluar cepat begitu tren patah. Pembentuk bubble yang rapi.</p></div>
+              <div class="mx-cell" data-row="0" data-col="2"><p>Beli-jual acak dan termakan rumor, tetapi punya rem berupa stop-loss.</p></div>
 
-        <div class="mx-rowhead" data-row="2"><b>Averager</b><small>Tambah posisi saat rugi selama modal tersisa (maks 2,5×)</small></div>
-        <div class="mx-cell" data-row="2" data-col="0"><p>Setiap harga di bawah nilai wajar dianggap diskon: tambah lot terus.</p></div>
-        <div class="mx-cell" data-row="2" data-col="1"><p>Kejar momentum, lalu average-down saat momentum berbalik. Kombinasi paling rentan.</p></div>
-        <div class="mx-cell" data-row="2" data-col="2"><p>FOMO masuk, lalu tambah lot setiap turun karena “sudah murah”.</p></div>
-      </div>
+              <div class="mx-rowhead" data-row="1"><b>Keras kepala</b><small><em>bagholder</em> · menolak jual rugi; saat rugi hanya menjual 5–20% dari yang seharusnya</small></div>
+              <div class="mx-cell" data-row="1" data-col="0"><p>Yakin “harga pasti balik ke nilai wajar”, lalu nyangkut kalau tidak kembali.</p></div>
+              <div class="mx-cell" data-row="1" data-col="1"><p>Masuk di puncak tren, menolak jual saat berbalik. Sumber utama penurunan berkepanjangan.</p></div>
+              <div class="mx-cell" data-row="1" data-col="2"><p>Ikut rumor, rugi, lalu berprinsip “belum dijual berarti belum rugi”.</p></div>
+
+              <div class="mx-rowhead" data-row="2"><b>Suka nambah</b><small><em>averager</em> · tambah beli saat rugi selama modal tersisa (maks 2,5× modal awal)</small></div>
+              <div class="mx-cell" data-row="2" data-col="0"><p>Setiap harga di bawah nilai wajar dianggap diskon: tambah terus.</p></div>
+              <div class="mx-cell" data-row="2" data-col="1"><p>Kejar tren, lalu nambah saat tren berbalik. Kombinasi paling rentan.</p></div>
+              <div class="mx-cell" data-row="2" data-col="2"><p>Takut ketinggalan lalu masuk, kemudian nambah setiap turun karena “sudah murah”.</p></div>
+            </div>
+          </div>
+
+          <div class="agent-notes">
+            <div class="note">
+              <h4>Ambang batas berbeda tiap orang</h4>
+              <p>Ambang “sakit” tiap investor diambil acak di sekitar rugi 25% (± 8%), ambang “serakah” di sekitar untung 45% (± 10%), dan peluang bereaksi 50–80% per menit. Hasilnya tidak ada gelombang aksi yang terlalu serentak, sehingga crash terlihat organik, bukan seperti saklar.</p>
+            </div>
+            <div class="note">
+              <h4>Akar keuangan perilaku</h4>
+              <ul class="refs">
+                <li><b>Disposition effect</b> (Shefrin &amp; Statman, 1985): jual yang untung terlalu cepat, tahan yang rugi terlalu lama.</li>
+                <li><b>Loss aversion</b> (Kahneman &amp; Tversky, 1979): sakitnya rugi lebih besar dari senangnya untung.</li>
+                <li><b>Herding</b>: ikut mayoritas alih-alih analisis sendiri; lebih kuat di pasar ritel.</li>
+              </ul>
+            </div>
+            <div class="note">
+              <h4>Lapisan AI (opsional)</h4>
+              <p>Bila <code class="mono">GEMINI_API_KEY</code> tersedia, sebagian keputusan emosional investor bisa diserahkan ke model Gemini yang menerima profil, untung-rugi, dan sinyal dasar, lalu mengembalikan satu angka pesanan beserta alasannya. Tanpa kunci API, simulasi berjalan penuh dengan aturan yang sama.</p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="deep-item" id="dalam-data">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">🗂️</span>
+          <span class="deep-title">Dari mana daftar saham dan harganya?<span class="deep-sub">962 emiten (perusahaan yang sahamnya tercatat di BEI) dan harga penutupan terakhir dari Sectors</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <ul class="deep-list">
+            <li><strong>Daftar saham</strong>: 962 emiten Bursa Efek Indonesia dalam 11 sektor (potret September 2026). Pencarian mengenali kode (<code class="mono">BBCA</code>), nama (<code class="mono">bank bca</code>), sebutan sehari-hari (<code class="mono">mandiri</code>, <code class="mono">telkom</code>), sektor (<code class="mono">batu bara</code>), dan memaklumi salah ketik (<code class="mono">mandri</code>).</li>
+            <li><strong>Harga awal</strong>: saat kamu memilih saham, harga penutupan terakhir diambil dari <strong>Sectors Financial API</strong> dan dipakai sebagai nilai wajar sekaligus harga pembuka simulasi. Hasilnya disimpan 6 jam agar tidak memanggil API berulang (1 kredit per emiten).</li>
+            <li><strong>Tanpa koneksi atau kuota habis</strong>: simulator tetap jalan; kamu cukup mengetik harga awal sendiri.</li>
+            <li><strong>IHSG</strong> tetap tersedia sebagai pilihan bawaan, dan nilainya hari ini tampil di bagian atas halaman ini.</li>
+            <li><strong>Penting</strong>: hanya harga awal yang berasal dari bursa sungguhan. Semua pergerakan setelahnya adalah hasil simulasi, bukan gambaran pasar hari ini.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="deep-item" id="dalam-kalibrasi">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">🎯</span>
+          <span class="deep-title">Kalibrasi: dari mana angka-angkanya?<span class="deep-sub">Pencarian parameter agar perilakunya masuk akal, bukan agar cocok dengan harga riil</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <p>Parameter bawaan dipilih lewat <strong>pencarian menyeluruh tanpa tampilan</strong> (grid search headless): 576 kombinasi parameter × 8 benih acak × 600 menit simulasi. Ukurannya bukan “mirip harga sungguhan”, melainkan:</p>
+          <ul class="deep-list">
+            <li>Puncak bubble di kisaran 1,5–2,0× nilai wajar, lembah crash di 0,55–0,75×.</li>
+            <li>Minimal tiga siklus naik-turun per 600 menit.</li>
+            <li>Tidak meledak tak terkendali dan tidak kolaps ke nol.</li>
+          </ul>
+          <p>Hasil parameter terpilih: puncak <strong>1,88×</strong>, lembah <strong>0,60×</strong>, stabil di <strong>100%</strong> benih acak. Siklus itu muncul tanpa satu pun agen AI, bukti bahwa campuran sifat yang berbeda-beda saja sudah cukup kaya.</p>
+        </div>
+      </details>
+
+      <details class="deep-item" id="dalam-riset">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">📚</span>
+          <span class="deep-title">Posisi dalam riset<span class="deep-sub">Empat kontribusi, evolusi ide, dan perbandingan dengan MiroFish / OASIS</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <p>Riset “prediksi harga” sudah sesak, dan klaimnya sulit serta mahal untuk dibuktikan. Kami memilih arah lain: keberhasilan diukur dari <strong>masuk akal dan kayanya perilaku</strong>, bukan akurasi harga. Ide ini lahir setelah dua iterasi ditolak (platform prediksi harga; lalu indikator sentimen media sosial yang berisiko jatuh ke jebakan “prediksi untuk cuan”).</p>
+
+          <div class="contrib">
+            <div class="contrib-item">
+              <span class="contrib-n mono">C1</span>
+              <div><h4>Mesin pasar yang berfungsi</h4><p>Siklus boom-bust stabil murni dari interaksi agen berbasis aturan yang beragam, tanpa agen AI sebagai prasyarat.</p></div>
+            </div>
+            <div class="contrib-item">
+              <span class="contrib-n mono">C2</span>
+              <div><h4>Taksonomi psikologi untung-rugi</h4><p>Profil disiplin, keras kepala, suka nambah (dan <em>greedy holder</em> yang direncanakan) sebagai sumbu terpisah dari cara membaca pasar.</p></div>
+            </div>
+            <div class="contrib-item">
+              <span class="contrib-n mono">C3</span>
+              <div><h4>Agen AI dengan langkah refleksi</h4><p>Dirancang melawan <em>belief rigidity</em>: keyakinan awal di prompt tidak dibiarkan mendominasi seluruh sesi, tetapi dipaksa dievaluasi ulang dengan keluaran terukur.</p></div>
+            </div>
+            <div class="contrib-item">
+              <span class="contrib-n mono">C4</span>
+              <div><h4>Studi kasus Indonesia</h4><p>Pasar yang digerakkan rumor dan didominasi ritel, di luar riset global yang didominasi saham AS.</p></div>
+            </div>
+          </div>
+
+          <div class="compare">
+            <div class="compare-head">
+              <h4>SimPasar IDX vs MiroFish / OASIS</h4>
+              <p>MiroFish adalah mesin prediksi “kecerdasan kerumunan” open-source di atas kerangka OASIS (CAMEL-AI) yang menjalankan ribuan agen AI berpersona di jejaring sosial. Perbedaannya bersifat arsitektural.</p>
+            </div>
+            <div class="table-scroll">
+              <table class="cmp">
+                <thead>
+                  <tr><th>Aspek</th><th>MiroFish / OASIS</th><th class="th-us">SimPasar IDX</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>“Dunia” tempat agen beraksi</td><td>Jejaring sosial (platform media sosial)</td><td>Mekanisme pasar (pembentukan harga dari pesanan)</td></tr>
+                  <tr><td>Jenis aksi agen</td><td>Aksi sosial: posting, komentar, like, follow, repost</td><td>Aksi finansial: beli / jual / diam yang langsung menggerakkan harga</td></tr>
+                  <tr><td>Keluaran</td><td>Konsensus opini: prediksi apa yang akan dikatakan orang</td><td>Deret harga dan catatan transaksi dari agregasi pesanan</td></tr>
+                  <tr><td>Klaim prediktif</td><td>Belum ada tolok ukur terpublikasi terhadap pasar finansial</td><td>Sengaja tidak mengklaim prediktif (sandbox plausibilitas)</td></tr>
+                  <tr><td>Peluang gabung</td><td>Loop kognitif Perceive → Deliberate → Act → Persist sebagai “otak” agen</td><td>Mesin pasar dibangun sendiri; rute hibrida dengan OASIS tetap terbuka</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="lit">
+            <p class="lit-title">Literatur yang dirujuk</p>
+            <div class="lit-chips mono">
+              <span>Generative Agents “Smallville”</span><span>TradingAgents</span><span>StockSim</span><span>TwinMarket</span><span>Lopez-Lira (2025)</span><span>FinMem</span><span>TradingGPT</span><span>FinCon</span><span>QuantAgent</span><span>Reflexion</span><span>OASIS / MiroFish</span><span>Shefrin &amp; Statman 1985</span><span>Kahneman &amp; Tversky 1979</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="deep-item" id="dalam-roadmap">
+        <summary>
+          <span class="deep-icon" aria-hidden="true">🛠️</span>
+          <span class="deep-title">Teknologi dan peta jalan<span class="deep-sub">Ringan untuk dijalankan, luas untuk dikembangkan</span></span>
+          <span class="deep-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="deep-body">
+          <div class="stack">
+            <span class="stack-item"><b>Python 3.12</b><small>inti simulasi</small></span>
+            <span class="stack-item"><b>NumPy</b><small>acak &amp; agregasi pesanan</small></span>
+            <span class="stack-item"><b>FastAPI + WebSocket</b><small>server &amp; stream per menit</small></span>
+            <span class="stack-item"><b>Sectors Financial API</b><small>daftar emiten &amp; harga awal</small></span>
+            <span class="stack-item"><b>Canvas candlestick</b><small>chart tanpa dependensi</small></span>
+            <span class="stack-item"><b>Google Gemini</b><small>lapisan agen AI (opsional)</small></span>
+          </div>
+          <div class="roadmap">
+            <div class="rm-col">
+              <p class="rm-phase"><span class="rm-dot rm-now"></span> Sekarang</p>
+              <ul>
+                <li>Mesin pasar dengan 100 investor tiruan berbasis aturan</li>
+                <li>Tiga sifat saat rugi: disiplin, keras kepala, suka nambah</li>
+                <li>Pilih saham BEI apa saja (962 emiten) dengan harga awal dari Sectors</li>
+                <li>Chart 15 menit dengan jam bursa dan grid 100 investor</li>
+                <li>Lapisan Gemini opsional untuk keputusan emosional</li>
+              </ul>
+            </div>
+            <div class="rm-col">
+              <p class="rm-phase"><span class="rm-dot rm-next"></span> Berikutnya</p>
+              <ul>
+                <li>Agen AI dengan langkah refleksi (anti <em>belief rigidity</em>)</li>
+                <li>Profil <em>greedy holder</em> (untung dianggap “bukan uang sendiri”)</li>
+                <li>Buku pesanan sungguhan: limit/market order, eksekusi sebagian</li>
+                <li>Knob komunikasi kebijakan: kejelasan, berbasis data vs janji, kejutan tanpa pra-komunikasi</li>
+                <li>Skenario dari peristiwa BEI 2024–2026</li>
+              </ul>
+            </div>
+            <div class="rm-col">
+              <p class="rm-phase"><span class="rm-dot rm-later"></span> Nanti</p>
+              <ul>
+                <li>Beberapa saham sekaligus dan rotasi sektor</li>
+                <li>Ingatan per investor dan jejaring informasi antar investor</li>
+                <li>Rute hibrida OASIS: loop kognitif sebagai “otak”</li>
+                <li>Putar ulang, ekspor catatan transaksi, notebook riset</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
     </div>
 
-    <div class="agent-notes">
-      <div class="note reveal" style="--i:1">
-        <h4>Ambang batas unik per agen</h4>
-        <p>Ambang sakit di-sample dari N(25%, 8%) dan ambang serakah dari N(45%, 10%), dengan probabilitas bereaksi 50–80% per tick. Hasilnya: tidak ada gelombang aksi yang terlalu serentak, sehingga crash terlihat organik alih-alih seperti saklar. Angka ini meniru perilaku “tahan dulu” investor retail IDX.</p>
-      </div>
-      <div class="note reveal" style="--i:2">
-        <h4>Akar behavioral finance</h4>
-        <ul class="refs">
-          <li><b>Disposition effect</b> (Shefrin &amp; Statman, 1985): jual pemenang terlalu cepat, tahan pecundang terlalu lama.</li>
-          <li><b>Loss aversion</b> (Kahneman &amp; Tversky, 1979): sakitnya rugi lebih besar dari senangnya untung.</li>
-          <li><b>House money effect</b>: keuntungan dianggap “bukan uang sendiri”; dasar profil <em>greedy holder</em> yang direncanakan.</li>
-          <li><b>Herding</b>: ikut mayoritas alih-alih analisis mandiri; lebih kuat di pasar retail dengan asimetri informasi.</li>
-        </ul>
-      </div>
-      <div class="note reveal" style="--i:3">
-        <h4>Lapisan LLM (opsional)</h4>
-        <p>Bila <code class="mono">GEMINI_API_KEY</code> tersedia, keputusan psikologis agen bisa didelegasikan ke model Gemini yang menerima profil, P&amp;L, ambang, dan sinyal dasar, lalu mengembalikan satu angka order. Tanpa API key, simulasi berjalan penuh dengan aturan deterministik. Langkah <strong>refleksi eksplisit</strong> untuk melawan belief rigidity adalah pekerjaan berikutnya.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== 05 EMERGENT ============================== -->
-<section class="section" id="emergent" aria-labelledby="h-emergent">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">05 — Perilaku emergent</p>
-      <h2 id="h-emergent">Yang tidak pernah kami program, tetapi <em>selalu</em> muncul.</h2>
-    </div>
-    <div class="cards-3 cards-emergent">
-      <article class="card reveal" style="--i:1">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-amber" d="M0 33 C18 31 30 27 44 22 S68 7 84 4 S104 20 120 35"/></svg>
-        <h3>Bubble</h3>
-        <p>Chartist memperkuat momentum, noise trader ikut rumor, fundamentalis kalah jumlah. Harga menembus 125% nilai wajar lalu kehabisan pembeli.</p>
-      </article>
-      <article class="card reveal" style="--i:2">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-red" d="M0 8 C15 10 26 12 40 15 S58 30 74 36 S100 34 120 31"/></svg>
-        <h3>Panik-Crash</h3>
-        <p>Beberapa agen disciplined cut-loss, harga turun, ambang sakit agen lain terlewati, dan kaskade jual berlanjut hingga di bawah 82% nilai wajar.</p>
-      </article>
-      <article class="card reveal" style="--i:3">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-violet" d="M0 10 L28 12 L44 30 L120 33"/></svg>
-        <h3>Nyangkut massal</h3>
-        <p>Bagholder menolak jual. Pain meter menyala merah, harga bertahan rendah karena tidak ada kapitulasi, dan pemulihan berjalan lambat.</p>
-      </article>
-      <article class="card reveal" style="--i:4">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-orange" d="M0 8 L24 16 L44 26 L70 34 L90 24 L120 12"/></svg>
-        <h3>Averaging down</h3>
-        <p>Averager menambah posisi hingga 2,5× dan menggeser harga rata-rata masuk. Kadang menyelamatkan, kadang memperdalam kerugian saat modal habis.</p>
-      </article>
-      <article class="card reveal" style="--i:5">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-green" d="M0 20 C10 4 20 4 30 20 S50 36 60 20 S80 4 90 20 S110 36 120 20"/></svg>
-        <h3>Siklus boom-bust berulang</h3>
-        <p>Kalibrasi mensyaratkan minimal tiga siklus per 600 tick. Siklus muncul stabil tanpa satu pun agen LLM, bukti bahwa heterogenitas rule-based saja sudah cukup kaya.</p>
-      </article>
-      <article class="card reveal" style="--i:6">
-        <svg class="spark" viewBox="0 0 120 40" aria-hidden="true"><path class="sp sp-blue" d="M0 30 L40 28 L60 18 L120 6"/><path class="sp sp-blue" d="M0 36 L40 34 L60 20 L120 8" opacity=".55"/><path class="sp sp-blue" d="M0 24 L40 22 L60 16 L120 5" opacity=".35"/></svg>
-        <h3>Herding &amp; kaskade</h3>
-        <p>Agen tidak saling melihat, tetapi membaca harga yang sama. Cukup untuk membuat kerumunan bergerak searah, dan cukup heterogen agar tidak bergerak serentak.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== 06 EVOLUSI ============================== -->
-<section class="section section-alt" id="evolusi" aria-labelledby="h-evolusi">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">06 — Evolusi ide</p>
-      <h2 id="h-evolusi">Tiga iterasi sebelum menemukan pertanyaan yang <em>benar</em>.</h2>
-      <p class="sub">Paper mencatat evolusi konsep ini sebagai bagian dari kontribusi metodologis. Kami memulai dari ide yang paling umum dan berakhir di ide yang paling jujur.</p>
-    </div>
-    <ol class="timeline">
-      <li class="tl reveal" style="--i:1">
-        <span class="tl-dot tl-dot-red"></span>
-        <p class="tl-label mono">Iterasi 1 · ditolak</p>
-        <h3>Platform prediksi harga</h3>
-        <p>Menggabungkan berita, rumor, riwayat harga, dan indikator teknikal untuk memprediksi pergerakan. Ditolak: ruang riset padat dan klaim prediktif tidak bisa divalidasi dengan murah.</p>
-      </li>
-      <li class="tl reveal" style="--i:2">
-        <span class="tl-dot tl-dot-amber"></span>
-        <p class="tl-label mono">Iterasi 2 · dilema</p>
-        <h3>Fokus IDX + scraping sentimen medsos</h3>
-        <p>Menyelesaikan masalah diferensiasi, tetapi memunculkan pilihan sulit: <em>counterfactual simulation</em> atau <em>leading indicator</em>? Pilihan kedua berisiko jatuh kembali ke jebakan “prediksi untuk profit”.</p>
-      </li>
-      <li class="tl reveal" style="--i:3">
-        <span class="tl-dot tl-dot-green"></span>
-        <p class="tl-label mono">Iterasi 3 · arah final</p>
-        <h3>Sandbox perilaku emergent</h3>
-        <p>Reframing total: sukses diukur dari plausibilitas dan kekayaan perilaku, bukan akurasi harga. Tantangan barunya adalah justifikasi keberadaan dan legitimasi ilmiah, yang dijawab lewat empat kontribusi di bawah.</p>
-      </li>
-    </ol>
-  </div>
-</section>
-
-<!-- ============================== 07 RISET ============================== -->
-<section class="section" id="riset" aria-labelledby="h-riset">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">07 — Posisi dalam riset</p>
-      <h2 id="h-riset">Empat kontribusi dan satu pembanding <em>terdekat</em>.</h2>
-    </div>
-
-    <div class="contrib">
-      <div class="contrib-item reveal" style="--i:1">
-        <span class="contrib-n mono">C1</span>
-        <div><h4>Market Mechanism Engine fungsional</h4><p>Prototipe yang menunjukkan siklus boom-bust stabil murni dari interaksi agen rule-based heterogen, tanpa agen LLM sebagai prasyarat perilaku emergent.</p></div>
-      </div>
-      <div class="contrib-item reveal" style="--i:2">
-        <span class="contrib-n mono">C2</span>
-        <div><h4>Taksonomi psikologi P&amp;L per agen</h4><p>Empat profil (disciplined, greedy holder, bagholder, averager) yang berakar pada behavioral finance klasik dan dirancang sebagai sumbu independen dari gaya membaca informasi.</p></div>
-      </div>
-      <div class="contrib-item reveal" style="--i:3">
-        <span class="contrib-n mono">C3</span>
-        <div><h4>Arsitektur agen kognitif LLM dengan refleksi eksplisit</h4><p>Dirancang untuk mengatasi <em>belief rigidity</em>: pembaruan keyakinan tidak diasumsikan muncul otomatis dari membaca konteks baru, tetapi dipaksa lewat langkah refleksi dengan keluaran terukur.</p></div>
-      </div>
-      <div class="contrib-item reveal" style="--i:4">
-        <span class="contrib-n mono">C4</span>
-        <div><h4>Studi kasus pasar modal Indonesia</h4><p>Positioning di pasar yang rumor-driven dan retail-dominated, di luar persaingan riset global yang didominasi framework saham AS.</p></div>
-      </div>
-    </div>
-
-    <div class="compare reveal">
-      <div class="compare-head">
-        <h3>SimPasar IDX vs MiroFish / OASIS</h3>
-        <p>MiroFish adalah <em>swarm intelligence prediction engine</em> open-source di atas kerangka OASIS (CAMEL-AI) yang menjalankan ribuan agen LLM berpersona di graf sosial. Perbedaannya dengan proyek ini bersifat arsitektural.</p>
-      </div>
-      <div class="table-scroll">
-        <table class="cmp">
-          <thead>
-            <tr><th>Aspek</th><th>MiroFish / OASIS</th><th class="th-us">SimPasar IDX</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>“Dunia” tempat agen beraksi</td><td>Graf sosial (platform media sosial)</td><td>Mekanisme pasar (order book / price-clearing)</td></tr>
-            <tr><td>Jenis aksi agen</td><td>Aksi sosial: posting, komentar, like, follow, repost, search (23 aksi bawaan)</td><td>Aksi finansial: buy / sell / hold dengan kuantitas yang langsung memengaruhi harga</td></tr>
-            <tr><td>Output yang dihasilkan</td><td>Konsensus opini / tren: prediksi apa yang akan dikatakan orang</td><td>Deret harga dan log transaksi yang terbentuk dari agregasi order riil</td></tr>
-            <tr><td>Status validasi prediktif</td><td>Belum ada benchmark terpublikasi terhadap hasil historis pasar finansial</td><td>Secara desain tidak mengklaim prediktif (sandbox plausibilitas)</td></tr>
-            <tr><td>Potensi penggunaan ulang</td><td>Loop kognitif Perceive → Deliberate → Act → Persist berpotensi dipakai sebagai “otak” agen</td><td>Mekanisme dunia (order book / pembentukan harga) dibangun mandiri; rute hibrida dengan OASIS tetap terbuka</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="lit reveal">
-      <p class="lit-title">Lanskap literatur yang dirujuk</p>
-      <div class="lit-chips mono">
-        <span>Generative Agents “Smallville”</span><span>TradingAgents</span><span>StockSim</span><span>TwinMarket</span><span>Lopez-Lira (2025)</span><span>FinMem</span><span>TradingGPT</span><span>FinCon</span><span>QuantAgent</span><span>EconAI</span><span>TrustTrade</span><span>Reflexion</span><span>OASIS / MiroFish</span><span>Shefrin &amp; Statman 1985</span><span>Kahneman &amp; Tversky 1979</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== 08 SKENARIO ============================== -->
-<section class="section section-alt" id="skenario" aria-labelledby="h-skenario">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">08 — Skenario yang bisa diuji</p>
-      <h2 id="h-skenario">Putar knob-nya, lalu lihat kerumunan <em>bereaksi</em>.</h2>
-    </div>
-    <div class="scenarios">
-      <div class="scn-col reveal" style="--i:1">
-        <span class="tag tag-green">Tersedia sekarang</span>
-        <ul class="scn-list">
-          <li><b>📢 Inject rumor</b><span>Sentimen positif mendadak. Amati apakah chartist mengubahnya menjadi bubble.</span></li>
-          <li><b>📉 Bad news</b><span>Sentimen negatif. Cukupkah untuk memicu kaskade cut-loss?</span></li>
-          <li><b>🎚️ Geser populasi</b><span>Lebih banyak chartist → bubble lebih liar; lebih banyak fundamentalis → harga lebih jinak.</span></li>
-          <li><b>🧩 Geser psikologi</b><span>Lebih banyak bagholder → drawdown lebih dalam dan lebih lama; lebih banyak averager → volatilitas di dasar.</span></li>
-          <li><b>⏱️ Kecepatan, jeda, reset</b><span>Dari 0,1× hingga 5×, dengan seed yang dapat direproduksi.</span></li>
-        </ul>
-      </div>
-      <div class="scn-col reveal" style="--i:2">
-        <span class="tag tag-amber">Dalam rancangan · knob komunikasi kebijakan</span>
-        <p class="scn-intro">Dipetakan dari studi kasus reaksi pasar terhadap komunikasi pejabat publik 2024–2026 (lihat <code class="mono">docs/reference_pidato_market.md</code>).</p>
-        <ul class="scn-list">
-          <li><b>Kejelasan vs “pokoknya”</b><span>Kejelasan rendah melebarkan ketidakpastian; agen noise mendominasi dan condong negatif.</span></li>
-          <li><b>Berbasis data vs janji</b><span>Klaim tanpa data meluruh cepat; kekosongan diisi spekulasi negatif.</span></li>
-          <li><b>Trust sebagai stok yang meluruh</b><span>Makin rendah trust, makin sensitif reaksi terhadap setiap pengumuman.</span></li>
-          <li><b>Kosmetik vs substantif</b><span>Pengumuman kosmetik memberi pantulan sesaat lalu kembali (revert).</span></li>
-          <li><b>Kejutan tanpa pra-komunikasi</b><span>Memperbesar magnitudo dan arah negatif reaksi.</span></li>
-          <li><b>Buffer institusional</b><span>Stabilizer independen meredam sensitivitas pasar terhadap satu suara.</span></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== 09 STACK + ROADMAP ============================== -->
-<section class="section" id="roadmap" aria-labelledby="h-roadmap">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <p class="num">09 — Teknologi &amp; peta jalan</p>
-      <h2 id="h-roadmap">Ringan untuk dijalankan, luas untuk <em>dikembangkan</em>.</h2>
-    </div>
-
-    <div class="stack reveal">
-      <span class="stack-item"><b>Python 3.12</b><small>inti simulasi</small></span>
-      <span class="stack-item"><b>NumPy</b><small>RNG &amp; agregasi order</small></span>
-      <span class="stack-item"><b>FastAPI</b><small>server &amp; static</small></span>
-      <span class="stack-item"><b>WebSocket</b><small>stream ≈10 tick/s</small></span>
-      <span class="stack-item"><b>Canvas candlestick</b><small>OHLC + volume tanpa dependensi</small></span>
-      <span class="stack-item"><b>Google Gemini</b><small>lapisan agen LLM (opsional)</small></span>
-      <span class="stack-item"><b>Grid search headless</b><small>kalibrasi parameter</small></span>
-    </div>
-
-    <div class="roadmap">
-      <div class="rm-col reveal" style="--i:1">
-        <p class="rm-phase"><span class="rm-dot rm-now"></span> Sekarang · prototipe</p>
-        <ul>
-          <li>Market Mechanism Engine dengan 100 agen rule-based</li>
-          <li>Taksonomi psikologi P&amp;L: disciplined, bagholder, averager</li>
-          <li>Dashboard WebSocket: grid agen, chart, pain meter, sentimen</li>
-          <li>Kalibrasi grid search 576 × 8 × 600 dan skor stabilitas 100%</li>
-          <li>Hook agen LLM (Gemini) untuk keputusan psikologis</li>
-        </ul>
-      </div>
-      <div class="rm-col reveal" style="--i:2">
-        <p class="rm-phase"><span class="rm-dot rm-next"></span> Berikutnya</p>
-        <ul>
-          <li>Agen kognitif LLM dengan langkah refleksi eksplisit (anti belief rigidity)</li>
-          <li>Profil <em>greedy holder</em> berbasis house money effect</li>
-          <li>Order book persisten: limit/market order, partial fill</li>
-          <li>Knob komunikasi kebijakan dan buffer institusional</li>
-          <li>Skenario kalibrasi dari peristiwa IDX 2024–2026</li>
-        </ul>
-      </div>
-      <div class="rm-col reveal" style="--i:3">
-        <p class="rm-phase"><span class="rm-dot rm-later"></span> Nanti</p>
-        <ul>
-          <li>Multi-emiten dan rotasi sektor</li>
-          <li>Memori persisten per agen dan jejaring informasi antar-agen</li>
-          <li>Rute hibrida OASIS: loop kognitif sebagai “otak”, order book milik sendiri</li>
-          <li>Replay, ekspor log transaksi, dan notebook riset</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============================== CTA / RUN ============================== -->
-<section class="section cta" id="jalankan" aria-labelledby="h-run">
-  <div class="wrap cta-grid">
-    <div class="reveal">
-      <p class="num">Jalankan sendiri</p>
-      <h2 id="h-run">Tiga perintah, satu pasar <em>mini</em>.</h2>
-      <p class="sub">Simulator penuh berjalan sebagai server FastAPI dengan WebSocket. API key Gemini bersifat opsional; tanpa itu seluruh agen memakai aturan deterministik.</p>
-      <div class="hero-actions">
-        <a class="btn btn-amber btn-lg" href="/simulator">Buka simulator interaktif ↗</a>
-        <a class="btn btn-ghost btn-lg" href="/paper.pdf" target="_blank" rel="noopener">Unduh draf paper (PDF)</a>
-      </div>
-    </div>
-    <div class="code reveal" style="--i:1">
-      <div class="code-bar mono"><span>terminal</span><button class="copy" id="copyCmd" type="button">Salin</button></div>
-<pre class="mono" id="cmdBlock"><span class="cm"># 1. dependensi</span>
-pip install -r requirements.txt
-
-<span class="cm"># 2. (opsional) lapisan agen LLM</span>
-cp .env.example .env   <span class="cm"># isi GEMINI_API_KEY</span>
-
-<span class="cm"># 3. jalankan server + dashboard</span>
-uvicorn server:app --reload --port 8000</pre>
+    <div class="deep-more reveal">
+      <a class="btn btn-ghost" href="/paper.pdf" target="_blank" rel="noopener">📄 Baca draf paper lengkap (PDF)</a>
     </div>
   </div>
 </section>
@@ -636,12 +645,12 @@ uvicorn server:app --reload --port 8000</pre>
   <div class="wrap footer-inner">
     <div>
       <a class="brand" href="#top"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14"/><path d="M8 44 L20 34 L28 40 L40 20 L48 28 L56 12"/></svg><span>Sim<b>Pasar</b> IDX</span></a>
-      <p class="footer-desc">Simulasi Pasar Modal Indonesia Berbasis Agen Hibrida: Arsitektur Rule-Based dan Large Language Model untuk Dinamika Perilaku Emergent.</p>
+      <p class="footer-desc">Simulasi pasar saham Indonesia dengan 100 investor tiruan. Dibuat untuk belajar dan bereksperimen, bukan untuk menebak harga.</p>
     </div>
     <div class="footer-links">
-      <a href="#proyek">Proyek</a><a href="#mengapa">Mengapa</a><a href="#cara-kerja">Cara kerja</a><a href="#agen">Agen</a><a href="#riset">Riset</a><a href="/paper.pdf" target="_blank" rel="noopener">Draf paper</a>
+      <a href="#apa-ini">Apa ini</a><a href="#cara-pakai">Cara pakai</a><a href="#yang-terlihat">Yang terlihat</a><a href="#lebih-dalam">Lebih dalam</a><a href="/simulator">Simulator</a><a href="/paper.pdf" target="_blank" rel="noopener">Draf paper</a>
     </div>
-    <p class="footer-note mono">© <span id="year">2026</span> Tim SimPasar IDX · proyek hackathon · bukan nasihat investasi, bukan prediksi harga.</p>
+    <p class="footer-note mono">© <span id="year">2026</span> Tim SimPasar IDX · proyek hackathon · bukan nasihat investasi, bukan prediksi harga · data harga awal: Sectors Financial API.</p>
   </div>
 </footer>
 

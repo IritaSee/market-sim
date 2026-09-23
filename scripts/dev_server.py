@@ -3,8 +3,10 @@ Jalankan server SimPasar IDX secara lokal untuk pengembangan.
 
 Sectors: default MODE OFFLINE. URL Sectors MCP diganti skema yang tidak dikenal
 sehingga httpx langsung menolaknya dan kode memakai data fallback. Tujuannya agar
-sesi pengembangan tidak menghabiskan kredit API hackathon (1 kredit per start
-server, 1 per landing page, 3 per halaman simulator).
+sesi pengembangan tidak menghabiskan kredit API hackathon (maks. 1 kredit per start
+server untuk harga BBCA yang di-cache 6 jam, 1 per landing page, 3 per halaman simulator).
+Simulator dibuka di BBCA (SIMPASAR_START_SYMBOL untuk mengganti); dalam mode offline
+harga awal dibaca dari cache disk .cache/sectors/ bila ada, selain itu nilai cadangan Rp6.200.
 
 Gemini: kunci dibaca dari environment atau file .env di root repo. Bila ada,
 sebagian kecil keputusan agen dibantu LLM secara asinkron dengan batas request per
@@ -88,4 +90,5 @@ host = os.environ.get("HOST", "127.0.0.1")
 port = int(os.environ.get("PORT", "8000"))
 print(f"[dev_server] landing   -> http://{host}:{port}/")
 print(f"[dev_server] simulator -> http://{host}:{port}/simulator")
-uvicorn.run("server:app", host=host, port=port, reload=False)
+# ws_max_size: perintah klien < 1 KB; frame raksasa ditolak sebelum di-parse (lihat server.WS_MAX_MESSAGE_BYTES).
+uvicorn.run("server:app", host=host, port=port, reload=False, ws_max_size=64 * 1024)

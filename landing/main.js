@@ -1,6 +1,10 @@
 /**
  * main.js — interaksi landing page: nav, scroll-reveal, matriks agen,
- * salin perintah, dan renderer untuk simulasi live (SimPasar.Market).
+ * salin perintah, dan renderer untuk demo mini (SimPasar.Market dari sim.js).
+ *
+ * Demo mini memakai konvensi yang sama dengan simulator penuh:
+ * 1 tick = 1 menit bursa simulasi (sesi BEI 09:00–12:00 dan 13:30–16:00),
+ * candle bawaan 15 menit. Lihat tickToClock() di bawah.
  */
 (function () {
   "use strict";
@@ -14,22 +18,29 @@
   const navToggle = $("#navToggle");
   const navLinks = $$("#navLinks a");
 
-  function onScroll() { nav.classList.toggle("scrolled", window.scrollY > 8); }
-  onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
+  if (nav) {
+    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+  if (nav && navToggle) {
+    navToggle.addEventListener("click", () => {
+      const open = nav.classList.toggle("open");
+      navToggle.setAttribute("aria-expanded", String(open));
+      navToggle.setAttribute("aria-label", open ? "Tutup menu" : "Buka menu");
+    });
+    navLinks.forEach((a) => a.addEventListener("click", () => {
+      nav.classList.remove("open");
+      navToggle.setAttribute("aria-expanded", "false");
+    }));
+  }
 
-  navToggle.addEventListener("click", () => {
-    const open = nav.classList.toggle("open");
-    navToggle.setAttribute("aria-expanded", String(open));
-    navToggle.setAttribute("aria-label", open ? "Tutup menu" : "Buka menu");
-  });
-  navLinks.forEach((a) => a.addEventListener("click", () => {
-    nav.classList.remove("open");
-    navToggle.setAttribute("aria-expanded", "false");
-  }));
-
-  // Tandai link aktif berdasarkan section yang terlihat
-  const sections = navLinks.map((a) => $(a.getAttribute("href"))).filter(Boolean);
+  // Tandai link aktif berdasarkan section yang terlihat (hanya tautan anchor "#...")
+  const sections = navLinks
+    .map((a) => a.getAttribute("href") || "")
+    .filter((h) => /^#[\w-]+$/.test(h))
+    .map((h) => $(h))
+    .filter(Boolean);
   if ("IntersectionObserver" in window && sections.length) {
     const spy = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
@@ -96,24 +107,62 @@
     matrix.addEventListener("pointerleave", clear);
   }
 
-  // ───────────────────────────── SALIN ─────────────────────────────
-  const copyBtn = $("#copyCmd");
-  if (copyBtn) {
-    copyBtn.addEventListener("click", async () => {
-      const text = $("#cmdBlock").innerText.split("\n").filter((l) => l.trim() && !l.trim().startsWith("#")).map((l) => l.replace(/\s+#.*$/, "")).join("\n");
-      try {
-        await navigator.clipboard.writeText(text);
-        copyBtn.textContent = "Tersalin ✓";
-      } catch {
-        copyBtn.textContent = "Gagal menyalin";
-      }
-      setTimeout(() => (copyBtn.textContent = "Salin"), 1600);
-    });
-  }
   const yearEl = $("#year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  // ═════════════════════════ LIVE SIMULATION ═════════════════════════
+  // ───────────────────── PIL IHSG REAL-TIME (hero) ─────────────────────
+  // Dipanggil sekali saat halaman dimuat (tidak ada polling → hemat kredit Sectors).
+  // Di server statis (landing/serve.js) endpoint ini tidak ada → tampilkan keterangan.
+  async function fetchLiveIHSG() {
+    const valEl = $("#ihsg-val");
+    const chgEl = $("#ihsg-change");
+    const dateEl = $("#ihsg-date");
+    if (!valEl) return;
+    const unavailable = (why) => {
+      valEl.textContent = "tidak tersedia";
+      if (chgEl) chgEl.textContent = "";
+      if (dateEl) dateEl.textContent = why ? `• ${why}` : "";
+    };
+    try {
+      const res = await fetch("/api/ihsg");
+      if (!res.ok) return unavailable("butuh server simulator");
+      const data = await res.json();
+      const price = Number(data.price);
+      if (!Number.isFinite(price) || price <= 0) return unavailable("data belum ada");
+      const nf2 = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+      const labelEl = $("#ihsg-label");
+      if (data.status === "fallback") {
+        // Angka contoh saat Sectors tidak terhubung: jangan tampil seolah data bursa terkini.
+        if (labelEl) labelEl.textContent = "IHSG (angka contoh, data bursa offline)";
+        valEl.textContent = price.toLocaleString("id-ID", nf2);
+        if (chgEl) chgEl.textContent = "";
+        if (dateEl) dateEl.textContent = "";
+        return;
+      }
+      if (labelEl) labelEl.textContent = "IHSG penutupan terakhir";
+      valEl.textContent = price.toLocaleString("id-ID", nf2);
+      if (chgEl && Number.isFinite(Number(data.change_pct))) {
+        const pct = Number(data.change_pct);
+        const pts = Number(data.change_pts);
+        const isPos = pct >= 0;
+        const sign = isPos ? "+" : "";
+        chgEl.style.color = isPos ? "#3ddc97" : "#ff6b61";
+        chgEl.textContent = `${isPos ? "▲" : "▼"} ${sign}${pct.toLocaleString("id-ID", nf2)}%` +
+          (Number.isFinite(pts) ? ` (${sign}${pts.toLocaleString("id-ID", nf2)})` : "");
+      }
+      if (dateEl && data.date) {
+        const d = new Date(`${String(data.date).slice(0, 10)}T00:00:00`);
+        const when = Number.isNaN(d.getTime()) ? String(data.date) : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+        dateEl.textContent = `• ${when} · data Sectors`;
+      }
+    } catch (err) {
+      console.warn("IHSG ticker fetch error:", err);
+      unavailable("butuh server simulator");
+    }
+  }
+  fetchLiveIHSG();
+
+  // ═════════════════════════ DEMO MINI (LIVE) ═════════════════════════
   if (!window.SimPasar) return;
   const { Market } = window.SimPasar;
 
@@ -125,12 +174,42 @@
     log: $("#simLog"),
     btnRumor: $("#btnRumor"), btnPanic: $("#btnPanic"), btnPause: $("#btnPause"), btnReset: $("#btnReset"),
     selPop: $("#selPop"), selPsych: $("#selPsych"),
+    day: $("#simDay"),
     panel: $("#demo"),
   };
-  if (!el.chart || !el.grid) return;
+  if (!el.chart || !el.grid || !el.panel) return;
+  // Elemen teks opsional: bila tidak ada di HTML, pakai elemen dummy agar render() tidak error.
+  const dummy = () => document.createElement("span");
+  ["status", "price", "dev", "tick", "day", "sentBar", "sentVal", "stPos", "stPain", "stAvg", "stBSH", "stPnl", "log"]
+    .forEach((k) => { if (!el[k]) el[k] = dummy(); });
+  const on = (node, evt, fn) => { if (node) node.addEventListener(evt, fn); };
+
+  // ── Waktu bursa simulasi: 1 tick = 1 menit ──
+  // Identik dengan sim/simtime.py di server: Sesi 1 09:00–12:00 (180 menit),
+  // Sesi 2 13:30–16:00 (150 menit) → 330 menit per hari bursa.
+  const MINUTES_PER_DAY = 330;
+  const pad2 = (n) => String(n).padStart(2, "0");
+  function tickToClock(tick) {
+    const t = Math.max(0, Math.trunc(Number(tick) || 0));
+    const dayIndex = Math.floor(t / MINUTES_PER_DAY);
+    const m = t % MINUTES_PER_DAY;
+    let hh, mm, session;
+    if (m < 180) { hh = 9 + Math.floor(m / 60); mm = m % 60; session = 1; }
+    else { const m2 = m - 180; hh = 13 + Math.floor((30 + m2) / 60); mm = (30 + m2) % 60; session = 2; }
+    return { day: dayIndex + 1, minuteOfDay: m, session, time: `${pad2(hh)}:${pad2(mm)}` };
+  }
+  function renderClock(tick) {
+    const c = tickToClock(tick);
+    el.tick.textContent = c.time;
+    el.day.textContent = `hari ${c.day}`;
+  }
+
+  // Timeframe candle (menit per candle) → label & jarak label sumbu-X (tick)
+  const TF = { 1: { label: "1m", every: 15 }, 5: { label: "5m", every: 30 }, 15: { label: "15m", every: 60 }, 30: { label: "30m", every: 60 }, 60: { label: "1H", every: 180 }, 330: { label: "1D", every: 330 } };
+  const tfInfo = (p) => TF[p] || { label: `${p}m`, every: Math.max(15, p * 4) };
 
   const market = new Market({ nAgents: 100, fundamental: 100, seed: 42 });
-  const TICK_MS = 125;               // ≈ 8 tick/detik (server asli: 10/detik)
+  const TICK_MS = 125;               // ≈ 8 menit bursa per detik nyata (demo dipercepat)
   const COLORS = {
     text: "#eef1f6", dim: "#6f7a8c", line: "rgba(255,255,255,0.08)",
     amber: "#f6b73c", green: "#3ddc97", red: "#ff6b61", blue: "#6ea8ff", violet: "#b98cff", orange: "#ff9f43",
@@ -150,10 +229,24 @@
   let timer = null;
 
   // ── Chart candlestick + volume (TradingView style, landing/candlechart.js) ──
+  // Opsi periodLabel/formatTickLabel/formatTickRange/labelEveryTicks/sessionBreaks
+  // adalah opsi baru candlechart (label jam bursa). Bila versi candlechart belum
+  // mengenalnya, opsi itu diabaikan dan chart memakai label tick bawaan + unitLabel "m".
+  const DEFAULT_PERIOD = 15;
+  const activeTf = $("#simTf button.active");
+  const initialPeriod = Number(activeTf && activeTf.dataset.period) || DEFAULT_PERIOD;
   const chart = window.CandleChart
     ? window.CandleChart.create(el.chart, {
-        period: 5,
-        symbol: "SIMPASAR",
+        period: initialPeriod,
+        symbol: "DEMO",
+        unitLabel: "m",
+        tickLabel: "menit",
+        periodLabel: tfInfo(initialPeriod).label,
+        labelEveryTicks: tfInfo(initialPeriod).every,
+        sessionBreaks: true,
+        minutesPerDay: MINUTES_PER_DAY,
+        formatTickLabel: (t0) => { const c = tickToClock(t0); return c.minuteOfDay === 0 ? `Hari ${c.day}` : c.time; },
+        formatTickRange: (t0, t1) => { const a = tickToClock(t0), b = tickToClock(t1); return `Hari ${a.day} · ${a.time}` + (t1 > t0 ? `–${b.time}` : ""); },
         background: "#0c1119",
         fundamentalColor: COLORS.blue,
         bubbleColor: COLORS.amber,
@@ -167,11 +260,13 @@
     if (!chart) return;
     chart.setData({ tick: state.tick, prices: state.history, volumes: state.volumes, fundamental: state.fundamental });
   }
-  // Periode candle (tick per candle)
+  // Lebar candle (menit bursa per candle)
   const tfButtons = $$("#simTf button");
   tfButtons.forEach((b) => b.addEventListener("click", () => {
     if (!chart) return;
-    chart.setPeriod(Number(b.dataset.period) || 5);
+    const p = Number(b.dataset.period) || DEFAULT_PERIOD;
+    chart.setPeriod(p);
+    if (typeof chart.setOptions === "function") chart.setOptions({ periodLabel: tfInfo(p).label, labelEveryTicks: tfInfo(p).every });
     tfButtons.forEach((x) => { x.classList.toggle("active", x === b); x.setAttribute("aria-pressed", String(x === b)); });
   }));
 
@@ -209,7 +304,7 @@
     const { price, fundamental, tick, status, sentiment, stats, history } = state;
     const prev = history.length >= 2 ? history[history.length - 2] : price;
 
-    el.tick.textContent = tick;
+    renderClock(tick);
     el.price.textContent = price.toFixed(2);
     el.price.style.color = price > prev ? COLORS.green : price < prev ? COLORS.red : COLORS.text;
 
@@ -223,7 +318,8 @@
 
     if (status !== lastStatus) {
       const color = key === "bubble" ? COLORS.amber : key === "crash" ? COLORS.red : COLORS.green;
-      pushLog(`<b style="color:${color}">tick ${tick}</b> · status → ${status} @ ${price.toFixed(1)}`);
+      const label = key === "bubble" ? "BUBBLE: harga jauh di atas nilai wajar" : key === "crash" ? "PANIK-CRASH: harga jatuh" : "kembali NORMAL";
+      pushLog(`<b style="color:${color}">${tickToClock(tick).time}</b> · ${label} @ ${price.toFixed(1)}`);
       lastStatus = status;
     }
 
@@ -266,68 +362,43 @@
   window.addEventListener("resize", () => render(market.getState()));
 
   // ── Kontrol ──
-  const flash = (btn) => { btn.style.filter = "brightness(1.6)"; setTimeout(() => (btn.style.filter = ""), 180); };
-  el.btnRumor.addEventListener("click", () => {
+  const flash = (btn) => { if (!btn) return; btn.style.filter = "brightness(1.6)"; setTimeout(() => (btn.style.filter = ""), 180); };
+  const now = () => tickToClock(market.tick).time;
+  on(el.btnRumor, "click", () => {
     market.injectRumor(1.0); flash(el.btnRumor);
-    pushLog(`<b style="color:${COLORS.amber}">tick ${market.tick}</b> · 📢 rumor disuntik (+1.0)`);
+    pushLog(`<b style="color:${COLORS.amber}">${now()}</b> · 📢 rumor disebar, pemburu rumor condong beli`);
     render(market.getState());
   });
-  el.btnPanic.addEventListener("click", () => {
+  on(el.btnPanic, "click", () => {
     market.injectPanic(1.0); flash(el.btnPanic);
-    pushLog(`<b style="color:${COLORS.red}">tick ${market.tick}</b> · 📉 bad news disuntik (−1.0)`);
+    pushLog(`<b style="color:${COLORS.red}">${now()}</b> · 📉 kabar buruk, pemburu rumor condong jual`);
     render(market.getState());
   });
-  el.btnPause.addEventListener("click", () => {
+  on(el.btnPause, "click", () => {
     userPaused = !userPaused;
     el.btnPause.textContent = userPaused ? "▶" : "⏸";
     el.btnPause.setAttribute("aria-label", userPaused ? "Lanjutkan simulasi" : "Jeda simulasi");
   });
-  el.btnReset.addEventListener("click", () => {
+  on(el.btnReset, "click", () => {
     market.reset(); sesMax = sesMin = 100; lastStatus = "Normal"; logs.length = 0; el.log.innerHTML = "";
-    pushLog(`<b>tick 0</b> · reset · seed ${market.seed}`);
+    pushLog(`<b>09:00</b> · mulai ulang dari harga awal 100`);
     render(market.getState());
   });
-  el.selPop.addEventListener("change", () => {
+  on(el.selPop, "change", () => {
     const [f, c, n] = el.selPop.value.split(",").map(Number);
     market.setPopulation(f, c, n);
-    pushLog(`<b style="color:${COLORS.blue}">tick ${market.tick}</b> · populasi F${Math.round(f * 100)}/C${Math.round(c * 100)}/N${Math.round(n * 100)}`);
+    pushLog(`<b style="color:${COLORS.blue}">${now()}</b> · nilai wajar ${Math.round(f * 100)}% · tren ${Math.round(c * 100)}% · rumor ${Math.round(n * 100)}%`);
     render(market.getState());
   });
-  el.selPsych.addEventListener("change", () => {
+  on(el.selPsych, "change", () => {
     const [d, b] = el.selPsych.value.split(",").map(Number);
     market.setPsych(d, b);
-    pushLog(`<b style="color:${COLORS.violet}">tick ${market.tick}</b> · psikologi D${Math.round(d * 100)}/B${Math.round(b * 100)}/A${Math.round((1 - d - b) * 100)}`);
+    pushLog(`<b style="color:${COLORS.violet}">${now()}</b> · disiplin ${Math.round(d * 100)}% · keras kepala ${Math.round(b * 100)}% · suka nambah ${Math.round((1 - d - b) * 100)}%`);
     render(market.getState());
   });
 
   // Mulai
-  pushLog(`<b>tick 0</b> · 100 agen dibangun · seed ${market.seed}`);
+  pushLog(`<b>09:00</b> · 100 investor tiruan siap · harga awal 100`);
   render(market.getState());
   start();
-
-  // ── Fetch Real-time IHSG from Sectors MCP ──
-  async function fetchLiveIHSG() {
-    try {
-      const res = await fetch("/api/ihsg");
-      if (!res.ok) return;
-      const data = await res.json();
-      const valEl = $("#ihsg-val");
-      const chgEl = $("#ihsg-change");
-      const dateEl = $("#ihsg-date");
-      if (valEl && data.price) {
-        valEl.textContent = Number(data.price).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-      if (chgEl && data.change_pct !== undefined) {
-        const isPos = data.change_pct >= 0;
-        chgEl.style.color = isPos ? "#3fb950" : "#f85149";
-        chgEl.textContent = `${isPos ? "+" : ""}${data.change_pct.toFixed(2)}% (${isPos ? "+" : ""}${data.change_pts})`;
-      }
-      if (dateEl && data.date) {
-        dateEl.textContent = `• ${data.date}`;
-      }
-    } catch (err) {
-      console.warn("IHSG ticker fetch error:", err);
-    }
-  }
-  fetchLiveIHSG();
 })();
