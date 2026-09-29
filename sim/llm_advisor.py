@@ -43,10 +43,12 @@ import json
 import math
 import queue
 import random
+import re
 import sys
 import threading
 import time
 from concurrent.futures import Future
+from email.utils import parsedate_to_datetime
 from typing import Any, Callable, Iterable
 
 RESPONSE_FORMAT: dict = {
@@ -77,6 +79,7 @@ RESPONSE_FORMAT: dict = {
 _RATE_LIMIT_MARKERS = ("RESOURCE_EXHAUSTED", "quota", "Quota", "rate limit", "Rate limit", "Too Many Requests")
 _AUTH_MARKERS = ("API_KEY_INVALID", "API key not valid", "API_KEY_SERVICE_BLOCKED", "PERMISSION_DENIED")
 _MAX_PENDING_CANDIDATES = 4096
+_RETRY_DELAY_MARKER = re.compile(r"retry in\s+(\d+(?:\.\d+)?)s", re.IGNORECASE)
 
 
 def _default_log(line: str) -> None:
@@ -98,6 +101,50 @@ def _status_code(exc: BaseException) -> int | None:
     return None
 
 
+def _retry_after_seconds(exc: BaseException) -> float | None:
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is not None:
+        retry_after_ms = headers.get("retry-after-ms")
+        if retry_after_ms is not None:
+            try:
+                return max(0.0, float(retry_after_ms) / 1000.0)
+            except (TypeError, ValueError):
+                pass
+        retry_after = headers.get("retry-after")
+        if retry_after is not None:
+            try:
+                return max(0.0, float(retry_after))
+            except (TypeError, ValueError):
+                try:
+                    retry_at = parsedate_to_datetime(str(retry_after)).timestamp()
+                    return max(0.0, retry_at - time.time())
+                except (TypeError, ValueError, OverflowError):
+                    pass
+    details = getattr(exc, "details", None)
+    if isinstance(details, dict):
+        error = details.get("error")
+        detail_groups = [details.get("details", ())]
+        if isinstance(error, dict):
+            detail_groups.append(error.get("details", ()))
+        for detail_group in detail_groups:
+            if not isinstance(detail_group, (list, tuple)):
+                continue
+            for detail in detail_group:
+                if isinstance(detail, dict):
+                    retry_delay = detail.get("retryDelay") or detail.get("retry_delay")
+                    if isinstance(retry_delay, str) and retry_delay.endswith("s"):
+                        try:
+                            return max(0.0, float(retry_delay[:-1]))
+                        except ValueError:
+                            pass
+    try:
+        match = _RETRY_DELAY_MARKER.search(str(exc))
+    except Exception:
+        match = None
+    return float(match.group(1)) if match else None
+
+
 def _is_interesting(agent: Any) -> bool:
     """Momen yang layak dinilai LLM: rugi mendekati ambang sakit atau untung mendekati ambang serakah."""
     entry = getattr(agent, "entry_price", 0.0) or 0.0
@@ -117,8 +164,8 @@ class LLMAdvisor:
         client: Any,
         model: str,
         *,
-        rpm: float = 12.0,
-        concurrency: int = 4,
+        rpm: float = 3.0,
+        concurrency: int = 1,
         batch_size: int = 11,
         sentiment_weight: float = 0.25,
         sentiment_halflife_s: float = 60.0,
@@ -145,6 +192,7 @@ class LLMAdvisor:
         self._client = client
         self.model = model
         self.rpm = float(rpm)
+        self._min_rpm = min(1.0, self.rpm)
         self.concurrency = int(concurrency)
         self.batch_size = int(batch_size)
         self.sentiment_weight = float(sentiment_weight)
@@ -158,7 +206,7 @@ class LLMAdvisor:
         self._log = logger or _default_log
 
         self._lock = threading.Lock()
-        self._capacity = float(max(1, min(self.concurrency, math.ceil(self.rpm))))
+        self._capacity = 1.0
         self._tokens = self._capacity
         self._last_refill = clock()
         self._inflight = 0
@@ -458,6 +506,7 @@ class LLMAdvisor:
         status = _status_code(exc)
         auth = status in (401, 403) or any(marker in message for marker in _AUTH_MARKERS)
         rate_limited = status == 429 or any(marker in message for marker in _RATE_LIMIT_MARKERS)
+        retry_after = _retry_after_seconds(exc) if rate_limited else None
         coarse = f"{name} {status}" if status is not None else name
         detail = self._redact(f"{name}: {message}")[:300]
         try:
@@ -465,16 +514,19 @@ class LLMAdvisor:
         except Exception:  # noqa: BLE001
             now = time.monotonic()
         newly_disabled = False
+        previous_rpm = self.rpm
         with self._lock:
             self._stats["errors"] += 1
             self._consecutive_errors += 1
             first_in_streak = self._consecutive_errors == 1
             delay = min(60.0, 2.0 ** min(self._consecutive_errors, 6))
             if rate_limited:
-                delay = max(delay, 30.0)
+                delay = max(delay, 30.0, retry_after or 0.0)
+                self.rpm = max(self._min_rpm, self.rpm * 0.5)
+                self._tokens = 0.0
             self._backoff_until = max(self._backoff_until, now + delay)
-            # Defensif: SDK google-genai dapat saja mengulang request sebelum error sampai ke sini.
-            self._tokens = max(-self._capacity, self._tokens - 1)
+            if not rate_limited:
+                self._tokens = max(-self._capacity, self._tokens - 1)
             self._last_error = coarse            # hanya ringkasan kasar yang dikirim ke browser
             self._last_error_detail = detail     # detail teredaksi hanya untuk log server
             if auth and not self._disabled_reason:
@@ -482,5 +534,10 @@ class LLMAdvisor:
                 newly_disabled = True
         if newly_disabled:
             self._log(f"[llm] Gemini menolak kunci atau izin ({coarse}); agen LLM dihentikan untuk sesi ini. Detail: {detail}")
+        elif rate_limited:
+            self._log(
+                f"[llm] Gemini membatasi request ({coarse}); RPM diturunkan "
+                f"{previous_rpm:.2f} -> {self.rpm:.2f}, jeda {delay:.0f} detik. Detail: {detail}"
+            )
         elif first_in_streak:
             self._log(f"[llm] error dari Gemini ({coarse}); backoff {delay:.0f} detik. Detail: {detail}")

@@ -32,26 +32,25 @@ and include each agent's individual continuous values in its situation block.
 - Phase B is implemented: accepted LLM decisions feed decaying per-profile
    sentiment (`SIMPASAR_LLM_SENTIMENT_WEIGHT`, default 0.25;
    `SIMPASAR_LLM_SENTIMENT_HALFLIFE_S`, default 60 seconds).
+- Rate limiting now starts at 3 RPM with one worker and a one-request burst.
+   Each 429 halves the effective RPM down to `min(1, initial RPM)` and honors
+   provider retry-delay metadata when available.
 - Batch size 11 is a maximum, not a promise that every profile group contains
    11 eligible candidates. Slider ratios determine actual group sizes.
 - Groups rotate least-recently-served first; urgency selects agents within
    each selected group to avoid one group monopolizing the available slots.
 
-Adaptive RPM auto-tuning / honoring `Retry-After` is explicitly OUT of scope
-(not selected by the user) — batching is quota-agnostic and is the primary
-lever.
+Rate adaptation is part of the implementation because batching alone did not
+prevent provider 429s. The initial rate is intentionally conservative, and a
+429 reduces it further while respecting provider retry-delay metadata.
 
 ## Current architecture (verified against the code)
 - `LLMAdvisor` (`sim/llm_advisor.py`): token-bucket rate limiter
-  (`rpm`/`concurrency`), per-agent `offer()` registers a candidate +
-  prompt-builder callback without I/O; `end_tick()` sorts the pool
-  (interesting-first, then least-recently-served) and submits up to
-  `slots = min(floor(tokens), concurrency-inflight, remaining_budget)`
-  **individual** requests, 1 agent per request, to a queue drained by
-  `concurrency` daemon worker threads (`_worker` -> `_call`).
-- `agents.py::_build_persona_prompt(agent, base_order, price, gut_seed)`
-  builds the full prompt text (persona + situation + JSON instruction) per
-  agent.
+   (`rpm`/`concurrency`, burst capacity 1), per-agent `offer()` registers a
+   candidate without I/O; `end_tick()` groups by realized profile and submits
+   up to available request slots, one batch per request.
+- `agents.py` builds a shared persona header plus an individual situation
+   block for each agent in the batch.
 - `agents.py::Agent._psych_override`: if advisor present, calls
   `advisor.collect()` (non-blocking check of a previous future), else falls
   back to deterministic jittered rules per psych_profile
@@ -62,8 +61,9 @@ lever.
 - Error handling: exponential backoff, 429 -> min 30s backoff, 401/403 ->
   permanent disable. SDK retries disabled (`attempts=1`) so the advisor's own
   budget accounting stays authoritative.
-- The new `tests/test_llm_advisor.py` covers response mapping, profile isolation,
-   sentiment expiry, and fallback blending.
+- A temporary focused advisor test module was removed at the user's request;
+   those cases were run before removal, and their results are summarized in the
+   implementation session.
 
 ## Steps
 
@@ -187,8 +187,8 @@ parallel and wired in last.
    decisions for the same psych_profile, assert `sentiment()` moves toward
    the recent order value and decays/returns `None` after enough simulated
    elapsed time.
-4. Load check: with `SIMPASAR_LLM_RPM=12`, `SIMPASAR_LLM_CONCURRENCY=4`,
-   `SIMPASAR_LLM_BATCH_SIZE=11`, confirm at most 4 requests in flight, each
+4. Load check: with `SIMPASAR_LLM_RPM=3`, `SIMPASAR_LLM_CONCURRENCY=1`,
+   `SIMPASAR_LLM_BATCH_SIZE=11`, confirm at most 1 request in flight, each
    batch contains agents from exactly one `(agent_type, psych_profile)`
    bucket, and up to 11 agents per request (fewer for smaller eligible groups),
    reducing request count relative to the original 1:1 pattern.
@@ -210,8 +210,9 @@ parallel and wired in last.
 - Bucket priority when `slots < 9`: use least-recently-served group rotation,
    with urgency order breaking ties. This avoids starving groups while keeping
    urgency as the within-group selection rule.
-- Adaptive RPM auto-tuning / honoring `Retry-After` header: explicitly OUT
-  of scope (only batching + herd sentiment were chosen).
+- On 429, honor `Retry-After`/`retry-after-ms` (or retry delay in the Gemini
+   error payload), halve the effective RPM to a floor of `min(1, initial RPM)`,
+   and clear any burst credit. Initial burst capacity is one request.
 - Top-K capping is implemented implicitly via per-bucket batch sizing, not a
   separate config knob, to avoid over-engineering.
 - Batch parse failures degrade per-agent to `None` (same as today's

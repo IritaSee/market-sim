@@ -101,12 +101,12 @@ def get_llm_advisor() -> LLMAdvisor | None:
     """
     Penasihat LLM bersama untuk semua agen, atau None bila LLM dimatikan atau tidak
     ada kunci. Konfigurasi dibaca sekali dari environment:
-    SIMPASAR_LLM, SIMPASAR_LLM_MODEL, SIMPASAR_LLM_RPM (default 12),
+    SIMPASAR_LLM, SIMPASAR_LLM_MODEL, SIMPASAR_LLM_RPM (default 3),
     SIMPASAR_LLM_MAX_REQUESTS (default 1000 per proses, 0 = tanpa batas),
     SIMPASAR_LLM_BATCH_SIZE (default 11),
     SIMPASAR_LLM_SENTIMENT_WEIGHT (default 0.25),
     SIMPASAR_LLM_SENTIMENT_HALFLIFE_S (default 60),
-    SIMPASAR_LLM_CONCURRENCY (default 4), SIMPASAR_LLM_TIMEOUT_MS (default 25000).
+    SIMPASAR_LLM_CONCURRENCY (default 1), SIMPASAR_LLM_TIMEOUT_MS (default 25000).
     """
     global _llm_advisor, _llm_advisor_state
     if _llm_advisor_state != "unresolved":
@@ -114,9 +114,9 @@ def get_llm_advisor() -> LLMAdvisor | None:
     with _llm_advisor_lock:
         if _llm_advisor_state != "unresolved":
             return _llm_advisor
-        rpm = _env_number("SIMPASAR_LLM_RPM", 12.0)
+        rpm = _env_number("SIMPASAR_LLM_RPM", 3.0)
         max_requests = max(0, int(_env_number("SIMPASAR_LLM_MAX_REQUESTS", 1000)))
-        concurrency = min(16, int(_env_number("SIMPASAR_LLM_CONCURRENCY", 4)))
+        concurrency = min(16, int(_env_number("SIMPASAR_LLM_CONCURRENCY", 1)))
         batch_size = max(1, min(16, int(_env_number("SIMPASAR_LLM_BATCH_SIZE", 11))))
         sentiment_weight = max(0.0, min(1.0, _env_number("SIMPASAR_LLM_SENTIMENT_WEIGHT", 0.25)))
         sentiment_halflife_s = max(1.0, min(3600.0, _env_number("SIMPASAR_LLM_SENTIMENT_HALFLIFE_S", 60.0)))
