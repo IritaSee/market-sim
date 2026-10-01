@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 from datetime import date
 import numpy as np
-from .agents import Agent, build_agents, get_llm_advisor, llm_status
+from .agents import Agent, build_agents, get_llm_advisor, llm_status, set_news_context
 from .idx_rules import limit_hit, price_limits
 from .simtime import MINUTES_PER_DAY, default_start_date, sim_time_info
 
@@ -49,6 +49,12 @@ HISTORY_WINDOW   = MAX_HISTORY   # kompatibilitas: snapshot penuh mengirim selur
 MIN_FUNDAMENTAL  = 1.0    # harga minimum BEI 1 rupiah (papan pemantauan khusus)
 MAX_FUNDAMENTAL  = 1e9    # harga saham BEI tertinggi ± 1e6 rupiah; IHSG ± 1e4
 MAX_SENTIMENT    = 3.0
+# Berita bisa menggeser nilai wajar (orang fundamentalist menilai ulang). Satu berita maks. ±10%,
+# dan total pergeseran dari harga awal dibatasi ±50% supaya simulasi tidak lepas kendali.
+MAX_NEWS_SHIFT_PCT   = 10.0
+MAX_NEWS_DRIFT_RATIO = 0.5
+# "Sedang untung" / "sedang rugi" untuk statistik & grid: P&L di luar ±2%.
+PNL_STATE_EPS = 0.02
 FUNDAMENTAL_RANGE_MSG = "harga awal harus angka antara 1 dan 1.000.000.000"
 
 # Lantai harga relatif terhadap fundamental (0,5%). Lantai absolut lama (0,5) membuat saham
@@ -104,6 +110,7 @@ class Market:
         seed:        int  | None = None,
     ):
         self.fundamental = fundamental
+        self.base_fundamental = fundamental   # nilai wajar awal (sebelum digeser berita); dipakai reset
         self.price       = fundamental
         # Harga acuan ARA/ARB: harga awal di hari pertama, lalu penutupan hari sebelumnya.
         self.ref_price   = fundamental
@@ -226,6 +233,24 @@ class Market:
     def inject_panic(self, strength: float = 1.0) -> bool:
         return _is_finite(strength) and self._add_sentiment(-float(strength))
 
+    def shift_fundamental(self, pct: float) -> float | None:
+        """
+        Geser nilai wajar sebesar `pct` persen tanpa memulai ulang simulasi (berita fundamental:
+        orang fundamentalist menilai ulang harga yang pantas). Dibatasi ±MAX_NEWS_SHIFT_PCT per
+        berita dan ±MAX_NEWS_DRIFT_RATIO dari nilai wajar awal. Mengembalikan nilai wajar baru,
+        atau None bila ditolak.
+        """
+        if not _is_finite(pct):
+            return None
+        pct = max(-MAX_NEWS_SHIFT_PCT, min(MAX_NEWS_SHIFT_PCT, float(pct)))
+        lo = self.base_fundamental * (1 - MAX_NEWS_DRIFT_RATIO)
+        hi = self.base_fundamental * (1 + MAX_NEWS_DRIFT_RATIO)
+        target = valid_fundamental(max(lo, min(hi, self.fundamental * (1 + pct / 100.0))))
+        if target is None:
+            return None
+        self.fundamental = target
+        return target
+
     def set_population(self, fundamentalist: float, chartist: float, noise: float) -> bool:
         """Ubah rasio info_style. Rasio harus finite dan ≥ 0; False (tanpa perubahan) bila ditolak."""
         if not _is_finite(fundamentalist, chartist, noise):
@@ -259,6 +284,7 @@ class Market:
         if fundamental is None:
             return False
         self.fundamental = fundamental
+        self.base_fundamental = fundamental
         self.price = fundamental
         self.ref_price = fundamental
         self.price_history = [fundamental]
@@ -269,6 +295,7 @@ class Market:
         self._order_log = []
         self.start_date = default_start_date()
         self.agents = self._make_agents()
+        set_news_context("", 0.0)                 # berita lama tidak berlaku untuk simulasi baru
         return True
 
     def set_symbol(self, meta: dict, fundamental: float) -> bool:
@@ -302,6 +329,7 @@ class Market:
         if seed is not None:
             self._seed = seed
         self._rng          = np.random.default_rng(self._seed)
+        self.fundamental   = self.base_fundamental   # pergeseran nilai wajar dari berita ikut dibatalkan
         self.price         = self.fundamental
         self.ref_price     = self.fundamental
         self.price_history = [self.fundamental]
@@ -312,6 +340,7 @@ class Market:
         self._order_log    = []
         self.start_date    = default_start_date()
         self.agents        = self._make_agents()
+        set_news_context("", 0.0)
 
     def pause(self)  -> None: self.is_paused = True
     def resume(self) -> None: self.is_paused = False
@@ -337,9 +366,10 @@ class Market:
         in_position   = [a for a in self.agents if a.position > 0]
         pain_agents   = [a for a in in_position if a.in_pain]
         avg_pnl       = float(np.mean([a.pnl_pct for a in in_position])) if in_position else 0.0
-        averager_act  = sum(1 for a in self.agents
-                            if a.psych_profile == "averager" and a.last_action == "buy"
-                            and a.position > 1.05)  # beli tambahan (position > baseline)
+        adding        = [a for a in self.agents if a.last_added]   # benar-benar menambah posisi tick ini
+        averager_act  = len(adding)
+        averaging_up  = sum(1 for a in adding if a.pnl_pct >= 0)
+        in_profit     = sum(1 for a in in_position if a.pnl_pct > PNL_STATE_EPS)
 
         limits = self._limits()
         limits["hit"] = limit_hit(self.price, limits)       # "ara" | "arb" | None
@@ -369,7 +399,10 @@ class Market:
             "psych_stats": {
                 "in_position":  len(in_position),
                 "in_pain":      len(pain_agents),
-                "averaging":    averager_act,
+                "averaging":    averager_act,                  # total sedang nambah posisi
+                "averaging_up":   averaging_up,                # nambah saat untung (average up)
+                "averaging_down": averager_act - averaging_up, # nambah saat rugi (average down)
+                "in_profit":    in_profit,
                 "avg_pnl_pct":  round(avg_pnl * 100, 1),
             },
         }

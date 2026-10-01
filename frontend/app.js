@@ -1,5 +1,5 @@
 /**
- * app.js — logika dashboard simulator SimPasar IDX.
+ * app.js — logika dashboard simulator SimPasar.
  *
  * Struktur halaman ada di index.html, gaya di styles.css. File ini:
  *   1. util & formatter angka id-ID (indeks 2 desimal, saham 0 desimal + "Rp" di kartu)
@@ -10,9 +10,10 @@
  *      event speed_changed; slider dari params tiap state; asal harga dari symbol.source_kind
  *      (server lama tanpa field ini tetap didukung: kecepatan lokal & sumber ditebak dari teks)
  *   4. chart candlestick (landing/candlechart.js) dengan timeframe 1m…1D, label jam simulasi
- *   5. panel kiri (kartu emiten, grid 100 agen dengan 3 mode warna + tooltip alasan Gemini, komposisi, P&L),
+ *   5. panel kiri (kartu emiten, grid 100 agen: Aksi / Tipe orang / Sifat orang + tooltip alasan Gemini, komposisi, P&L),
  *      statistik (harga vs acuan, batas harian ARA/ARB dari state.limits, suasana pasar)
- *   6. panel kanan (stream ritel fiktif, berita Sectors), dock (aksi + pintasan R/K/Spasi, kecepatan, slider)
+ *   6. panel kanan (stream ritel fiktif, berita Sectors, Input berita), dock (aksi + pintasan R/K/Spasi, kecepatan, slider),
+ *      panduan langkah demi langkah (tombol Panduan / ?)
  *   7. modal pencarian simbol → kartu konfirmasi harga Sectors → cmd set_symbol
  *
  * Semua teks yang datang dari server dimasukkan lewat textContent (tidak pernah innerHTML mentah).
@@ -223,6 +224,7 @@
       },
       up: '#16c784', down: '#ea3943',                        // beli/jual, garis ARA/ARB, sparkline
       holdFill: '#141a26', holdEdge: '#263042',              // kotak agen "diam"
+      profitFill: '#0f6a45', lossFill: '#7a1f27',            // hijau tua sedang untung / merah tua sedang rugi (= landing page)
       halo: '#0a0d14', glyph: '#0a0d14',                     // halo cincin rugi & tanda ▲▼ di kotak berwarna
       pain: '#f87171', avg: '#f59e0b', muted: '#8590a3', text: '#e6e9f0',
       type: { fundamentalist: '#38bdf8', chartist: '#f472b6', noise: '#facc15' },     // = --type-*
@@ -240,6 +242,7 @@
       },
       up: '#087f50', down: '#dc2626',                        // 5,05:1 / 4,83:1 di putih (label ARA/ARB)
       holdFill: '#edf1f6', holdEdge: '#cfd6e2',
+      profitFill: '#14532d', lossFill: '#7f1d1d',
       halo: '#ffffff', glyph: '#ffffff',
       pain: '#dc2626', avg: '#d97706', muted: '#5b6678', text: '#0f172a',
       type: { fundamentalist: '#0369a1', chartist: '#be185d', noise: '#a16207' },
@@ -256,8 +259,9 @@
     '1m': { period: 1, every: 15 }, '5m': { period: 5, every: 30 }, '15m': { period: 15, every: 60 },
     '30m': { period: 30, every: 60 }, '1H': { period: 60, every: 180 }, '1D': { period: 330, every: 330 },
   };
-  // Timeframe dikunci ke 15 menit (1 candle = 15 menit bursa); tombol timeframe sudah dihapus.
-  S.tf = '15m';
+  // Timeframe yang bisa dipilih (= landing page): 1, 5, 15, 30 menit per candle; pilihan diingat per browser.
+  const TF_CHOICES = ['1m', '5m', '15m', '30m'];
+  { const saved = storageGet('simpasar:tf'); S.tf = TF_CHOICES.includes(saved) ? saved : '15m'; }
   // Kapasitas jendela chart mengikuti timeframe (≈90 candle), bukan seluruh histori 2000 tick:
   // dengan 2000 tick pada 15m kapasitasnya 134 candle sehingga candle terlalu kurus (~5 px).
   const windowTicksFor = (period) => Math.min(MAX_HISTORY, Math.max(120, period * 90));
@@ -298,7 +302,6 @@
       chart.setOptions({ periodLabel: tf, labelEveryTicks: cfg.every, windowTicks: windowTicksFor(cfg.period) });
     }
     tfButtons.forEach((b) => { const on = b.dataset.tf === tf; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
-    setText('ohlcTf', tf);
     if (persist) storageSet('simpasar:tf', tf);
     updateOhlcStrip();
   }
@@ -460,8 +463,8 @@
   // Nama perintah WS → istilah tombol di UI (untuk pesan error yang ramah).
   const CMD_LABEL = {
     inject_rumor: 'Sebar rumor', inject_panic: 'Kabar buruk', inject_news_sentiment: 'Suntik berita',
-    pause: 'Jeda', resume: 'Lanjut', reset: 'Reset', set_speed: 'Kecepatan', set_population: 'Cara baca pasar',
-    set_psych: 'Sifat saat rugi', set_fundamental: 'Terapkan IHSG riil', set_symbol: 'Ganti emiten', get_state: 'Sinkronisasi',
+    pause: 'Jeda', resume: 'Lanjut', reset: 'Reset', set_speed: 'Kecepatan', set_population: 'Tipe orang',
+    set_psych: 'Sifat orang', set_fundamental: 'Terapkan IHSG riil', set_symbol: 'Ganti emiten', get_state: 'Sinkronisasi',
   };
   function handleEvent(msg) {
     switch (msg.event) {
@@ -470,7 +473,16 @@
       case 'speed_changed': syncSpeed(Number(msg.tick_interval), true); break;
       case 'news_injected': {
         const strength = num(msg.strength, 0);
-        toast(strength >= 0 ? 'ok' : 'error', 'Berita disuntik ke pasar', `${String(msg.title || 'Berita IDX')} · suasana pasar ${fmtSigned1(strength)}`);
+        const fp = num(msg.fundamental_pct, 0);
+        const effect = [`suasana pasar ${fmtSigned1(strength)}`];
+        if (Math.abs(fp) >= 0.05) effect.push(`nilai wajar ${fmtPct(fp, 1)}`);
+        const own = msg.origin === 'user' && Date.now() - (S.ownNewsAt || 0) < 5000;
+        if (own) S.ownNewsAt = 0;
+        const title = own ? 'Berita yang kamu input disuntik ke pasar'
+          : msg.origin === 'user' ? 'Berita dari penonton lain disuntik ke pasar' : 'Berita Sectors disuntik ke pasar';
+        toast(strength >= 0 ? 'ok' : 'error', title,
+          `${String(msg.title || 'Berita')} · ${effect.join(' · ')}`, 5200, 'news');
+        pulseMood();
         break;
       }
       case 'symbol_changed': onSymbolChanged(msg); break;
@@ -577,10 +589,10 @@
   }
 
   function updateTitle() {
-    if (!isNum(S.price)) { document.title = `${S.symbol.symbol} · SimPasar IDX`; return; }
+    if (!isNum(S.price)) { document.title = `${S.symbol.symbol} · SimPasar`; return; }
     const base = isNum(S.ref) ? S.ref : S.prevPrice;       // arah terhadap harga acuan (seperti aplikasi sekuritas)
     const arrow = isNum(base) && S.price < base ? '▼' : '▲';
-    document.title = `${S.symbol.symbol} ${fmtPrice(S.price)} ${arrow} · SimPasar IDX`;
+    document.title = `${S.symbol.symbol} ${fmtPrice(S.price)} ${arrow} · SimPasar`;
   }
 
   function onSymbolChanged(msg) {
@@ -595,12 +607,14 @@
     applySymbolMeta(meta);
     renderSymbol();
     Search.onSymbolChanged(S.symbol.symbol);
+    MyNews.onSymbolChanged(S.symbol.symbol);
     const priceText = fmtByKind(S.symbol.kind, isNum(msg.fundamental) ? msg.fundamental : S.symbol.source_price, true);
     toast('ok', `Simbol diganti: ${S.symbol.symbol}`, `${S.symbol.name} · harga awal ${priceText}`);
     addChatMessage('DokterSaham', 'ANALIS 📊', 'badge-fomo', `Ganti fokus ke {T} (${S.symbol.sector_name || 'BEI'}) di harga ${priceText}. Pantau reaksi kerumunan ya 📈`);
   }
   function onSymbolError(msg) {
     const text = String(msg.message || 'Simbol tidak dikenal');
+    if (MyNews.onSymbolError(msg)) { toast('error', `Gagal mengganti simbol ${String(msg.symbol || '')}`, text); return; }
     if (!Search.onSymbolError(msg)) toast('error', `Gagal mengganti simbol ${String(msg.symbol || '')}`, text);
   }
 
@@ -776,38 +790,59 @@
   }
 
   // ── Grid 100 agen: satu dimensi warna per mode (lebih mudah dibaca daripada 8 legenda sekaligus) ──
-  //   Aksi      : hijau beli / merah jual / gelap diam (pekat = keyakinan order besar)
-  //   Cara baca : nilai wajar / pengikut tren / pemburu rumor (▲ ▼ – di dalam kotak = beli/jual/diam)
-  //   Sifat     : disiplin / keras kepala / suka nambah
-  // Di semua mode: cincin merah = sedang rugi berat, ▲ amber di pojok = sedang nambah beli (averaging down).
+  //   Aksi        : hijau beli / hijau tua sedang untung / merah jual / merah tua sedang rugi / gelap diam
+  //                 (beli/jual: pekat = keyakinan order besar; untung/rugi = pegang saham, P&L di luar ±2%)
+  //   Tipe orang  : fundamentalist / chartist / noise (▲ ▼ – di dalam kotak = beli/jual/diam)
+  //   Sifat orang : discipline / denial / averager
+  // Di semua mode: cincin merah = sedang rugi berat, ▲ amber di pojok = sedang nambah posisi (average up/down).
   const agentCanvas = $('agentCanvas');
   const actx = agentCanvas.getContext('2d');
   const GRID_PX = 240, CELL = GRID_PX / 10;
-  // Warna kotak dari tema aktif (T): beli/jual T.up/T.down, diam T.holdFill, cara baca T.type, sifat T.psych.
+  // Warna kotak dari tema aktif (T): beli/jual T.up/T.down, untung/rugi T.profitFill/T.lossFill,
+  // diam T.holdFill, tipe orang T.type, sifat orang T.psych.
+  const ACTION_COLOR_KEYS = { buy: 'up', sell: 'down', profit: 'profitFill', loss: 'lossFill' };
   function crowdColor(mode, key) {
-    if (mode === 'action') return key === 'buy' ? T.up : key === 'sell' ? T.down : null;
+    if (mode === 'action') return ACTION_COLOR_KEYS[key] ? T[ACTION_COLOR_KEYS[key]] : null;
     return (mode === 'type' ? T.type : T.psych)[key] || T.muted;
   }
-  // Label awam (istilah teknis ada di title HTML) — sama dengan istilah di landing page.
-  const TYPE_LABEL = { fundamentalist: 'nilai wajar', chartist: 'pengikut tren', noise: 'pemburu rumor' };
-  const PSYCH_LABEL = { disciplined: 'disiplin', bagholder: 'keras kepala', averager: 'suka nambah' };
+  // Kategori mode Aksi: order beli/jual yang tegas (|order| ≥ 0,35, ambang masuk posisi di sim/agents.py)
+  // tampil hijau/merah; investor yang sedang pegang saham dengan order lemah tampil sebagai sedang
+  // untung (hijau tua) / sedang rugi (merah tua); sisanya order lemah atau diam.
+  const PNL_STATE_PCT = 2;                                // = sim/market.py PNL_STATE_EPS (dalam persen)
+  const FIRM_ORDER = 0.35;
+  function actionKey(a) {
+    const o = num(a.order, 0);
+    if (Math.abs(o) >= FIRM_ORDER) return o > 0 ? 'buy' : 'sell';
+    if (num(a.pos, 0) > 0) {
+      const p = num(a.pnl, 0);
+      if (p > PNL_STATE_PCT) return 'profit';
+      if (p < -PNL_STATE_PCT) return 'loss';
+    }
+    return a.action === 'buy' || a.action === 'sell' ? a.action : 'hold';
+  }
+  const crowdKey = (mode, a) => (mode === 'action' ? actionKey(a) : mode === 'type' ? a.type : a.psych);
+  // Istilah sama dengan landing page: tipe orang & sifat orang.
+  const TYPE_LABEL = { fundamentalist: 'Fundamentalist', chartist: 'Chartist', noise: 'Noise' };
+  const PSYCH_LABEL = { disciplined: 'Discipline', bagholder: 'Denial', averager: 'Averager' };
   const ACTION_LABEL = { buy: 'BELI', sell: 'JUAL', hold: 'DIAM' };
   const MAX_ORDER = 1.5;                                  // |order| agen maksimal (sim/agents.py)
   const CROWD_MODES = {
-    action: { field: 'action', items: [
+    action: { items: [
       { key: 'buy', label: 'Beli' },
+      { key: 'profit', label: 'Sedang untung' },
       { key: 'sell', label: 'Jual' },
+      { key: 'loss', label: 'Sedang rugi' },
       { key: 'hold', label: 'Diam' },
     ] },
-    type: { field: 'type', items: [
-      { key: 'fundamentalist', label: 'Nilai wajar' },
-      { key: 'chartist', label: 'Pengikut tren' },
-      { key: 'noise', label: 'Pemburu rumor' },
+    type: { items: [
+      { key: 'fundamentalist', label: 'Fundamentalist' },
+      { key: 'chartist', label: 'Chartist' },
+      { key: 'noise', label: 'Noise' },
     ] },
-    psych: { field: 'psych', items: [
-      { key: 'disciplined', label: 'Disiplin' },
-      { key: 'bagholder', label: 'Keras kepala' },
-      { key: 'averager', label: 'Suka nambah' },
+    psych: { items: [
+      { key: 'disciplined', label: 'Discipline' },
+      { key: 'bagholder', label: 'Denial' },
+      { key: 'averager', label: 'Averager' },
     ] },
   };
   let crowdMode = storageGet('simpasar:crowdMode');
@@ -832,7 +867,9 @@
       ul.appendChild(li);
       return { key: m.key, cnt, fill: fillEl };
     });
-    if (crowdMode !== 'action') ul.appendChild(el('li', 'crowd-legend__note', 'Tanda di dalam kotak: ▲ beli · ▼ jual · – diam'));
+    ul.appendChild(el('li', 'crowd-legend__note', crowdMode === 'action'
+      ? 'Hijau/merah tua = pegang saham, untung/rugi lebih dari 2%, dan tidak sedang beli/jual tegas. Jumlah semua yang untung ada di Untung / rugi.'
+      : 'Tanda di dalam kotak: ▲ beli · ▼ jual · – diam'));
   }
   function setCrowdMode(mode) {
     if (!CROWD_MODES[mode]) return;
@@ -867,10 +904,9 @@
       const x = col * CELL + 1.5, y = row * CELL + 1.5;
       let color = null, alpha = 1;
       if (crowdMode === 'action') {
-        if (a.action === 'buy' || a.action === 'sell') {
-          color = crowdColor('action', a.action);
-          alpha = 0.45 + 0.55 * clamp(Math.abs(num(a.order, 0)) / MAX_ORDER, 0, 1);   // pekat = order besar
-        }
+        const key = actionKey(a);
+        color = crowdColor('action', key);
+        if (key === 'buy' || key === 'sell') alpha = 0.8 + 0.2 * clamp(Math.abs(num(a.order, 0)) / MAX_ORDER, 0, 1);   // pekat = order besar (tetap beda dari hijau/merah tua)
       } else {
         color = crowdColor(crowdMode, crowdMode === 'type' ? a.type : a.psych);
       }
@@ -895,8 +931,8 @@
         actx.strokeStyle = T.pain; actx.lineWidth = 2;
         actx.strokeRect(x + 5, y + 5, s - 10, s - 10);
       }
-      if (a.psych === 'averager' && num(a.pos, 0) > 1.05) {
-        // ▲ amber = sedang nambah (averaging down), dengan tepi gelap agar terlihat di isi terang
+      if ('add' in a ? a.add === true : (a.psych === 'averager' && a.action === 'buy' && num(a.pos, 0) > 1.05)) {
+        // ▲ amber = sedang nambah posisi (average up/down), dengan tepi gelap agar terlihat di isi terang
         actx.fillStyle = T.avg; actx.strokeStyle = T.halo; actx.lineWidth = 1;
         actx.beginPath();
         actx.moveTo(x + s - 7.5, y + s - 1.5); actx.lineTo(x + s - 1.5, y + s - 1.5); actx.lineTo(x + s - 4.5, y + s - 7);
@@ -906,9 +942,8 @@
   }
   function updateCrowdCounts(agents) {
     const tot = agents.length || 1;
-    const field = CROWD_MODES[crowdMode].field;
     const cnt = {};
-    agents.forEach((a) => { const k = a[field]; cnt[k] = (cnt[k] || 0) + 1; });
+    agents.forEach((a) => { const k = crowdKey(crowdMode, a); cnt[k] = (cnt[k] || 0) + 1; });
     legendRefs.forEach((r) => {
       const v = cnt[r.key] || 0;
       r.cnt.textContent = String(v);
@@ -958,7 +993,7 @@
     const pnlNum = num(a.pnl, 0);
     const pnlV = el('b', null, fmtPct(pnlNum, 1));
     pnlV.className = pnlNum > 0 ? 'is-up' : pnlNum < 0 ? 'is-down' : 'is-flat';
-    pnl.append('Untung/rugi: ', pnlV, a.pain ? ' · sedang rugi berat' : '', num(a.pos, 0) > 1.05 ? ` · ▲ nambah ×${NF1.format(Number(a.pos))}` : '');
+    pnl.append('Untung/rugi: ', pnlV, a.pain ? ' · sedang rugi berat' : '', num(a.pos, 0) > 1.05 ? ` · ▲ posisi ×${NF1.format(Number(a.pos))}` : '');
     tooltip.appendChild(pnl);
     const r = S.llmReasons.get(a.id);
     if (r) tooltip.appendChild(el('div', 'tooltip__llm', `Alasan Gemini (menit ke-${r.tick}): ${r.reason}`));
@@ -985,9 +1020,16 @@
     const painEl = $('pnlInPain');
     painEl.textContent = String(ps.in_pain);
     painEl.className = 'mono ' + (ps.in_pain > 10 ? 'is-down' : ps.in_pain > 5 ? 'is-warn' : 'is-flat');
-    const avgEl = $('pnlAveraging');
-    avgEl.textContent = String(ps.averaging);
-    avgEl.className = 'mono ' + (ps.averaging > 0 ? 'is-warn' : 'is-flat');
+    const profitEl = $('pnlInProfit');
+    const inProfit = num(ps.in_profit, NaN);                // server lama tidak mengirim
+    profitEl.textContent = isNum(inProfit) ? String(inProfit) : '—';
+    profitEl.className = 'mono ' + (inProfit > 0 ? 'is-up' : 'is-flat');
+    const up = num(ps.averaging_up, NaN), down = isNum(num(ps.averaging_down, NaN)) ? num(ps.averaging_down, 0) : num(ps.averaging, 0);
+    const upEl = $('pnlAvgUp'), downEl = $('pnlAvgDown');
+    upEl.textContent = isNum(up) ? String(up) : '—';
+    upEl.className = 'mono ' + (up > 0 ? 'is-warn' : 'is-flat');
+    downEl.textContent = String(down);
+    downEl.className = 'mono ' + (down > 0 ? 'is-warn' : 'is-flat');
     const pnlEl = $('pnlAvg');
     pnlEl.textContent = fmtPct(num(ps.avg_pnl_pct, 0), 1);
     pnlEl.className = 'mono ' + (ps.avg_pnl_pct > 0 ? 'is-up' : ps.avg_pnl_pct < -3 ? 'is-down' : 'is-flat');
@@ -1050,12 +1092,12 @@
   $('btnRumor').addEventListener('click', (e) => {
     if (!sendOrWarn({ cmd: 'inject_rumor', strength: 1.0 })) return;
     flash(e.currentTarget); pulseMood();
-    toast('warn', 'Rumor disebar', 'Suasana pasar +1 — pemburu rumor condong beli. Lihat reaksinya di chart.', 2600, 'rumor');
+    toast('warn', 'Rumor disebar', 'Suasana pasar +1, orang noise condong beli. Lihat reaksinya di chart.', 2600, 'rumor');
   });
   $('btnPanic').addEventListener('click', (e) => {
     if (!sendOrWarn({ cmd: 'inject_panic', strength: 1.0 })) return;
     flash(e.currentTarget); pulseMood();
-    toast('error', 'Kabar buruk disebar', 'Suasana pasar −1 — pemburu rumor condong jual. Lihat reaksinya di chart.', 2600, 'panic');
+    toast('error', 'Kabar buruk disebar', 'Suasana pasar −1, orang noise condong jual. Lihat reaksinya di chart.', 2600, 'panic');
   });
   $('btnPause').addEventListener('click', () => {
     const want = !S.paused;
@@ -1143,7 +1185,7 @@
   }));
 
   // Slider komposisi (debounce 400ms; populasi dibangun ulang di server → alasan Gemini lama dibuang).
-  // Dua slider per kelompok; sisanya otomatis ke kelompok ketiga (pemburu rumor / suka nambah).
+  // Dua slider per kelompok; sisanya otomatis ke kelompok ketiga (noise / averager).
   // Jumlah dua slider maksimal 100%: slider pasangannya diturunkan, sehingga angka = posisi slider.
   const slF = $('slF'), slC = $('slC'), slD = $('slD'), slB = $('slB');
   const SLIDER_GROUPS = {
@@ -1180,7 +1222,7 @@
     const g = SLIDER_GROUPS.psych;
     const moved = e && e.target;
     let r = readGroup(g, moved);
-    if (r.x + r.y === 0) {                    // server butuh Disiplin + Keras kepala > 0
+    if (r.x + r.y === 0) {                    // server butuh Discipline + Denial > 0
       (moved === g.a ? g.b : g.a).value = '5';
       r = readGroup(g, moved);
     }
@@ -1218,13 +1260,6 @@
     }
   }
 
-  // Panel kanan: toggle (layar sempit)
-  const toggleRight = $('toggleRight');
-  toggleRight.addEventListener('click', () => {
-    const on = document.body.classList.toggle('show-right');
-    toggleRight.setAttribute('aria-pressed', String(on));
-  });
-
   // ═══════════════════════════ 9. Toast ═══════════════════════════
   // Di atas dock, tidak menangkap klik. `key` menggabungkan toast sejenis (mis. klik Rumor beruntun → "×3").
   const toastsEl = $('toasts');
@@ -1261,15 +1296,63 @@
   // ═══════════════════════════ 10. Panel kanan: tab, stream ritel, berita ═══════════════════════════
   const tabs = Array.from(document.querySelectorAll('.tab[data-tab]'));
   let newsLoaded = false;
+  const PANES = { stream: 'paneStream', news: 'paneNews', mynews: 'paneMyNews' };
+  const railTabs = Array.from(document.querySelectorAll('.rail__btn[data-open-tab]'));
   function activateTab(name) {
     tabs.forEach((t) => { const on = t.dataset.tab === name; t.classList.toggle('is-active', on); t.setAttribute('aria-selected', String(on)); });
-    const ps = $('paneStream'), pn = $('paneNews');
-    ps.classList.toggle('is-active', name === 'stream'); ps.hidden = name !== 'stream';
-    pn.classList.toggle('is-active', name === 'news'); pn.hidden = name !== 'news';
+    railTabs.forEach((b) => {
+      const on = b.dataset.openTab === name;
+      b.classList.toggle('is-active', on);
+      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');   // tab yang akan dibuka strip
+    });
+    Object.entries(PANES).forEach(([key, id]) => { const p = $(id); if (p) { p.classList.toggle('is-active', key === name); p.hidden = key !== name; } });
     if (name === 'news' && !newsLoaded) loadNews();        // berita dimuat saat tab dibuka (aksi pengguna, hemat kredit)
   }
-  tabs.forEach((t) => t.addEventListener('click', () => activateTab(t.dataset.tab)));
+  tabs.forEach((t) => t.addEventListener('click', () => {
+    activateTab(t.dataset.tab);
+    if (!RightPanel.isOpen()) RightPanel.setOpen(true);   // ponsel: panel tertutup tetap menampilkan baris tab
+  }));
   $('newsReload').addEventListener('click', () => loadNews());
+
+  // ── Buka / tutup panel kanan ──
+  // Tertutup = body.right-collapsed: di layar lebar panel menyusut jadi strip tipis (tombol buka + pintasan
+  // tab) dan chart melebar; di ponsel/tablet tegak (< 1024 px, panel di bawah) hanya baris tab yang tersisa.
+  // Selalu terbuka saat aplikasi dibuka: pilihan buka/tutup sengaja tidak disimpan.
+  const RightPanel = (() => {
+    const body = document.body;
+    const collapseBtn = $('rightCollapse'), expandBtn = $('rightExpand');
+    const isOpen = () => !body.classList.contains('right-collapsed');
+    const shown = (n) => !!n && n.getClientRects().length > 0;
+    function sync() {
+      const open = isOpen(), label = open ? 'Tutup panel kanan' : 'Buka panel kanan';
+      collapseBtn.setAttribute('aria-expanded', String(open)); collapseBtn.title = label; collapseBtn.setAttribute('aria-label', label);
+      expandBtn.setAttribute('aria-expanded', String(open));
+    }
+    // instant: tanpa animasi lebar (dipakai panduan supaya sorotannya langsung pas).
+    function setOpen(open, opts) {
+      if (open === isOpen()) return;
+      const instant = opts && opts.instant;
+      if (instant) body.classList.add('right-instant');
+      body.classList.toggle('right-collapsed', !open);
+      sync();
+      if (instant) { void body.offsetWidth; requestAnimationFrame(() => body.classList.remove('right-instant')); }
+    }
+    function activeTab() { return tabs.find((t) => t.classList.contains('is-active')) || tabs[0]; }
+    collapseBtn.addEventListener('click', () => {
+      const open = !isOpen();
+      setOpen(open);
+      // Tombol ini hilang saat panel tertutup di layar lebar → fokus pindah ke tombol buka di strip.
+      if (!open && shown(expandBtn)) expandBtn.focus({ preventScroll: true });
+    });
+    expandBtn.addEventListener('click', () => { setOpen(true); activeTab().focus({ preventScroll: true }); });
+    railTabs.forEach((b) => b.addEventListener('click', () => {
+      activateTab(b.dataset.openTab);
+      setOpen(true);
+      activeTab().focus({ preventScroll: true });
+    }));
+    sync();
+    return { isOpen, setOpen };
+  })();
 
   // ── Stream ritel (komunitas fiktif; pool kalimat dipertahankan, {T} = ticker aktif) ──
   const USER_PROFILES = [
@@ -1315,6 +1398,11 @@
       'Tenang gaes, fundamentalnya bagus kok... kata influencer di X wkwk',
       'Turun terus serok terus, dompet yang boncos wkwk 😂',
     ],
+    averagingUp: [
+      'Average up {T} terus mumpung naik, semoga bukan beli di pucuk 😅',
+      'Udah cuan malah nambah muatan {T}, harga rata-rata ikut naik nih 📈',
+      'Pyramiding {T} dulu capt, selama tren masih hijau gas terus 🔥',
+    ],
     ara: [
       'ARA! {T} dikunci di pucuk, offer kosong, antrean beli numpuk 🚀',
       'Mentok ARA {T}, yang belum kebagian cuma bisa antre bid sampai besok 😂',
@@ -1326,10 +1414,10 @@
       'Auto reject bawah {T}... besok pagi pre-opening deg-degan nih 💀',
     ],
     normal: [
-      'Market lagi adem ayem nih, cocok buat scalping santai {T} ☕',
+      'Pasar lagi adem ayem nih, cocok buat scalping santai {T} ☕',
       'Volume transaksi {T} mulai rame, ada tarikan halus dari broker asing.',
       '{T} sideways dulu ya, mantau bid-offer sambil ngopi santai.',
-      'Chart time-frame 15 menit {T} ada sinyal reversal nih capt 📊',
+      'Chart {T} di timeframe 15 menit ada sinyal reversal nih capt 📊',
       'Titip sendal dulu di support kuat 🩴',
       'Asing mulai net buy tipis-tipis di {T} nih 👀',
       'Sabar itu subur, jangan fomo ngejar candle pucuk ya gaes.',
@@ -1430,7 +1518,8 @@
     }
     if (psych_stats && psych_stats.averaging > 0 && Math.random() < 0.12 && tick - lastChatTick > 10) {
       lastChatTick = tick;
-      addChatMessage('PejuangDividen', 'AVG DOWN ↗️', 'badge-nyangkut', pick(CHAT_POOLS.averaging));
+      const upMore = num(psych_stats.averaging_up, 0) > num(psych_stats.averaging_down, psych_stats.averaging);
+      addChatMessage('PejuangDividen', upMore ? 'AVG UP 📈' : 'AVG DOWN ↘️', 'badge-nyangkut', pick(upMore ? CHAT_POOLS.averagingUp : CHAT_POOLS.averaging));
     }
   }
 
@@ -1464,7 +1553,7 @@
       const impact = num(item.sentiment_impact, 0);
       const card = el('article', 'news-card');
       const meta = el('div', 'news-card__meta');
-      meta.appendChild(el('span', 'news-card__type', item.type === 'filing' ? 'Filing IDX' : 'Berita'));
+      meta.appendChild(el('span', 'news-card__type', item.type === 'filing' ? 'Filing BEI' : 'Berita'));
       if (item.date) meta.appendChild(el('span', null, `· ${fmtDateID(item.date)}`));
       card.appendChild(meta);
       card.appendChild(el('div', 'news-card__title', String(item.title || '(tanpa judul)')));
@@ -1487,7 +1576,7 @@
   }
   function injectNews(item, btn) {
     const strength = num(item.sentiment_impact, 1.0);
-    const title = String(item.title || 'Berita IDX');
+    const title = String(item.title || 'Berita');
     if (!send({ cmd: 'inject_news_sentiment', title, strength })) { toast('error', 'Tidak terhubung', 'Server simulasi belum tersambung.'); return; }
     flash(btn);
     const isBull = strength >= 0;
@@ -1495,6 +1584,440 @@
     addChatMessage(isBull ? 'ScalperGarisKeras' : 'PrajuritCutloss', isBull ? 'HAKA 🚀' : 'HAKI 🚨', isBull ? 'badge-tp' : 'badge-cl',
       isBull ? `🔥 BREAKING NEWS: "${short}" HAKA {T} berjamaah capt!!` : `🚨 BAD NEWS ALERT: "${short}" Buang kiri {T} woy sebelum ARB!`);
   }
+
+  // ═══════════════════════════ 10b. Input berita ═══════════════════════════
+  // Pengguna menempelkan link (atau isi) berita → POST /api/news/analyze (server membaca judul &
+  // ringkasan, menebak saham yang dibahas, menilai sentimen + saran pergeseran nilai wajar) →
+  // pratinjau yang bisa disetel → cmd inject_news_sentiment. Agen bereaksi lewat suasana pasar
+  // (orang noise), nilai wajar (orang fundamentalist), dan judul berita di prompt agen Gemini.
+  // Bila berita membahas saham lain, simulasi bisa diganti ke saham itu dulu (set_symbol) lalu disuntik.
+  const MyNews = (() => {
+    const form = $('myNewsForm'), urlIn = $('myNewsUrl'), textIn = $('myNewsText');
+    const btn = $('myNewsAnalyze'), statusEl = $('myNewsStatus'), preview = $('myNewsPreview');
+    const listEl = $('myNewsList'), clearBtn = $('myNewsClear');
+    const STORE_KEY = 'simpasar:myNews';
+    const MAX_HISTORY_ITEMS = 20;
+    const round1 = (v) => Math.round(v * 10) / 10;
+    const validItem = (h) => h && typeof h.title === 'string' && h.title && isNum(h.strength) && isNum(h.fpct);
+    let history = [];
+    try {
+      const saved = JSON.parse(storageGet(STORE_KEY) || '[]');
+      if (Array.isArray(saved)) history = saved.filter(validItem).slice(0, MAX_HISTORY_ITEMS);
+    } catch (_) { history = []; }
+    let current = null;                                  // hasil analisis yang sedang dipratinjau
+    let pending = null;                                  // {item, symbol}: tunggu simbol diganti, lalu suntik
+    let busy = false;
+
+    function setStatus(text, tone) {
+      statusEl.textContent = text || '';
+      statusEl.className = 'mynews__status' + (tone ? ` is-${tone}` : '');
+    }
+    const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '')) ? String(u) : '');
+    const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (_) { return ''; } };
+    const sentiClass = (v) => (v > 0.2 ? 'senti--bull' : v < -0.2 ? 'senti--bear' : 'senti--neu');
+    const sentiLabel = (v) => (v > 0.2 ? 'Positif' : v < -0.2 ? 'Negatif' : 'Netral');
+
+    async function analyze(e) {
+      if (e) e.preventDefault();
+      if (busy) return;
+      const url = urlIn.value.trim(), text = textIn.value.trim();
+      if (!url && !text) { setStatus('Tempel link berita atau tulis isi beritanya dulu.', 'warn'); urlIn.focus(); return; }
+      busy = true; btn.disabled = true; btn.textContent = 'Membaca berita…';
+      setStatus('Membaca dan menilai berita…', 'info');
+      preview.hidden = true;
+      try {
+        const res = await fetch('/api/news/analyze', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, text }),
+        });
+        let data = null;
+        try { data = await res.json(); } catch (_) { /* bukan JSON */ }
+        if (!res.ok || !data || !data.ok) {
+          setStatus((data && data.message) || `Berita tidak bisa dianalisis (HTTP ${res.status}).`, 'error');
+          return;
+        }
+        current = {
+          title: String(data.title || 'Berita'), url: safeUrl(data.url), source: String(data.source || hostOf(data.url) || 'Berita'),
+          summary: String(data.summary || ''), reason: String(data.reason || ''), method: data.method === 'gemini' ? 'gemini' : 'aturan',
+          category: String(data.category || 'lainnya'), warning: data.warning ? String(data.warning) : '',
+          tickers: Array.isArray(data.tickers) ? data.tickers.filter((t) => t && /^[A-Z]{4}$/.test(String(t.symbol))) : [],
+          primary: /^[A-Z]{4}$/.test(String(data.primary || '')) ? String(data.primary) : null,
+          strength: round1(clamp(num(data.sentiment, 0), -3, 3)),
+          fpct: round1(clamp(num(data.fundamental_pct, 0), -5, 5)),
+        };
+        setStatus(current.warning, current.warning ? 'warn' : '');
+        renderPreview();
+      } catch (_) {
+        setStatus('Server simulasi tidak bisa dihubungi. Coba lagi setelah tersambung.', 'error');
+      } finally {
+        busy = false; btn.disabled = false; btn.textContent = 'Analisis berita';
+      }
+    }
+
+    function effectText(c) {
+      const parts = [];
+      if (Math.abs(c.strength) >= 0.05) {
+        parts.push(`Suasana pasar ${fmtSigned1(c.strength)}: orang noise condong ${c.strength > 0 ? 'beli' : 'jual'}${Math.abs(c.strength) >= 1.5 ? ' kuat' : ''}`);
+      } else {
+        parts.push('Suasana pasar tidak berubah');
+      }
+      if (Math.abs(c.fpct) >= 0.05) {
+        const after = isNum(S.fundamental) ? S.fundamental * (1 + c.fpct / 100) : NaN;
+        parts.push(`nilai wajar ${fmtPct(c.fpct, 1)}${isNum(after) ? ` (${fmtPrice(S.fundamental)} → ${fmtPrice(after)})` : ''}: orang fundamentalist menilai ulang harga yang pantas`);
+      }
+      return parts.join(' · ') + '.';
+    }
+
+    function sliderRow(label, min, max, step, value, fmt, onInput) {
+      const wrap = el('label', 'mynews-card__ctl');
+      const head = el('span', 'mynews-card__ctl-head');
+      const out = el('b', 'mono', fmt(value));
+      head.append(el('span', null, label), out);
+      const input = el('input');
+      input.type = 'range'; input.min = String(min); input.max = String(max); input.step = String(step); input.value = String(value);
+      input.addEventListener('input', () => { const v = round1(Number(input.value)); out.textContent = fmt(v); onInput(v); });
+      wrap.append(head, input);
+      return wrap;
+    }
+
+    function renderPreview() {
+      const c = current;
+      preview.replaceChildren();
+      const meta = el('div', 'news-card__meta');
+      meta.appendChild(el('span', 'news-card__type', c.source));
+      meta.appendChild(el('span', 'mynews-card__method', c.method === 'gemini' ? '· dinilai Gemini' : '· dinilai otomatis'));
+      if (c.category && c.category !== 'lainnya') meta.appendChild(el('span', null, `· ${c.category}`));
+      preview.appendChild(meta);
+      if (c.url) {
+        const a = el('a', 'news-card__title mynews-card__title', c.title);
+        a.href = c.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        preview.appendChild(a);
+      } else {
+        preview.appendChild(el('div', 'news-card__title mynews-card__title', c.title));
+      }
+      if (c.summary && c.summary !== c.title) preview.appendChild(el('div', 'news-card__body', c.summary));
+
+      const tick = el('div', 'mynews-card__tickers');
+      tick.appendChild(el('span', 'mynews-card__k', 'Saham dibahas'));
+      if (c.tickers.length) {
+        c.tickers.forEach((t) => {
+          const chip = el('span', 'mynews-card__tick mono' + (t.symbol === c.primary ? ' is-primary' : ''), t.symbol);
+          if (t.name) chip.title = t.name;
+          tick.appendChild(chip);
+        });
+      } else {
+        tick.appendChild(el('span', 'mynews-card__none', 'tidak terdeteksi, dianggap berita pasar umum'));
+      }
+      preview.appendChild(tick);
+
+      const senti = el('span', `senti ${sentiClass(c.strength)}`, `${sentiLabel(c.strength)} · ${fmtSigned1(c.strength)}`);
+      senti.title = 'Perkiraan dampak ke suasana pasar (−3 sampai +3)';
+      const sentiRow = el('div', 'mynews-card__senti');
+      sentiRow.appendChild(senti);
+      if (c.reason) sentiRow.appendChild(el('span', 'mynews-card__reason', c.reason));
+      preview.appendChild(sentiRow);
+
+      const effect = el('p', 'mynews-card__effect', effectText(c));
+      const ctl = el('div', 'mynews-card__ctls');
+      ctl.appendChild(sliderRow('Kekuatan ke suasana pasar', -3, 3, 0.1, c.strength, (v) => fmtSigned1(v), (v) => {
+        c.strength = v; senti.className = `senti ${sentiClass(v)}`; senti.textContent = `${sentiLabel(v)} · ${fmtSigned1(v)}`; effect.textContent = effectText(c);
+      }));
+      ctl.appendChild(sliderRow('Geser nilai wajar', -5, 5, 0.5, c.fpct, (v) => fmtPct(v, 1), (v) => { c.fpct = v; effect.textContent = effectText(c); }));
+      preview.appendChild(ctl);
+      preview.appendChild(effect);
+
+      const actions = el('div', 'mynews-card__actions');
+      const sym = S.symbol.symbol;
+      if (c.primary && c.primary !== sym) {
+        preview.appendChild(el('p', 'mynews-card__note', `Berita ini membahas ${c.primary}, sedangkan simulasi sedang memakai ${sym}.`));
+        const go = el('button', 'btn btn--primary btn--sm', `Simulasikan ${c.primary} + suntik`);
+        go.type = 'button';
+        go.title = `Ganti saham simulasi ke ${c.primary} (harga penutupan terakhir dari Sectors), lalu suntik berita ini`;
+        go.disabled = !!pending;
+        go.addEventListener('click', () => switchAndInject(Object.assign({}, c), go));
+        const here = el('button', 'btn btn--outline btn--sm', `Suntik ke ${sym}`);
+        here.type = 'button';
+        here.addEventListener('click', () => inject(Object.assign({}, c), here));
+        actions.append(go, here);
+      } else {
+        const b = el('button', 'btn btn--primary btn--sm', 'Suntik ke pasar');
+        b.type = 'button';
+        b.addEventListener('click', () => inject(Object.assign({}, c), b));
+        actions.appendChild(b);
+      }
+      preview.appendChild(actions);
+      preview.hidden = false;
+    }
+
+    function inject(item, button) {
+      const payload = {
+        cmd: 'inject_news_sentiment', title: item.title, strength: round1(item.strength), fundamental_pct: round1(item.fpct),
+        origin: 'user', url: item.url || '', ticker: item.primary || '',
+      };
+      if (!sendOrWarn(payload)) return false;
+      S.ownNewsAt = Date.now();                            // toast "Berita yang kamu input" hanya untuk pengirim
+      if (button) flash(button);
+      pulseMood();
+      const short = item.title.length > 65 ? item.title.substring(0, 65) + '…' : item.title;
+      if (item.strength >= 0.2) addChatMessage('ScalperGarisKeras', 'HAKA 🚀', 'badge-tp', `Ada yang share berita: "${short}" Gas HAKA {T} capt!! 🔥`);
+      else if (item.strength <= -0.2) addChatMessage('PrajuritCutloss', 'HAKI 🚨', 'badge-cl', `Baru baca: "${short}" Buang kiri {T} dulu woy sebelum ARB!`);
+      else addChatMessage('DokterSaham', 'ANALIS 📊', 'badge-fomo', `Berita "${short}" netral sih, {T} kayaknya sideways dulu.`);
+      remember(item);
+      setStatus(`Disuntik ke ${S.symbol.symbol}. Lihat reaksinya di chart dan grid investor.`, 'ok');
+      return true;
+    }
+
+    function clearPending() { if (pending) { clearTimeout(pending.timer); pending = null; } }
+    function switchAndInject(item, btn) {
+      if (pending) return;
+      if (!sendOrWarn({ cmd: 'set_symbol', symbol: item.primary })) return;
+      pending = {
+        item, symbol: item.primary,
+        timer: setTimeout(() => {                          // koneksi putus / server diam: jangan menunggu selamanya
+          if (!pending) return;
+          const sym = pending.symbol; pending = null;
+          setStatus(`Server belum menjawab penggantian ke ${sym}. Coba lagi.`, 'warn');
+          if (current && !preview.hidden) renderPreview();
+        }, 15000),
+      };
+      if (btn) btn.disabled = true;
+      setStatus(`Mengganti simulasi ke ${item.primary}…`, 'info');
+    }
+    // Dipanggil dari onSymbolChanged: snapshot simbol baru menyusul, beri jeda sebentar lalu suntik.
+    function onSymbolChanged(sym) {
+      const job = pending && pending.symbol === sym ? pending : null;
+      clearPending();
+      if (preview && !preview.hidden && current) renderPreview();          // tombol & teks efek mengikuti simbol aktif
+      if (job) setTimeout(() => { if (inject(job.item, null) && current) renderPreview(); }, 700);
+    }
+    function onSymbolError(msg) {
+      if (!pending || (msg.symbol && String(msg.symbol).toUpperCase() !== pending.symbol)) return false;
+      const sym = pending.symbol;
+      clearPending();
+      setStatus(`${sym} tidak bisa disimulasikan: ${String(msg.message || 'harga tidak tersedia')}. Berita tetap bisa disuntik ke ${S.symbol.symbol}.`, 'error');
+      if (current && !preview.hidden) renderPreview();
+      return true;
+    }
+
+    function remember(item) {
+      const entry = {
+        title: item.title.slice(0, 300), url: item.url || '', source: item.source || '', primary: item.primary || '',
+        strength: round1(item.strength), fpct: round1(item.fpct), symbol: S.symbol.symbol, at: Date.now(),
+      };
+      history = [entry].concat(history.filter((h) => !(h.title === entry.title && h.url === entry.url))).slice(0, MAX_HISTORY_ITEMS);
+      storageSet(STORE_KEY, JSON.stringify(history));
+      renderList();
+    }
+    function renderList() {
+      listEl.replaceChildren();
+      clearBtn.hidden = !history.length;
+      if (!history.length) {
+        listEl.appendChild(el('p', 'mynews__empty', 'Belum ada berita yang kamu suntik. Tempel link berita saham di atas, atau tulis isi beritanya.'));
+        return;
+      }
+      history.forEach((h) => {
+        const row = el('div', 'mynews-item');
+        const top = el('div', 'mynews-item__top');
+        const when = new Date(h.at);
+        top.append(
+          el('span', `senti ${sentiClass(h.strength)}`, fmtSigned1(h.strength)),
+          el('span', 'mynews-item__meta', `${h.source || 'Teks kamu'} · ${pad2(when.getHours())}:${pad2(when.getMinutes())} · ${h.symbol}` +
+            (Math.abs(h.fpct) >= 0.05 ? ` · nilai wajar ${fmtPct(h.fpct, 1)}` : '')),
+        );
+        row.appendChild(top);
+        const url = safeUrl(h.url);
+        if (url) {
+          const a = el('a', 'mynews-item__title', h.title);
+          a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+          row.appendChild(a);
+        } else {
+          row.appendChild(el('div', 'mynews-item__title', h.title));
+        }
+        const again = el('button', 'btn btn--ghost btn--xs', 'Suntik lagi');
+        again.type = 'button';
+        again.title = 'Suntik ulang berita ini ke saham yang sedang disimulasikan';
+        again.addEventListener('click', () => inject({ title: h.title, url, source: h.source, primary: h.primary, strength: h.strength, fpct: h.fpct }, again));
+        row.appendChild(again);
+        listEl.appendChild(row);
+      });
+    }
+
+    form.addEventListener('submit', analyze);
+    clearBtn.addEventListener('click', () => { history = []; storageSet(STORE_KEY, '[]'); renderList(); });
+    renderList();
+    return { onSymbolChanged, onSymbolError, refresh: renderList };
+  })();
+
+  // ═══════════════════════════ 10c. Panduan (tur langkah demi langkah) ═══════════════════════════
+  // Kartu bernomor yang menyorot satu fitur per langkah. Muncul otomatis sekali (localStorage), bisa
+  // dibuka lagi lewat tombol "Panduan" atau tombol ?. Langkah yang targetnya tidak terlihat tetap
+  // ditampilkan di tengah layar tanpa sorotan; panel kanan yang sedang ditutup dibuka sebentar.
+  const Tour = (() => {
+    const DONE_KEY = 'simpasar:tourDone';
+    const STEPS = [
+      { sel: '#symbolButton', title: 'Pilih saham',
+        text: 'Klik di sini (atau tekan /) untuk memilih saham BEI mana saja, misalnya BBCA atau GOTO. Harga awalnya diambil dari harga penutupan terakhir di bursa lewat Sectors API.' },
+      { sel: '#statusBadge', title: 'Status pasar',
+        text: 'Normal, Bubble (harga jauh di atas nilai wajar), atau Panik-Crash (jatuh jauh di bawahnya). Status ini muncul sendiri dari reaksi 100 investor tiruan.' },
+      { sel: '#simClock', title: 'Jam bursa simulasi',
+        text: '1 langkah simulasi = 1 menit jam bursa: Sesi 1 pukul 09.00–12.00, Sesi 2 pukul 13.30–16.00. Akhir pekan dilompati.' },
+      { sel: '#statsRow', title: 'Angka penting',
+        text: 'Harga sekarang, nilai wajar, selisih keduanya, tertinggi dan terendah hari ini, suasana pasar (−3 panik sampai +3 euforia), serta batas harian ARA/ARB.' },
+      { sel: ['#tfGroup', '#chartWrap'], title: 'Chart dan timeframe',
+        text: 'Pilih lebar candle 1, 5, 15, atau 30 menit. Di chart: scroll untuk zoom, seret untuk menggeser, klik ganda untuk kembali ke tampilan awal.' },
+      { sel: '#dockActions', title: 'Atur simulasinya',
+        text: 'Sebar rumor (R) menaikkan suasana pasar, Kabar buruk (K) menurunkannya; orang noise bereaksi lebih dulu. Jeda (Spasi) dan Reset juga ada di sini.' },
+      { sel: '#speedGroup', title: 'Kecepatan',
+        text: 'Percepat atau perlambat simulasi dari 0,5x sampai 5x.' },
+      { sel: '#dockMix', title: 'Komposisi investor',
+        text: 'Geser porsi tipe orang (fundamentalist dan chartist, sisanya noise) dan sifat orang (discipline dan denial, sisanya averager). Ke-100 investor langsung dibentuk ulang dan posisinya mulai dari nol, sedangkan harga dan chart tetap berjalan.' },
+      { sel: '#crowdBlock', title: '100 investor tiruan',
+        text: 'Tiap kotak satu investor. Mode Aksi: hijau beli, hijau tua sedang untung, merah jual, merah tua sedang rugi, gelap diam. Ganti ke Tipe orang atau Sifat orang, lalu sorot atau ketuk kotak untuk melihat detailnya.' },
+      { sel: '#pnlBlock', title: 'Untung / rugi',
+        text: 'Berapa investor yang pegang saham, sedang untung, rugi berat, dan yang nambah posisi saat harga naik atau turun.' },
+      { sel: '#rightHead', title: 'Stream ritel, Berita Sectors, dan Input berita', openRight: true,
+        // Teks mengikuti tata letak: layar lebar (panel di samping chart) vs ponsel/tablet tegak (panel di bawah).
+        text: () => 'Stream ritel berisi komunitas fiktif yang ikut bereaksi. Berita Sectors berisi berita BEI asli. Di Input berita, tempel link berita sendiri, lalu lihat agen bereaksi. ' +
+          (window.matchMedia('(max-width: 1023px)').matches
+            ? 'Tombol panah di ujung baris tab melipat panel ini sampai tinggal baris tabnya; ketuk tombol itu atau salah satu tab untuk membukanya lagi.'
+            : 'Tombol panah › di ujung baris tab menutup panel ini menjadi strip tipis supaya chart lebih lebar; buka lagi lewat tombol ‹ di strip itu atau klik nama tabnya.') },
+      { sel: '#helpBtn', title: 'Selesai, selamat bereksperimen',
+        text: 'Buka panduan ini lagi kapan saja lewat tombol Panduan atau tombol ?. Mode gelap/terang ada di sebelahnya.' },
+    ];
+    let root = null, spot = null, card = null, idx = 0, isOpen = false, lastFocus = null, openedRight = false;
+    let savedScroll = null;                              // posisi gulir sebelum panduan (dikembalikan saat ditutup)
+
+    function build() {
+      root = el('div', 'tour');
+      root.hidden = true;
+      root.setAttribute('role', 'dialog');
+      root.setAttribute('aria-modal', 'true');
+      root.setAttribute('aria-labelledby', 'tourTitle');
+      root.tabIndex = -1;                                  // klik di luar tombol → fokus tetap di panduan (Esc/panah jalan)
+      spot = el('div', 'tour__spot');
+      card = el('div', 'tour__card');
+      root.append(spot, card);
+      document.body.appendChild(root);
+      root.addEventListener('keydown', onKey);
+      window.addEventListener('resize', () => { if (isOpen) place(); });
+      window.addEventListener('scroll', () => { if (isOpen) place(); }, true);
+    }
+    function visible(node) {
+      if (!node) return false;
+      const r = node.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(node).visibility !== 'hidden';
+    }
+    function target() {
+      for (const sel of [].concat(STEPS[idx].sel)) { const n = document.querySelector(sel); if (visible(n)) return n; }
+      return null;
+    }
+    function button(text, cls, fn) { const b = el('button', `btn ${cls}`, text); b.type = 'button'; b.addEventListener('click', fn); return b; }
+    function render() {
+      const step = STEPS[idx];
+      // Panel kanan sedang ditutup: buka sebentar untuk langkah itu, lalu tutup lagi setelahnya.
+      if (step.openRight && !RightPanel.isOpen()) { RightPanel.setOpen(true, { instant: true }); openedRight = true; }
+      card.replaceChildren();
+      card.appendChild(el('div', 'tour__step mono', `Langkah ${idx + 1} dari ${STEPS.length}`));
+      const h = el('h2', 'tour__title', step.title);
+      h.id = 'tourTitle';
+      card.appendChild(h);
+      card.appendChild(el('p', 'tour__text', typeof step.text === 'function' ? step.text() : step.text));
+      const dots = el('div', 'tour__dots');
+      STEPS.forEach((_, i) => dots.appendChild(el('i', i === idx ? 'is-on' : null)));
+      card.appendChild(dots);
+      const nav = el('div', 'tour__nav');
+      nav.appendChild(button('Lewati', 'btn--ghost btn--sm', () => close()));
+      const right = el('div', 'tour__nav-r');
+      if (idx > 0) right.appendChild(button('Kembali', 'btn--outline btn--sm', () => go(idx - 1)));
+      const next = button(idx === STEPS.length - 1 ? 'Selesai' : 'Lanjut', 'btn--primary btn--sm', () => (idx === STEPS.length - 1 ? close() : go(idx + 1)));
+      right.appendChild(next);
+      nav.appendChild(right);
+      card.appendChild(nav);
+      const n = target();
+      if (n) {
+        n.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // juga di dalam panel kiri yang bergulir
+        const r = n.getBoundingClientRect(), room = card.offsetHeight + 30, vh = window.innerHeight;
+        if (r.bottom + room > vh && r.top - room < 0) n.scrollIntoView({ block: 'start' });   // target tinggi (ponsel)
+      }
+      place();
+      next.focus({ preventScroll: true });
+    }
+    function place() {
+      const n = target();
+      const vw = window.innerWidth, vh = window.innerHeight, pad = 6, gap = 12, m = 12;
+      const cw = card.offsetWidth, ch = card.offsetHeight;
+      if (!n) {
+        spot.classList.add('is-none');
+        card.style.left = `${Math.max(m, (vw - cw) / 2)}px`;
+        card.style.top = `${Math.max(m, (vh - ch) / 2)}px`;
+        return;
+      }
+      spot.classList.remove('is-none');
+      const r = n.getBoundingClientRect();
+      const x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad);
+      spot.style.left = `${x}px`; spot.style.top = `${y}px`;
+      spot.style.width = `${Math.min(vw - 4, r.right + pad) - x}px`;
+      spot.style.height = `${Math.min(vh - 4, r.bottom + pad) - y}px`;
+      let top = r.bottom + pad + gap;
+      if (top + ch > vh - m) top = r.top - pad - gap - ch;          // tidak muat di bawah → di atas
+      if (top < m) {                                                // tidak muat juga → di samping
+        let left = r.right + pad + gap;
+        if (left + cw > vw - m) left = r.left - pad - gap - cw;
+        if (left < m) {                                             // tidak ada ruang di samping (ponsel) → dasar layar
+          card.style.left = `${Math.max(m, (vw - cw) / 2)}px`;
+          card.style.top = `${Math.max(m, vh - ch - m)}px`;
+          return;
+        }
+        card.style.left = `${clamp(left, m, Math.max(m, vw - cw - m))}px`;
+        card.style.top = `${clamp(r.top, m, Math.max(m, vh - ch - m))}px`;
+        return;
+      }
+      card.style.top = `${top}px`;
+      card.style.left = `${clamp(r.left + r.width / 2 - cw / 2, m, Math.max(m, vw - cw - m))}px`;
+    }
+    function go(i) {
+      if (openedRight && !STEPS[i].openRight) { RightPanel.setOpen(false, { instant: true }); openedRight = false; }
+      idx = clamp(i, 0, STEPS.length - 1);
+      render();
+    }
+    function open(start) {
+      if (!root) build();
+      if (Search.isOpen()) Search.close();
+      if (!tooltip.hidden) tooltip.hidden = true;
+      lastFocus = document.activeElement;
+      const lp = $('leftPanel');
+      savedScroll = { left: lp ? lp.scrollTop : 0, page: window.scrollY };
+      isOpen = true;
+      root.hidden = false;
+      document.body.classList.add('tour-open');
+      go(start || 0);
+    }
+    function close() {
+      if (!isOpen) return;
+      isOpen = false;
+      root.hidden = true;
+      document.body.classList.remove('tour-open');
+      if (openedRight) { RightPanel.setOpen(false, { instant: true }); openedRight = false; }
+      storageSet(DONE_KEY, '1');
+      if (savedScroll) { const lp = $('leftPanel'); if (lp) lp.scrollTop = savedScroll.left; window.scrollTo(0, savedScroll.page); savedScroll = null; }
+      if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); if (idx < STEPS.length - 1) go(idx + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); if (idx > 0) go(idx - 1); }
+      else if (e.key === 'Tab') {                                   // fokus tetap di dalam kartu
+        const f = Array.from(card.querySelectorAll('button'));
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (!f.includes(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+        else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+    function maybeAutoStart() { if (storageGet(DONE_KEY) !== '1' && !isOpen) open(0); }
+    return { open, close, isOpen: () => isOpen, maybeAutoStart };
+  })();
+  $('helpBtn').addEventListener('click', () => Tour.open(0));
 
   // ═══════════════════════════ 11. Modal pencarian simbol ═══════════════════════════
   const POPULAR_FALLBACK = [
@@ -1874,11 +2397,13 @@
 
   // Pintasan global: "/" atau Ctrl+K membuka pencarian (saat tidak mengetik di input lain).
   document.addEventListener('keydown', (e) => {
+    if (Tour.isOpen()) return;                              // panduan menangani tombolnya sendiri
     const t = e.target;
     const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); Search.toggle(); return; }
     if (typing || Search.isOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === '/') { e.preventDefault(); Search.open(); return; }
+    if (e.key === '?') { e.preventDefault(); Tour.open(0); return; }
     if (e.repeat) return;                                   // tombol ditahan tidak menyebar rumor berkali-kali
     const k = e.key.toLowerCase();
     if (chart && chart.zoomIn) {
@@ -1947,4 +2472,5 @@
   setTimeout(initStreamMessages, 2500);                     // fallback bila server belum tersambung: stream tetap hidup
   if (chart) showOverlay('Menghubungkan ke simulator…', false);   // tanpa chart, pesan "candlechart.js tidak termuat" dipertahankan
   connect();
+  setTimeout(() => Tour.maybeAutoStart(), 1200);           // pengunjung baru: panduan muncul sekali
 })();

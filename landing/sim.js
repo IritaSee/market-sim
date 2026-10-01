@@ -26,6 +26,7 @@
   };
 
   const BUBBLE_THRESHOLD = 1.25;
+  const AVERAGE_UP_FRACTION = 0.5;   // = sim/agents.py: averager menambah posisi saat untung > 0,5 × ambang serakah
   const CRASH_THRESHOLD = 0.82;
   const MAX_HISTORY = 500;
 
@@ -100,22 +101,25 @@
     if (a.psych === "disciplined") {
       if (pnl < -a.pain) return -1.5;                  // cut loss
       if (pnl > a.greed) return -1.5;                  // take profit
-    } else if (a.psych === "bagholder") {
+    } else if (a.psych === "bagholder") {             // denial
       if (pnl < -a.pain) {
         if (base < 0) return base * rng.uniform(0.05, 0.2); // tahan! jual sedikit saja
         return base;
       }
-      if (pnl > a.greed) return -1.5;
+      if (pnl > 0) {                                   // serakah: menolak take profit selama masih untung
+        if (base < 0) return base * rng.uniform(0.05, 0.2);
+        return base;
+      }
     } else { // averager
-      if (pnl < -a.pain && a.capital > 0.15) {
+      if ((pnl < -a.pain || pnl > a.greed * AVERAGE_UP_FRACTION) && a.capital > 0.15) {
         const q = Math.min(a.capital * 0.55, 0.8);
         const total = a.position + q;
         a.entry = (a.entry * a.position + price * q) / total;
         a.position = Math.min(2.5, total);
         a.capital = Math.max(0, a.capital - q);
-        return 1.5;                                    // averaging down
+        return 1.5;                                    // averaging down (rugi) / averaging up (untung)
       }
-      if (pnl > a.greed) return -1.5;
+      if (pnl > a.greed) return -1.5;                  // modal habis + untung besar → take profit
     }
     return base;
   }
@@ -233,7 +237,7 @@
     getState() {
       const inPos = this.agents.filter((a) => a.position > 0);
       const inPain = inPos.filter((a) => a.inPain).length;
-      const averaging = this.agents.filter((a) => a.psych === "averager" && a.action === "buy" && a.position > 1.05).length;
+      const averaging = this.agents.filter((a) => a.psych === "averager" && a.action === "buy" && a.position > 1.05 && a.pnl < 0).length;   // nambah saat rugi
       const avgPnl = inPos.length ? inPos.reduce((s, a) => s + a.pnl, 0) / inPos.length : 0;
       let buy = 0, sell = 0, hold = 0;
       for (const a of this.agents) { if (a.action === "buy") buy++; else if (a.action === "sell") sell++; else hold++; }

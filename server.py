@@ -19,6 +19,8 @@ Protokol WebSocket (ringkas, detail di README):
     - Simulasi dimulai di BBCA (SIMPASAR_START_SYMBOL untuk mengganti); IHSG tetap bisa dipilih.
     - Pesan dengan "event": paused, resumed, news_injected, symbol_changed, symbol_error,
       speed_changed, error.
+    - "Input berita": POST /api/news/analyze membaca link/teks berita (sim/news.py), lalu klien
+      mengirim inject_news_sentiment (+ fundamental_pct) → sentimen & nilai wajar bergeser.
     - Pengiriman tidak pernah memblok loop simulasi: tiap koneksi punya antrean + task penulis
       sendiri (lihat WSClient). Klien lambat kehilangan delta lalu menerima snapshot penuh.
 """
@@ -32,11 +34,12 @@ import struct
 import time
 import traceback
 from collections import deque
+from pathlib import Path
 from contextlib import suppress
 from typing import Any, Callable
 from urllib.parse import urlsplit
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
@@ -54,8 +57,11 @@ from sim.env import load_env_file
 # Variabel yang sudah diset di shell tetap diprioritaskan.
 load_env_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
-from sim.agents import get_gemini_client, llm_status, shutdown_llm_advisor  # noqa: E402
-from sim.market import FUNDAMENTAL_RANGE_MSG, MAX_SENTIMENT, Market, valid_fundamental  # noqa: E402
+from sim.agents import get_gemini_client, llm_status, set_news_context, shutdown_llm_advisor  # noqa: E402
+from sim.market import (  # noqa: E402
+    FUNDAMENTAL_RANGE_MSG, MAX_NEWS_SHIFT_PCT, MAX_SENTIMENT, Market, valid_fundamental,
+)
+from sim.news import NewsError, analyze_news  # noqa: E402
 from sim.sectors import (  # noqa: E402
     get_realtime_ihsg, get_latest_news_and_filings, get_stock_price, peek_cached_price,
 )
@@ -63,7 +69,20 @@ from sim.stocks import (  # noqa: E402
     get_symbol_meta, is_valid_symbol_format, list_companies, load_companies, normalize_symbol, search_stocks,
 )
 
-app = FastAPI(title="SimPasar IDX")
+app = FastAPI(title="SimPasar")
+
+
+@app.middleware("http")
+async def _revalidate_static(request: Request, call_next):
+    """
+    HTML/JS/CSS selalu dicek ulang ke server (ETag → 304 bila tidak berubah), supaya browser tidak
+    menampilkan app.js / index.html versi lama setelah aplikasi diperbarui.
+    """
+    response = await call_next(request)
+    ctype = response.headers.get("content-type", "")
+    if request.method == "GET" and any(t in ctype for t in ("text/html", "javascript", "text/css")):
+        response.headers.setdefault("Cache-Control", "no-cache")
+    return response
 
 # ------------------------------------------------------------------ #
 #  State global                                                       #
@@ -452,10 +471,27 @@ async def shutdown_event() -> None:
 #  REST Endpoints                                                     #
 # ------------------------------------------------------------------ #
 
+_SIMULATOR_ASSETS = ("/frontend/styles.css", "/frontend/app.js", "/candlechart.js")
+
+
+def _asset_version(url: str) -> str:
+    path = Path("landing" + url) if url == "/candlechart.js" else Path(url.lstrip("/"))
+    try:
+        return str(int(path.stat().st_mtime))
+    except OSError:
+        return "0"
+
+
 @app.get("/simulator")
-async def serve_simulator() -> FileResponse:
-    """Halaman Dashboard Simulator Interaktif."""
-    return FileResponse("frontend/index.html")
+async def serve_simulator() -> HTMLResponse:
+    """
+    Halaman Dashboard Simulator Interaktif. CSS/JS diberi ?v=<waktu ubah file>, jadi setiap kali
+    file berubah URL-nya ikut berubah dan browser tidak bisa memakai salinan lama dari cache.
+    """
+    page = Path("frontend/index.html").read_text(encoding="utf-8")
+    for url in _SIMULATOR_ASSETS:
+        page = page.replace(f'="{url}"', f'="{url}?v={_asset_version(url)}"')
+    return HTMLResponse(page, headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/ihsg")
@@ -470,6 +506,60 @@ async def api_news():
     """Ambil berita & company filings terkini dari Sectors MCP beserta skor sentimen."""
     items = await get_latest_news_and_filings()
     return JSONResponse(items)
+
+
+# Analisis berita pengguna memanggil situs luar (dan Gemini bila aktif): dibatasi supaya server
+# tidak dipakai sebagai proxy massal. Token bucket global + maks. 3 analisis bersamaan.
+NEWS_ANALYZE_PER_MIN = 20
+NEWS_ANALYZE_MAX_BODY = 64 * 1024       # = WS_MAX_MESSAGE_BYTES; URL 2 KB + teks 6000 karakter muat
+_news_analyze_sem = asyncio.Semaphore(3)
+
+
+@app.post("/api/news/analyze")
+async def api_news_analyze(request: Request):
+    """
+    Baca & nilai berita dari link dan/atau teks pengguna. Body JSON: {"url"?: str, "text"?: str}.
+    Hasil: judul, ringkasan, saham yang dibahas, sentimen −3…+3, kategori, saran pergeseran
+    nilai wajar (persen) dan metode penilaian ("gemini" / "aturan"). Belum mengubah pasar.
+    """
+    # Halaman dari domain lain tidak boleh memakai server ini (sama seperti /ws); JSON wajib
+    # (form lintas situs tidak bisa mengirim application/json tanpa izin CORS).
+    if not _origin_allowed(request):
+        return JSONResponse({"ok": False, "message": "Asal permintaan tidak diizinkan"}, status_code=403)
+    if "application/json" not in (request.headers.get("content-type") or "").lower():
+        return JSONResponse({"ok": False, "message": "Format permintaan tidak valid"}, status_code=400)
+    try:
+        declared = int(request.headers.get("content-length") or 0)
+    except ValueError:
+        declared = NEWS_ANALYZE_MAX_BODY + 1
+    if declared > NEWS_ANALYZE_MAX_BODY:
+        return JSONResponse({"ok": False, "message": "Permintaan terlalu besar"}, status_code=413)
+    if not _news_analyze_limiter.allow():
+        return JSONResponse({"ok": False, "message": "Terlalu banyak analisis berita, coba lagi sebentar"}, status_code=429)
+    raw = bytearray()
+    async for chunk in request.stream():          # dibaca bertahap: body tanpa Content-Length tetap dibatasi
+        raw += chunk
+        if len(raw) > NEWS_ANALYZE_MAX_BODY:
+            return JSONResponse({"ok": False, "message": "Permintaan terlalu besar"}, status_code=413)
+    try:
+        body = json.loads(bytes(raw).decode("utf-8"))
+    except (ValueError, RecursionError):
+        body = None
+    if not isinstance(body, dict):
+        return JSONResponse({"ok": False, "message": "Format permintaan tidak valid"}, status_code=400)
+    url = str(body.get("url") or "").strip()[:2048]
+    text = str(body.get("text") or "").strip()[:6000]
+    if not url and not text:
+        return JSONResponse({"ok": False, "message": "Isi link berita atau teks beritanya dulu"}, status_code=400)
+    async with _news_analyze_sem:
+        try:
+            result = await analyze_news(url or None, text or None, current_symbol=str(market.symbol.get("symbol", "")))
+        except NewsError as exc:
+            return JSONResponse({"ok": False, "message": str(exc)}, status_code=422)
+        except Exception as exc:
+            print(f"[news] analisis gagal: {type(exc).__name__}: {exc}", flush=True)
+            return JSONResponse({"ok": False, "message": "Berita tidak bisa dianalisis saat ini"}, status_code=500)
+    return JSONResponse(result)
 
 
 @app.get("/api/state")
@@ -565,6 +655,12 @@ def _bounded_float(value, lo: float, hi: float) -> float:
     return max(lo, min(hi, f))
 
 
+def _http_url_or_empty(value) -> str:
+    """URL http(s) untuk ditampilkan klien sebagai tautan, atau "" (javascript:/data: dsb. dibuang)."""
+    url = str(value or "").strip()[:500]
+    return url if url.lower().startswith(("http://", "https://")) else ""
+
+
 def _fundamental_or_error(value) -> float:
     f = valid_fundamental(value)
     if f is None:
@@ -589,7 +685,10 @@ class _RateLimiter:
         return False
 
 
-def _origin_allowed(websocket: WebSocket) -> bool:
+_news_analyze_limiter = _RateLimiter(rate=NEWS_ANALYZE_PER_MIN / 60.0, burst=5)
+
+
+def _origin_allowed(websocket: WebSocket | Request) -> bool:
     """
     Tolak cross-site WebSocket hijacking: halaman dari domain lain yang dibuka pengguna tidak boleh
     mengendalikan simulasi di localhost. Tanpa header Origin (klien non-browser) → diizinkan.
@@ -701,18 +800,32 @@ async def handle_command(client: WSClient, msg: dict) -> None:
         market.inject_rumor(_bounded_float(msg.get("strength", 1.0), -MAX_SENTIMENT, MAX_SENTIMENT))
 
     elif cmd == "inject_news_sentiment":
-        # Injeksi sentimen berdasarkan berita nyata
+        # Berita (Sectors atau "Input berita"): sentimen → orang noise; fundamental_pct (opsional)
+        # menggeser nilai wajar → orang fundamentalist menilai ulang; judul masuk prompt agen Gemini.
         strength = _bounded_float(msg.get("strength", 1.0), -MAX_SENTIMENT, MAX_SENTIMENT)
-        title = str(msg.get("title", "Berita IDX"))[:300]
+        title = " ".join(str(msg.get("title", "Berita")).split())[:300] or "Berita"
+        raw_pct = msg.get("fundamental_pct")
+        pct = _bounded_float(raw_pct, -MAX_NEWS_SHIFT_PCT, MAX_NEWS_SHIFT_PCT) if raw_pct is not None else 0.0
         if strength >= 0:
             market.inject_rumor(strength)
         else:
             market.inject_panic(abs(strength))
+        before = market.fundamental
+        if abs(pct) >= 0.05:
+            market.shift_fundamental(pct)
+        applied_pct = round((market.fundamental / before - 1) * 100, 2) if before else 0.0
+        set_news_context(title, strength, applied_pct)
+        ticker = str(msg.get("ticker") or "").strip().upper()[:8]
         broadcast({
             "event": "news_injected",
             "title": title,
             "strength": strength,
-            "sentiment": market.sentiment
+            "sentiment": market.sentiment,
+            "origin": "user" if msg.get("origin") == "user" else "sectors",
+            "url": _http_url_or_empty(msg.get("url")),
+            "ticker": ticker if ticker.isalpha() else "",
+            "fundamental_pct": applied_pct,
+            "fundamental": market.fundamental,
         })
 
     elif cmd == "inject_panic":

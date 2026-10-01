@@ -1,6 +1,6 @@
 """
 Agen-agen pasar modal — dua sumbu:
-  - info_style   : cara baca informasi pasar (fundamentalist / chartist / noise)
+  - info_style   : tipe orang: cara membaca pasar (fundamentalist / chartist / noise)
   - psych_profile: respons psikologis terhadap P&L (disciplined / bagholder / averager)
 
 Psych profile MENG-OVERRIDE sinyal info_style saat agen sedang punya posisi.
@@ -23,6 +23,7 @@ from __future__ import annotations
 import math
 import os
 import threading
+import time
 from google import genai
 from google.genai import types as genai_types
 
@@ -174,6 +175,10 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Literal
 
+# Averager menambah posisi saat untung (averaging up) begitu untung melewati porsi ini
+# dari greed_threshold-nya; sisa modal yang sama juga dipakai untuk averaging down.
+AVERAGE_UP_FRACTION = 0.5
+
 AgentType   = Literal["fundamentalist", "chartist", "noise"]
 PsychProfile = Literal["disciplined", "bagholder", "averager"]
 Action       = Literal["buy", "sell", "hold"]
@@ -191,22 +196,58 @@ _PERSONA_DESCRIPTIONS: dict[str, str] = {
         "today you're feeling confident or shaky."
     ),
     "bagholder": (
-        "Someone who hates admitting a trade was wrong. When a position turns red you rationalize — "
-        "'it'll bounce back', 'I'm not selling at a loss', 'this is just noise'. You anchor hard to "
-        "your entry price, as if that's what the stock 'should' be worth. Mostly you freeze and hold, "
-        "maybe trimming a sliver to ease the anxiety, but if the pain becomes truly unbearable you can "
-        "suddenly capitulate and dump far more than usual — panic-selling near the bottom. When you're "
-        "finally green, you grab the profit fast and with relief, sometimes too early, because you "
-        "remember exactly what holding a loser felt like."
+        "Someone in denial about what the price is telling you. When a position turns red you "
+        "rationalize — 'it'll bounce back', 'I'm not selling at a loss', 'this is just noise'. You "
+        "anchor hard to your entry price, as if that's what the stock 'should' be worth. Mostly you "
+        "freeze and hold, maybe trimming a sliver to ease the anxiety, but if the pain becomes truly "
+        "unbearable you can suddenly capitulate and dump far more than usual — panic-selling near the "
+        "bottom. When you're green you get greedy instead of grateful: 'it can still go higher'. You "
+        "refuse to take profit, and keep holding even as the gain melts back toward your entry or "
+        "turns into a loss."
     ),
     "averager": (
-        "A conviction investor who sees dips as a discount, not a warning — 'more shares, lower "
-        "average'. You genuinely believe in the trade. But you're not infinitely confident: as losses "
-        "deepen and your dry powder runs low, doubt creeps in and you buy smaller, more hesitant "
-        "amounts, or stop averaging altogether once capital is scarce. When the trade finally turns "
-        "profitable, you take the win — averaging down was stressful and you want the relief."
+        "A conviction investor who keeps adding to a position. Dips look like a discount — 'more "
+        "shares, lower average' — and rallies look like confirmation — 'it's working, add more' "
+        "(averaging up). You genuinely believe in the trade. But you're not infinitely confident: as "
+        "your dry powder runs low, doubt creeps in and you buy smaller, more hesitant amounts, or stop "
+        "adding altogether once capital is scarce. Only when your capital is used up and the gain is "
+        "large do you finally take the win."
     ),
 }
+
+
+# ── Berita terakhir yang disuntik ke pasar (Sectors atau berita pengguna) ──
+# Ikut masuk ke prompt LLM supaya agen berbasis Gemini menimbang isi beritanya, bukan hanya
+# angka sentimen. Kedaluwarsa sendiri setelah NEWS_CONTEXT_TTL_S detik.
+NEWS_CONTEXT_TTL_S = 180.0
+_news_context: dict | None = None
+_news_lock = threading.Lock()
+
+
+def set_news_context(title: str, strength: float, fundamental_pct: float = 0.0) -> None:
+    """Catat berita terbaru untuk prompt LLM (judul dirapikan & dipotong; kosong = hapus)."""
+    global _news_context
+    clean = " ".join(str(title or "").replace('"', "'").split())[:200]
+    with _news_lock:
+        _news_context = (
+            {"title": clean, "strength": float(strength), "fundamental_pct": float(fundamental_pct),
+             "at": time.monotonic()}
+            if clean else None
+        )
+
+
+def _news_line() -> str:
+    with _news_lock:
+        ctx = _news_context
+    if not ctx or time.monotonic() - ctx["at"] > NEWS_CONTEXT_TTL_S:
+        return ""
+    tone = "positive" if ctx["strength"] > 0.2 else "negative" if ctx["strength"] < -0.2 else "neutral"
+    fair = (f" Analysts now put the fair value {ctx['fundamental_pct']:+.1f}% from before."
+            if abs(ctx["fundamental_pct"]) >= 0.05 else "")
+    return (
+        f"\n\nBreaking news everyone in this market is reacting to (tone: {tone}): \"{ctx['title']}\".{fair} "
+        "Let it color each person's feelings the way their persona would; a headline is not a certainty."
+    )
 
 
 def _persona_header(agent_type: str, psych_profile: str) -> str:
@@ -217,6 +258,7 @@ def _persona_header(agent_type: str, psych_profile: str) -> str:
         f"Shared persona: {persona}\n\n"
         f"Their trading style is '{agent_type}', which produces each person's cold, "
         "rational base signal before feelings about their own position get involved."
+        + _news_line()
     )
 
 
@@ -259,6 +301,7 @@ class Agent:
     last_order:  float  = 0.0
     last_action: Action = "hold"
     last_reason: str    = ""   # alasan singkat dari LLM (kosong kalau fallback)
+    last_added:  bool   = False  # True hanya pada tick _add_position berjalan (average up/down)
     pnl_pct:     float  = 0.0   # untuk visualisasi
     in_pain:     bool   = False
 
@@ -292,6 +335,8 @@ class Agent:
         self.pnl_pct = pnl
 
         # Probabilistik — tidak semua agen bereaksi di tick yang sama
+        # (berlaku sama untuk semua sifat; menahan jual Denial juga di tick "tidak bereaksi"
+        # membuat bubble melewati target kalibrasi 1,5–2,0× nilai wajar, lihat tuning/)
         if rng.random() > self.reaction_delay_prob:
             return base_order
 
@@ -351,26 +396,37 @@ class Agent:
                     partial = rng.uniform(0.6, 1.0) if capitulate else rng.uniform(0.05, 0.20)
                     return with_sentiment(base_order * partial)
                 return with_sentiment(base_order)
-            if pnl > self.greed_threshold:
-                relief = rng.uniform(0.7, 1.0)   # buru-buru ambil untung, kadang terlalu cepat
-                return with_sentiment(-1.5 * float(relief))
+            if pnl > 0:
+                # Serakah: menolak take profit ("masih bisa naik"); jual hanya sedikit sekali
+                # meski sinyalnya jual, sehingga untung bisa menguap kembali ke harga beli.
+                # Baru bisa keluar setelah untungnya habis (kembali ke titik awal atau rugi).
+                if base_order < 0:
+                    return with_sentiment(base_order * rng.uniform(0.05, 0.20))
+                return with_sentiment(base_order)
 
         elif self.psych_profile == "averager":
             if pnl < -self.pain_threshold and self.capital_remaining > 0.15:
                 # AVERAGING DOWN — beli tambahan, makin ragu saat modal menipis
-                confidence = float(np.clip(self.capital_remaining * rng.uniform(0.7, 1.0), 0.15, 1.0))
-                buy_qty = min(self.capital_remaining * 0.55 * confidence, 0.8)
-                total = self.position + buy_qty
-                self.entry_price = (
-                    self.entry_price * self.position + price * buy_qty
-                ) / total
-                self.position = min(2.5, total)
-                self.capital_remaining = max(0.0, self.capital_remaining - buy_qty)
-                return with_sentiment(1.5 * confidence)
+                return with_sentiment(1.5 * self._add_position(price, rng))
+            if pnl > self.greed_threshold * AVERAGE_UP_FRACTION and self.capital_remaining > 0.15:
+                # AVERAGING UP — tambah muatan saat harga terus naik (harga rata-rata ikut naik)
+                return with_sentiment(1.5 * self._add_position(price, rng))
             if pnl > self.greed_threshold:
+                # Modal sudah terpakai dan untung besar → baru ambil untung
                 return with_sentiment(-1.5 * float(rng.uniform(0.7, 1.0)))
 
         return with_sentiment(base_order)
+
+    def _add_position(self, price: float, rng: np.random.Generator) -> float:
+        """Tambah posisi (averaging down/up) dari sisa modal; mengembalikan keyakinan 0,15–1."""
+        confidence = float(np.clip(self.capital_remaining * rng.uniform(0.7, 1.0), 0.15, 1.0))
+        buy_qty = min(self.capital_remaining * 0.55 * confidence, 0.8)
+        total = self.position + buy_qty
+        self.entry_price = (self.entry_price * self.position + price * buy_qty) / total
+        self.position = min(2.5, total)
+        self.capital_remaining = max(0.0, self.capital_remaining - buy_qty)
+        self.last_added = True
+        return confidence
 
     # ── Update state posisi setelah order dikirim ────────────────────
     def _update_position(self, order: float, price: float) -> None:
@@ -400,6 +456,7 @@ class Agent:
         params: dict,
         rng: np.random.Generator,
     ) -> float:
+        self.last_added = False
         base  = self._base_signal(price, fundamental, price_history, sentiment, params, rng)
         final = self._psych_override(base, price, rng)
         self._update_position(final, price)
@@ -430,6 +487,7 @@ class Agent:
             "pos":    round(float(self.position), 2),
             "pain":   bool(self.in_pain),
             "reason": self.last_reason,
+            **({"add": True} if self.last_added else {}),   # sedang menambah posisi (hanya dikirim bila benar)
         }
 
 

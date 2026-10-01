@@ -192,19 +192,22 @@ Pada halaman Simulator Dashboard (`/simulator`), Anda dapat berinteraksi secara 
   | >Rp5.000 | +20% | −15% |
 
   Contoh: acuan Rp5 → ARA Rp6, ARB Rp4 (bukan dikali persen). BBCA acuan Rp6.200 → ARA Rp7.440, ARB Rp5.270. Acuan dibulatkan ke rupiah terdekat dan batas dihitung dengan bilangan bulat (ARA dibulatkan ke bawah, ARB ke atas) supaya tidak ada galat pembulatan; fraksi harga (tick size) tidak diterapkan.
-- **Waktu bursa simulasi:** 1 tick = 1 menit bursa. Sesi mengikuti BEI (09:00–12:00 & 13:30–16:00 = 330 menit/hari), kalender melewati Sabtu/Minggu. Chart candlestick 15 menit dengan label jam simulasi, histori hingga 2000 tick (≈6 hari bursa). Navigasi chart: roda mouse = zoom, seret = geser ke segala arah (kiri/kanan = waktu, atas/bawah/diagonal = harga), seret sumbu harga = skala vertikal, dua jari = cubit/geser (layar sentuh), klik ganda = reset; pintasan `+` `−` (zoom), `←` `→` `↑` `↓` (geser), `0` (reset), `End` (kembali ke candle & harga terbaru).
+- **Waktu bursa simulasi:** 1 tick = 1 menit bursa. Sesi mengikuti BEI (09:00–12:00 & 13:30–16:00 = 330 menit/hari), kalender melewati Sabtu/Minggu. Chart candlestick dengan timeframe 1m / 5m / 15m / 30m (pilihan diingat per browser) dan label jam simulasi, histori hingga 2000 tick (≈6 hari bursa). Navigasi chart: roda mouse = zoom, seret = geser ke segala arah (kiri/kanan = waktu, atas/bawah/diagonal = harga), seret sumbu harga = skala vertikal, dua jari = cubit/geser (layar sentuh), klik ganda = reset; pintasan `+` `−` (zoom), `←` `→` `↑` `↓` (geser), `0` (reset), `End` (kembali ke candle & harga terbaru).
 - **Chart Candlestick Real-time:** Menampilkan pergerakan harga saham simulasi secara live melalui WebSocket (protokol snapshot + delta, lihat referensi di bawah).
 - **Suntik Sentimen & Berita:**
-  - *⚡ SUNTIK*: Memilih berita atau corporate filing nyata dari Sectors MCP untuk disuntikkan ke pasar.
-  - *🚀 Rumor (+)*: Menyuntikkan sentimen positif dadakan untuk menguji pembentukan *bubble*.
-  - *📉 Bad News (-)*: Menyuntikkan sentimen kepanikan (*panic selling*).
-- **Komposisi Agen (Population Mix):**
-  - **Fundamentalis:** Menilai harga berdasarkan nilai intrinsik.
-  - **Chartist (Teknikal):** Mengikuti tren momentum & moving averages.
-  - **Noise Trader:** Bertindak berdasarkan sentimen emosional dan rumor.
-- **Profil Psikologis Agen:**
-  - *Disciplined*: Disiplin stop-loss dan profit taking.
-  - *Bagholder / FOMO*: Cenderung menahan rugi (*loss aversion*) dan mudah panik saat pasar rontok.
+  - *Berita Sectors*: berita atau corporate filing nyata dari Sectors MCP, tombol *Suntik ke pasar*.
+  - *Input berita*: tempel link berita (atau isinya) → server membaca judul & ringkasan (`sim/news.py`), menebak saham yang dibahas, menilai sentimen −3…+3 dan saran pergeseran nilai wajar (Gemini bila aktif, cadangan kamus kata Indonesia/Inggris). Pengguna bisa menyetel kekuatannya, lalu menyuntik ke saham aktif atau langsung mengganti simulasi ke saham yang dibahas. Agen bereaksi lewat suasana pasar (orang noise), nilai wajar (orang fundamentalist), dan judul berita di prompt agen Gemini.
+  - *Sebar rumor (+)* / *Kabar buruk (−)*: sentimen dadakan untuk menguji *bubble* dan *panic selling*.
+- **Tipe orang (cara membaca pasar):**
+  - **Fundamentalist:** melihat nilai wajar atau harga yang pantas menurut kondisi perusahaan.
+  - **Chartist:** memprediksi pergerakan dari chart masa lalu (momentum 8 menit).
+  - **Noise:** percaya berita dan rumor yang beredar.
+- **Sifat orang (saat untung & saat rugi):**
+  - *Discipline* (`disciplined`): take profit sesuai rencana, berani cut loss.
+  - *Denial* (`bagholder`): menolak jual selama masih untung karena serakah (baru bisa keluar setelah untungnya habis); saat rugi menahan sampai nyangkut (sesekali kapitulasi).
+  - *Averager* (`averager`): menambah posisi saat harga naik (average up, mulai di 0,5 × ambang serakah) maupun turun (average down) dari sisa modal yang sama; take profit setelah modal habis.
+- **Panduan di aplikasi:** tur 12 langkah muncul sekali untuk pengunjung baru; buka lagi lewat tombol *Panduan* atau tombol `?`.
+- **Panel kanan bisa ditutup:** panel *Stream ritel / Berita Sectors / Input berita* selalu terbuka saat aplikasi dibuka. Tombol panah di ujung baris tab menutupnya menjadi strip tipis di tepi kanan supaya chart lebih lebar; strip itu berisi tombol buka dan pintasan ke tiap tab. Di ponsel dan tablet tegak (lebar < 1024px) semua bagian disusun satu kolom: chart selebar layar, panel ini di bagian bawah, dan saat ditutup hanya baris tabnya yang tersisa.
 
 ---
 
@@ -218,6 +221,12 @@ Pada halaman Simulator Dashboard (`/simulator`), Anda dapat berinteraksi secara 
   `source_kind` ∈ `sectors | cache | stale | fallback`, `fetched_at` = epoch detik pengambilan dari API.
 - `GET /api/news`  
   Mengambil daftar berita dan company filings teranyar beserta skor sentimen (cache 10 menit — setiap pengambilan memotong 2 kredit).
+- `POST /api/news/analyze` (body JSON `{"url"?: str, "text"?: str}`)  
+  Membaca & menilai berita dari tab "Input berita" tanpa mengubah pasar. Balasan `{ok, url, source, title, summary, published, tickers: [{symbol, name}], primary, sentiment (−3…+3), label, category (fundamental | rumor | pasar | lainnya), fundamental_pct (−5…+5), reason, method (gemini | aturan), fetched, warning}`.
+  Hanya URL http/https publik (port 80/443) yang diambil; host lokal/privat ditolak (dicek saat resolve, di tiap redirect, dan pada alamat yang benar-benar tersambung, sehingga tahan DNS rebinding; proxy sistem diabaikan); batas 8 detik per operasi, 15 detik total, 1,5 MB, maks. 3 unduhan bersamaan.
+  Wajib `Content-Type: application/json` dan Origin yang sama (atau `SIMPASAR_ALLOWED_ORIGINS`), body maks. 64 KB. Gemini dipakai hanya bila agen LLM aktif dan tidak sedang backoff (maks. 4 analisis/menit, 200/proses), selain itu kamus kata.
+  Halaman yang gagal dibaca → judul ditebak dari URL (`warning` diisi). Dibatasi 20 analisis/menit dan 3 bersamaan.
+  Galat: 400 (body kosong/rusak/bukan JSON), 403 (Origin lain), 413 (body > 64 KB), 422 (URL tidak bisa dipakai, pesan ramah di `message`), 429 (terlalu sering).
 - `GET /api/stocks/search?q=<teks>&limit=<1..30, default 12>`  
   Cari emiten BEI. Balasan `{"query", "count", "results": [{symbol, name, sector, sector_name, kind, score, match}]}`.
   `match` ∈ `ticker | alias | name | sector | fuzzy | default`; `kind` ∈ `stock | index` (IHSG). Query kosong → IHSG + emiten populer.
@@ -249,6 +258,8 @@ Pada halaman Simulator Dashboard (`/simulator`), Anda dapat berinteraksi secara 
 **Pesan dari server** — dua jenis:
 
 1. **State** (tanpa field `event`). Selalu memuat `tick, price, fundamental, status, sentiment, paused, llm, volume, agents, params, psych_stats`, plus:
+   - `agents[]`: `{id, type, psych, action, order, pnl, pos, pain, reason}` + `add: true` hanya pada tick agen benar-benar menambah posisi (average up/down).
+   - `psych_stats`: `{in_position, in_pain, in_profit, averaging, averaging_up, averaging_down, avg_pnl_pct}` — `in_profit` = pegang saham dengan untung > 2%, `averaging_up`/`averaging_down` = agen yang menambah posisi di tick ini saat untung/rugi (`averaging` = jumlah keduanya).
    - `tick_interval`: kecepatan server saat ini (detik per tick, 0,05–1,5; 1x = 0,25). Klien menandai tombol kecepatan dengan interval terdekat (`0.5x=0.5, 1x=0.25, 2x=0.125, 3x=0.0833, 5x=0.05`).
    - `symbol`: `{symbol, name, sector, sector_name, kind, source_price, source_date, source, source_kind}` — simbol yang sedang disimulasikan.
      `source_kind` = asal harga awal: `"sectors"` (harga baru dari API), `"cache"` (cache Sectors ≤ TTL), `"stale"` (cache kedaluwarsa karena API gagal),
@@ -262,7 +273,7 @@ Pada halaman Simulator Dashboard (`/simulator`), Anda dapat berinteraksi secara 
    - `sim_time`: `{tick, day, date, weekday, weekday_short, date_label, time, session, minute_of_day, minutes_per_day, label}` — waktu bursa simulasi (1 tick = 1 menit; Sesi 1 09:00–12:00, Sesi 2 13:30–16:00; 330 menit/hari; kalender melewati akhir pekan).
    - `snapshot: true` → **snapshot penuh** dengan `price_history` & `volume_history` (hingga 2000 tick). Dikirim saat konek, `get_state` (ke pengirim), dan di-broadcast ke **semua** klien setelah `reset`, `set_fundamental`, `set_population`, `set_psych`, `set_symbol`. Klien mengganti seluruh histori (dan menyinkronkan slider dari `params`).
    - `snapshot: false` → **delta per tick** tanpa histori. Klien melakukan `push(price)`, `push(volume)`; bila `tick !== lastTick + 1` (loncat/putus) kirim `{"cmd":"get_state"}` untuk sinkron ulang; potong array ke 2000.
-2. **Event** (`{"event": ...}`): `paused`, `resumed`, `news_injected {title, strength, sentiment}`,
+2. **Event** (`{"event": ...}`): `paused`, `resumed`, `news_injected {title, strength, sentiment, origin ("sectors" | "user"), url, ticker, fundamental_pct, fundamental}`,
    `symbol_changed {symbol, fundamental}` (selalu sebelum snapshot-nya), `symbol_error {symbol, message, price_status?}`,
    `speed_changed {tick_interval}` (ke semua klien setelah `set_speed`), `error {cmd, message}` (perintah rusak atau dibuang limiter; koneksi tetap hidup).
 
@@ -284,6 +295,10 @@ Pada halaman Simulator Dashboard (`/simulator`), Anda dapat berinteraksi secara 
 { "cmd": "inject_rumor", "strength": 1.5 }
 { "cmd": "inject_panic", "strength": 1.0 }
 { "cmd": "inject_news_sentiment", "title": "Judul berita", "strength": -0.8 }
+// Opsional: geser nilai wajar (persen, ±10 per berita, total ±50% dari harga awal; reset membatalkan),
+// asal berita, tautan (hanya http/https yang diteruskan) dan ticker yang dibahas.
+{ "cmd": "inject_news_sentiment", "title": "Saham GOTO di bawah gocap", "strength": -2.5,
+  "fundamental_pct": -3, "origin": "user", "url": "https://…", "ticker": "GOTO" }
 
 // Komposisi & psikologi agen (balasan: snapshot penuh ke SEMUA klien)
 { "cmd": "set_population", "fundamentalist": 0.3, "chartist": 0.5, "noise": 0.2 }

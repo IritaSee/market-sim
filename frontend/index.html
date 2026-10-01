@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SimPasar IDX — Simulator</title>
-  <meta name="description" content="Simulator pasar saham BEI berbasis 100 agen tiruan: pilih emiten, suntik rumor atau kabar buruk, lihat reaksi kerumunan di chart 15 menit." />
+  <title>SimPasar — Simulator</title>
+  <meta name="description" content="Simulator pasar saham BEI dengan 100 investor tiruan: pilih saham, sebar rumor, kabar buruk, atau input berita sendiri, lalu lihat reaksi pasar di berbagai timeframe." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307090e'/%3E%3Cpath d='M8 44 L20 34 L28 40 L40 20 L48 28 L56 12' fill='none' stroke='%23f6b73c' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <meta name="theme-color" content="#10151f" />
   <script>
@@ -32,7 +32,7 @@
   <header class="topbar" id="topbar">
     <div class="topbar__left">
       <span class="brand">
-        <span class="brand__name">SimPasar <span class="brand__accent">IDX</span></span>
+        <span class="brand__name">SimPasar</span>
       </span>
 
       <button id="symbolButton" class="symbol-btn" type="button" aria-haspopup="dialog" aria-controls="searchModal" title="Ganti emiten — tekan / atau Ctrl+K">
@@ -65,12 +65,13 @@
         <span class="conn__dot" id="connDot"></span>
         <span class="conn__label" id="connLabel">Menghubungkan…</span>
       </div>
+      <button id="helpBtn" class="btn btn--outline help-btn" type="button" title="Panduan cara pakai (tombol ?)" aria-label="Buka panduan cara pakai">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.9" /><path d="M12 17.2v.01" /></svg>
+        <span class="help-btn__label">Panduan</span>
+      </button>
       <button id="themeToggle" class="btn btn--icon theme-btn" type="button" title="Ganti ke mode terang" aria-label="Ganti ke mode terang">
         <svg class="theme-btn__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></svg>
         <svg class="theme-btn__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7z" /></svg>
-      </button>
-      <button id="toggleRight" class="btn btn--icon" type="button" aria-pressed="false" title="Tampilkan / sembunyikan panel kanan">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>
       </button>
     </div>
   </header>
@@ -102,7 +103,7 @@
             <dd class="mono" id="cardChange">—</dd>
           </div>
           <div class="kv__row" id="rowMcap">
-            <dt>Market cap</dt>
+            <dt>Kapitalisasi pasar</dt>
             <dd class="mono" id="cardMcap">—</dd>
           </div>
         </dl>
@@ -110,12 +111,12 @@
         <button id="btnUseIhsg" class="btn btn--teal btn--block" type="button" title="Samakan nilai wajar simulasi dengan IHSG terkini dari Sectors" hidden>Terapkan IHSG riil</button>
       </section>
 
-      <section class="block">
+      <section class="block" id="crowdBlock">
         <h2 class="block__title"><span class="block__title-main">100 investor tiruan</span><span class="block__hint" id="agentHint">sorot kotak</span></h2>
         <div class="seg seg--crowd" role="group" aria-label="Warnai kotak menurut" id="crowdMode">
-          <button class="seg__btn is-active" type="button" data-mode="action" aria-pressed="true" title="Hijau beli, merah jual, gelap diam">Aksi</button>
-          <button class="seg__btn" type="button" data-mode="type" aria-pressed="false" title="Apa yang dilihat investor saat memutuskan">Cara baca</button>
-          <button class="seg__btn" type="button" data-mode="psych" aria-pressed="false" title="Sifat investor saat sedang rugi">Sifat</button>
+          <button class="seg__btn is-active" type="button" data-mode="action" aria-pressed="true" title="Hijau beli, hijau tua sedang untung, merah jual, merah tua sedang rugi, gelap diam">Aksi</button>
+          <button class="seg__btn" type="button" data-mode="type" aria-pressed="false" title="Tipe orang: fundamentalist, chartist, noise">Tipe orang</button>
+          <button class="seg__btn" type="button" data-mode="psych" aria-pressed="false" title="Sifat orang saat untung dan saat rugi: discipline, denial, averager">Sifat orang</button>
         </div>
         <div class="agent-grid">
           <canvas id="agentCanvas" width="240" height="240" role="img" aria-label="Grid 10×10 berisi 100 investor tiruan"></canvas>
@@ -123,16 +124,18 @@
         <ul class="crowd-legend" id="crowdLegend" aria-live="off"></ul>
         <p class="crowd-marks">
           <span class="crowd-marks__i"><span class="sq sq--pain" aria-hidden="true"></span>sedang rugi berat</span>
-          <span class="crowd-marks__i"><span class="tri" aria-hidden="true">▲</span>sedang nambah beli</span>
+          <span class="crowd-marks__i"><span class="tri" aria-hidden="true">▲</span>sedang nambah posisi</span>
         </p>
       </section>
 
-      <section class="block">
+      <section class="block" id="pnlBlock">
         <h2 class="block__title"><span>Untung / rugi</span><span class="block__hint">yang pegang saham</span></h2>
         <dl class="kv kv--tight">
           <div class="kv__row"><dt>Sedang pegang saham</dt><dd class="mono" id="pnlInPos">—</dd></div>
-          <div class="kv__row"><dt>Sedang rugi berat</dt><dd class="mono" id="pnlInPain">—</dd></div>
-          <div class="kv__row"><dt>Nambah saat rugi</dt><dd class="mono" id="pnlAveraging">—</dd></div>
+          <div class="kv__row" title="Semua yang pegang saham dengan untung lebih dari 2%, termasuk yang sedang beli/jual"><dt>Sedang untung</dt><dd class="mono" id="pnlInProfit">—</dd></div>
+          <div class="kv__row" title="Rugi melewati ambang sakit masing-masing"><dt>Sedang rugi berat</dt><dd class="mono" id="pnlInPain">—</dd></div>
+          <div class="kv__row" title="Orang averager menambah posisi saat harga makin naik (average up)"><dt>Nambah saat naik</dt><dd class="mono" id="pnlAvgUp">—</dd></div>
+          <div class="kv__row" title="Orang averager menambah posisi saat harga makin turun (average down)"><dt>Nambah saat turun</dt><dd class="mono" id="pnlAvgDown">—</dd></div>
           <div class="kv__row"><dt>Rata-rata untung/rugi</dt><dd class="mono" id="pnlAvg">—</dd></div>
           <div class="kv__row" id="pnlLlmRow" title="Keputusan investor yang dibantu AI Gemini secara asinkron"><dt>Dibantu AI (Gemini)</dt><dd class="mono" id="pnlLlm">—</dd></div>
         </dl>
@@ -140,20 +143,20 @@
       </section>
 
       <section class="block">
-        <h2 class="block__title"><span>Cara baca pasar</span><span class="block__hint">apa yang dilihat</span></h2>
+        <h2 class="block__title"><span>Tipe orang</span><span class="block__hint">apa yang dilihat</span></h2>
         <div class="bars">
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--f" title="Fundamentalist: membeli bila harga di bawah nilai wajar, menjual bila di atasnya">Nilai wajar</span>
+            <span class="bar-row__label bar-row__label--f" title="Melihat nilai wajar atau harga yang pantas menurut kondisi perusahaan">Fundamentalist</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--f" id="barF"></div></div>
             <span class="bar-row__pct mono" id="pctF">30%</span>
           </div>
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--c" title="Chartist: mengikuti arah harga 8 menit terakhir">Pengikut tren</span>
+            <span class="bar-row__label bar-row__label--c" title="Memprediksi pergerakan saham berdasarkan chart kinerja pasar di masa lalu">Chartist</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--c" id="barC"></div></div>
             <span class="bar-row__pct mono" id="pctC">50%</span>
           </div>
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--n" title="Noise trader: acak dan mudah terpengaruh rumor">Pemburu rumor</span>
+            <span class="bar-row__label bar-row__label--n" title="Percaya dengan berita dan rumor yang beredar di masyarakat">Noise</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--n" id="barN"></div></div>
             <span class="bar-row__pct mono" id="pctN">20%</span>
           </div>
@@ -161,20 +164,20 @@
       </section>
 
       <section class="block">
-        <h2 class="block__title"><span>Sifat saat rugi</span><span class="block__hint">psikologi</span></h2>
+        <h2 class="block__title"><span>Sifat orang</span><span class="block__hint">saat untung &amp; rugi</span></h2>
         <div class="bars">
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--d" title="Disciplined: berani jual rugi (cut loss) dan ambil untung">Disiplin</span>
+            <span class="bar-row__label bar-row__label--d" title="Saat untung: berani take profit sesuai rencana · Saat rugi: berani cut loss">Discipline</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--d" id="barD"></div></div>
             <span class="bar-row__pct mono" id="pctD">34%</span>
           </div>
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--b" title="Bagholder: menolak jual rugi, cenderung nyangkut">Keras kepala</span>
+            <span class="bar-row__label bar-row__label--b" title="Saat untung: menolak jual karena serakah · Saat rugi: menolak kenyataan harga turun dan akhirnya nyangkut">Denial</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--b" id="barB"></div></div>
             <span class="bar-row__pct mono" id="pctB">33%</span>
           </div>
           <div class="bar-row">
-            <span class="bar-row__label bar-row__label--a" title="Averager: menambah beli saat harga turun (averaging down)">Suka nambah</span>
+            <span class="bar-row__label bar-row__label--a" title="Saat untung: nambah posisi saat harga makin naik · Saat rugi: nambah posisi saat harga makin turun">Averager</span>
             <div class="bar-row__track"><div class="bar-row__fill bar-row__fill--a" id="barA"></div></div>
             <span class="bar-row__pct mono" id="pctA">33%</span>
           </div>
@@ -186,7 +189,12 @@
     <main class="center" id="center">
       <div class="ohlc mono" id="ohlcStrip" aria-live="off">
         <span class="ohlc__symbol" id="ohlcSymbol">BBCA</span>
-        <span class="ohlc__tf" id="ohlcTf" title="1 candle = 15 menit bursa">15m</span>
+        <div class="tf-group" id="tfGroup" role="group" aria-label="Timeframe chart (menit bursa per candle)">
+          <button class="tf-btn" type="button" data-tf="1m" aria-pressed="false" title="1 candle = 1 menit bursa">1m</button>
+          <button class="tf-btn" type="button" data-tf="5m" aria-pressed="false" title="1 candle = 5 menit bursa">5m</button>
+          <button class="tf-btn is-active" type="button" data-tf="15m" aria-pressed="true" title="1 candle = 15 menit bursa">15m</button>
+          <button class="tf-btn" type="button" data-tf="30m" aria-pressed="false" title="1 candle = 30 menit bursa">30m</button>
+        </div>
         <span class="ohlc__item"><span class="ohlc__k">O</span><span class="ohlc__v" id="ohlcO">—</span></span>
         <span class="ohlc__item"><span class="ohlc__k">H</span><span class="ohlc__v" id="ohlcH">—</span></span>
         <span class="ohlc__item"><span class="ohlc__k">L</span><span class="ohlc__v" id="ohlcL">—</span></span>
@@ -203,7 +211,7 @@
           <span class="stat__sub mono" id="statChange" title="Perubahan terhadap harga acuan (penutupan hari bursa sebelumnya)">—</span>
         </div>
         <div class="stat">
-          <span class="stat__label" title="Harga yang pantas menurut kondisi perusahaan; di simulasi = harga awal dari Sectors">Nilai wajar</span>
+          <span class="stat__label" title="Harga yang pantas menurut kondisi perusahaan. Awalnya sama dengan harga awal saham, lalu bisa bergeser karena berita yang kamu masukkan di Input berita; Reset mengembalikannya.">Nilai wajar</span>
           <span class="stat__value mono stat__value--accent" id="statFundamental">—</span>
         </div>
         <div class="stat">
@@ -252,14 +260,41 @@
       </div>
     </main>
 
-    <!-- ── Panel kanan: stream ritel & berita Sectors ── -->
+    <!-- ── Panel kanan: stream ritel, berita Sectors, input berita ──
+         Bisa ditutup lewat tombol panah di ujung baris tab. Saat tertutup tersisa strip tipis (.rail) berisi
+         tombol buka + pintasan ke tiap tab. Selalu terbuka saat aplikasi dibuka. -->
     <aside class="panel panel--right" id="rightPanel" aria-label="Panel stream dan berita">
-      <div class="tabs" role="tablist" aria-label="Panel kanan">
+      <nav class="rail" id="rightRail" aria-label="Panel kanan (tertutup)">
+        <button class="rail__btn rail__btn--open" type="button" id="rightExpand" aria-controls="rightPanel" aria-expanded="true" title="Buka panel kanan" aria-label="Buka panel kanan">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 5 8 12 15 19" /></svg>
+        </button>
+        <button class="rail__btn rail__btn--tab is-active" type="button" data-open-tab="stream" title="Buka Stream ritel" aria-label="Buka Stream ritel" aria-current="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" /><line x1="8" y1="9.5" x2="16" y2="9.5" /><line x1="8" y1="12.5" x2="13" y2="12.5" /></svg>
+          <span class="rail__label">Stream ritel</span>
+        </button>
+        <button class="rail__btn rail__btn--tab" type="button" data-open-tab="news" title="Buka Berita Sectors" aria-label="Buka Berita Sectors">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="8" y1="8.5" x2="16" y2="8.5" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="15.5" x2="12.5" y2="15.5" /></svg>
+          <span class="rail__label">Berita Sectors</span>
+        </button>
+        <button class="rail__btn rail__btn--tab" type="button" data-open-tab="mynews" title="Buka Input berita" aria-label="Buka Input berita">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2" /></svg>
+          <span class="rail__label">Input berita</span>
+        </button>
+      </nav>
+      <div class="right-head" id="rightHead">
+      <div class="tabs" role="tablist" aria-label="Panel kanan" id="rightTabs">
         <button class="tab is-active" type="button" role="tab" id="tabStream" aria-selected="true" aria-controls="paneStream" data-tab="stream">
           <span class="pulse" aria-hidden="true"></span>Stream ritel
         </button>
         <button class="tab" type="button" role="tab" id="tabNews" aria-selected="false" aria-controls="paneNews" data-tab="news">
           Berita Sectors
+        </button>
+        <button class="tab" type="button" role="tab" id="tabMyNews" aria-selected="false" aria-controls="paneMyNews" data-tab="mynews">
+          Input berita
+        </button>
+      </div>
+        <button class="right-collapse" type="button" id="rightCollapse" aria-controls="rightPanel" aria-expanded="true" title="Tutup panel kanan" aria-label="Tutup panel kanan">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 5 16 12 9 19" /></svg>
         </button>
       </div>
 
@@ -274,7 +309,7 @@
 
       <section class="pane" id="paneNews" role="tabpanel" aria-labelledby="tabNews" hidden>
         <div class="pane__head">
-          <span class="pane__hint" title="Berita &amp; filing IDX dari Sectors — tombol Suntik memasukkan sentimennya ke pasar simulasi">Berita IDX · suntik ke pasar</span>
+          <span class="pane__hint" title="Berita &amp; filing BEI dari Sectors — tombol Suntik memasukkan sentimennya ke pasar simulasi">Berita BEI · suntik ke pasar</span>
           <button class="btn btn--ghost btn--xs" type="button" id="newsReload">Muat ulang</button>
         </div>
         <div class="news" id="newsList">
@@ -283,22 +318,51 @@
           </div>
         </div>
       </section>
+
+      <!-- Input berita: tempel link / teks berita → server menilai sentimen & dampaknya → suntik ke pasar -->
+      <section class="pane" id="paneMyNews" role="tabpanel" aria-labelledby="tabMyNews" hidden>
+        <div class="pane__head">
+          <span class="pane__hint" title="Tempel link berita saham; sentimennya disuntik ke pasar dan agen bereaksi">Tempel berita, lihat agen bereaksi</span>
+        </div>
+        <div class="mynews" id="myNews">
+          <form class="mynews__form" id="myNewsForm" autocomplete="off" novalidate>
+            <label class="mynews__label" for="myNewsUrl">Link berita</label>
+            <input id="myNewsUrl" class="input mynews__input" type="url" inputmode="url" spellcheck="false" placeholder="https://… berita saham yang ingin diuji" />
+            <details class="mynews__more" id="myNewsMore">
+              <summary>Atau tulis / tempel isi beritanya</summary>
+              <textarea id="myNewsText" class="input mynews__text" rows="3" maxlength="6000" placeholder="mis. Laba bersih GOTO naik 30% dan perusahaan mulai buyback saham."></textarea>
+            </details>
+            <div class="mynews__row">
+              <button class="btn btn--primary btn--sm" type="submit" id="myNewsAnalyze">Analisis berita</button>
+            </div>
+          </form>
+          <p class="mynews__status" id="myNewsStatus" role="status" aria-live="polite"></p>
+          <article class="mynews-card" id="myNewsPreview" hidden></article>
+          <div class="mynews__hist">
+            <div class="mynews__hist-head">
+              <span>Riwayat input berita</span>
+              <button class="btn btn--ghost btn--xs" type="button" id="myNewsClear" hidden>Hapus riwayat</button>
+            </div>
+            <div class="mynews__list" id="myNewsList"></div>
+          </div>
+        </div>
+      </section>
     </aside>
   </div>
 
   <!-- ══════════════ 3. Dock bawah ══════════════ -->
   <footer class="dock" id="dock">
-    <section class="dock-card">
-      <h3 class="dock-card__title">Aksi <span class="dock-card__hint">ganggu pasarnya</span></h3>
+    <section class="dock-card" id="dockActions">
+      <h3 class="dock-card__title">Aksi <span class="dock-card__hint">atur simulasinya</span></h3>
       <div class="btn-row">
-        <button id="btnRumor" class="btn btn--amber" type="button" title="Sebar rumor positif: suasana pasar +1, pemburu rumor condong beli (tombol R)">Sebar rumor <kbd>R</kbd></button>
-        <button id="btnPanic" class="btn btn--red" type="button" title="Sebar kabar buruk: suasana pasar −1, pemburu rumor condong jual (tombol K)">Kabar buruk <kbd>K</kbd></button>
+        <button id="btnRumor" class="btn btn--amber" type="button" title="Sebar rumor positif: suasana pasar +1, orang noise condong beli (tombol R)">Sebar rumor <kbd>R</kbd></button>
+        <button id="btnPanic" class="btn btn--red" type="button" title="Sebar kabar buruk: suasana pasar −1, orang noise condong jual (tombol K)">Kabar buruk <kbd>K</kbd></button>
         <button id="btnPause" class="btn" type="button" aria-pressed="false" title="Jeda / lanjutkan simulasi, berlaku untuk semua penonton (tombol Spasi)"><span id="btnPauseLabel">⏸ Jeda</span> <kbd>Spasi</kbd></button>
         <button id="btnReset" class="btn btn--ghost" type="button" title="Mulai ulang simulasi dari harga awal">↺ Reset</button>
       </div>
     </section>
 
-    <section class="dock-card">
+    <section class="dock-card" id="dockSpeed">
       <h3 class="dock-card__title">Kecepatan <span class="dock-card__hint">1x ≈ 4 menit bursa per detik</span></h3>
       <div class="seg" role="group" aria-label="Kecepatan simulasi" id="speedGroup">
         <button class="seg__btn" type="button" data-speed="0.5" aria-pressed="false" title="Setengah kecepatan normal">0,5x</button>
@@ -309,29 +373,29 @@
       </div>
     </section>
 
-    <section class="dock-card dock-card--wide">
+    <section class="dock-card dock-card--wide" id="dockMix">
       <h3 class="dock-card__title">Komposisi investor
-        <span class="dock-card__rest" title="Porsi yang tidak diatur slider terisi otomatis">sisanya: <span class="dock-card__rest-n">Pemburu rumor <b class="mono" id="lblN">20%</b></span> · <span class="dock-card__rest-a">Suka nambah <b class="mono" id="lblA">33%</b></span></span>
+        <span class="dock-card__rest" title="Porsi yang tidak diatur slider terisi otomatis">sisanya: <span class="dock-card__rest-n">Noise <b class="mono" id="lblN">20%</b></span> · <span class="dock-card__rest-a">Averager <b class="mono" id="lblA">33%</b></span></span>
       </h3>
       <!-- Grid 6 kolom (label · slider · nilai) × 2 supaya track slider sejajar dan tidak pernah menyusut di bawah 72px. -->
       <div class="sliders">
         <label class="slider">
-          <span class="slider__label slider__label--f" title="Fundamentalist: beli bila harga di bawah nilai wajar">Nilai wajar</span>
+          <span class="slider__label slider__label--f" title="Orang fundamentalist: melihat nilai wajar perusahaan">Fundamentalist</span>
           <input type="range" id="slF" min="0" max="100" value="30" step="5" />
           <span class="slider__val mono" id="lblF">30%</span>
         </label>
         <label class="slider">
-          <span class="slider__label slider__label--d" title="Disciplined: berani jual rugi (cut loss)">Disiplin</span>
+          <span class="slider__label slider__label--d" title="Orang discipline: take profit sesuai rencana, berani cut loss">Discipline</span>
           <input type="range" id="slD" min="0" max="100" value="34" step="1" />
           <span class="slider__val mono" id="lblD">34%</span>
         </label>
         <label class="slider">
-          <span class="slider__label slider__label--c" title="Chartist: mengikuti arah harga">Pengikut tren</span>
+          <span class="slider__label slider__label--c" title="Orang chartist: membaca chart pergerakan masa lalu">Chartist</span>
           <input type="range" id="slC" min="0" max="100" value="50" step="5" />
           <span class="slider__val mono" id="lblC">50%</span>
         </label>
         <label class="slider">
-          <span class="slider__label slider__label--b" title="Bagholder: menolak jual rugi, cenderung nyangkut">Keras kepala</span>
+          <span class="slider__label slider__label--b" title="Orang denial: menahan untung karena serakah, menahan rugi sampai nyangkut">Denial</span>
           <input type="range" id="slB" min="0" max="100" value="33" step="1" />
           <span class="slider__val mono" id="lblB">33%</span>
         </label>

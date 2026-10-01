@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   SimPasar IDX — dashboard simulator ("terminal bursa modern")
+   SimPasar — dashboard simulator ("terminal bursa modern")
    Token warna & ukuran di :root; grid 8px; angka selalu JetBrains Mono tabular.
    Struktur ada di index.html, perilaku di app.js.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -27,12 +27,12 @@
   --down-text: #f25c66;          /* teks merah: 5,4:1 di panel-2 */
   --amber:     #f59e0b;
   --violet:    #a78bfa;
-  /* warna agen (grid) — hijau/merah per cara baca pasar, tiga tingkat */
+  /* warna agen (grid) — hijau/merah per tipe orang, tiga tingkat */
   --buy-f:  #16c784;  --sell-f: #ea3943;
   --buy-c:  #34d399;  --sell-c: #f87171;
   --buy-n:  #6ee7b7;  --sell-n: #fca5a5;
   --pain:   #f87171;             /* cincin "sedang rugi" (dengan halo gelap di canvas) */
-  /* cara baca pasar (mode "Cara baca" di grid, bar, slider) — sama dengan TYPE_COLORS di app.js */
+  /* tipe orang (mode "Tipe orang" di grid, bar, slider) — sama dengan TYPE_COLORS di app.js */
   --type-f: #38bdf8;  --type-c: #f472b6;  --type-n: #facc15;
   /* bentuk */
   --r-sm: 6px;
@@ -49,6 +49,7 @@
   --dock-h:   96px;
   --left-w:   260px;
   --right-w:  300px;
+  --rail-w:   44px;     /* lebar panel kanan saat ditutup (strip tombol) */
   --gap: 8px;
   /* warna turunan tema (dulu literal) — nilai gelap = tampilan lama */
   --text-strong: #fff;             /* teks paling terang di panel (ticker, harga besar, input) */
@@ -192,10 +193,16 @@ kbd {
 }
 .workspace {
   display: grid;
-  grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w);
+  grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-cur, var(--right-w));
   min-height: 0;
   background: var(--bg);
 }
+/* Panel kanan ditutup → kolomnya menyusut jadi strip --rail-w dan chart melebar */
+body.right-collapsed { --right-cur: var(--rail-w); }
+@media (prefers-reduced-motion: no-preference) {
+  .workspace { transition: grid-template-columns 200ms ease; }
+}
+body.right-instant .workspace { transition: none; }
 .panel {
   background: var(--panel);
   min-height: 0;
@@ -392,7 +399,7 @@ kbd {
 .agent-grid { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r); padding: 6px; }
 #agentCanvas { display: block; width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 4px; cursor: crosshair; }
 /* Layar pendek (≤ 820px, mis. 1366×768): grid agen dikecilkan supaya blok "Untung / rugi" tetap terlihat tanpa scroll. */
-@media (min-width: 801px) and (max-height: 820px) {
+@media (min-width: 1024px) and (max-height: 820px) {
   .agent-grid { width: 176px; margin-inline: auto; padding: 4px; }
 }
 
@@ -406,13 +413,13 @@ kbd {
 .dot--buy-f  { background: var(--buy-f); }  .dot--sell-f { background: var(--sell-f); }
 .dot--buy-c  { background: var(--buy-c); }  .dot--sell-c { background: var(--sell-c); }
 .dot--buy-n  { background: var(--buy-n); }  .dot--sell-n { background: var(--sell-n); }
-/* Garis tepi kotak = sifat saat rugi (biru/ungu/amber HANYA dipakai untuk dimensi ini). */
+/* Garis tepi kotak = sifat orang (biru/ungu/amber HANYA dipakai untuk dimensi ini). */
 .sq { width: 9px; height: 9px; border-radius: 2px; background: var(--panel-3); border: 1.5px dashed; flex-shrink: 0; }
 .sq--disc { border-color: var(--accent); } .sq--bag { border-color: var(--violet); } .sq--avg { border-color: var(--amber); }
 .sq--pain { border: 2px solid var(--pain); background: transparent; box-shadow: 0 0 0 1px var(--bg), inset 0 0 0 1px var(--bg); }
 .tri { color: var(--amber); font-size: 9px; line-height: 1; width: 9px; text-align: center; flex-shrink: 0; }
 
-/* Cara baca pasar memakai tiga tingkat hijau yang sama dengan legenda isi kotak. */
+/* Tipe orang memakai tiga tingkat hijau yang sama dengan legenda isi kotak. */
 .bars { display: flex; flex-direction: column; gap: 6px; }
 .bar-row { display: grid; grid-template-columns: 88px 1fr 34px; align-items: center; gap: 8px; font-size: 11px; }
 .bar-row__label { white-space: nowrap; font-weight: 500; }
@@ -468,6 +475,20 @@ kbd {
 .stat__value--up { color: var(--up); }
 .stat__value--down { color: var(--down-text); }
 
+/* Lebar area chart berubah saat panel kanan dibuka/ditutup (bukan hanya saat jendela diubah), jadi
+   kotak angka mengikuti lebar .center lewat container query: sempit → dua/tiga baris, tidak terpotong. */
+.center { container: center / inline-size; }
+@media (min-width: 1024px) {
+  @container center (max-width: 760px) {
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .stat--limits { grid-column: span 2; }
+  }
+  @container center (max-width: 460px) {
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stat--limits { grid-column: span 3; }
+  }
+}
+
 /* Suasana pasar: kata awam + angka kecil + meter −3…+3 di dasar kotak (tidak menambah tinggi baris). */
 .stat--mood { transition: background 300ms ease; }
 .stat--mood.is-pulse { background: var(--panel-3); }
@@ -514,7 +535,8 @@ kbd {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ═══════════════════════ Panel kanan ═══════════════════════ */
-.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.right-head { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+.tabs { display: flex; flex: 1; min-width: 0; }
 .tab {
   flex: 1; height: 40px;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -667,7 +689,7 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
 /* ═══════════════════════ Toast ═══════════════════════ */
 /* Di atas dock, tengah area chart: tidak menutupi tab/tombol panel kanan dan tidak menangkap klik. */
 .toasts {
-  position: fixed; bottom: calc(var(--dock-h) + 12px); left: calc(var(--left-w) + (100vw - var(--left-w) - var(--right-w)) / 2);
+  position: fixed; bottom: calc(var(--dock-h) + 12px); left: calc(var(--left-w) + (100vw - var(--left-w) - var(--right-cur, var(--right-w))) / 2);
   transform: translateX(-50%); z-index: 80;
   display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none;
   width: min(380px, calc(100vw - 24px));
@@ -801,17 +823,8 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
   .symbol-btn { overflow: hidden; }
   .symbol-btn__kbd { display: none; }
   .symbol-btn .chip { display: block; min-width: 0; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; line-height: 16px; }
-  .workspace { grid-template-columns: var(--left-w) minmax(0, 1fr) 0; }
-  .panel--right { display: none; }
-  body.show-right .workspace { grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w); }
-  body.show-right .panel--right { display: flex; }
   /* Sembunyikan "· Hari N" (pemisah SEBELUM #clockDay), bukan pemisah setelah Sesi. */
   .simclock #clockSession + .simclock__sep, .simclock #clockDay { display: none; }
-  .toasts { left: calc(var(--left-w) + (100vw - var(--left-w)) / 2); }
-  body.show-right .toasts { left: calc(var(--left-w) + (100vw - var(--left-w) - var(--right-w)) / 2); }
-}
-@media (min-width: 1101px) {
-  #toggleRight { display: none; }
 }
 /* Dock dua baris: Aksi + Kecepatan di atas, komposisi selebar dock di bawah. */
 @media (max-width: 1040px) {
@@ -820,20 +833,26 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
   .dock-card--wide { grid-column: 1 / -1; }
   .toasts { bottom: auto; top: calc(var(--header-h) + 10px); }
 }
-/* Ponsel/tablet sempit: satu kolom — chart → aksi/slider → panel kiri → panel kanan,
-   supaya tombol aksi berada tepat di bawah chart (bukan ±2600px di bawah). */
-@media (max-width: 800px) {
+/* Ponsel & tablet tegak (< 1024px): satu kolom — chart → aksi/slider → panel kiri → panel kanan,
+   supaya tombol aksi berada tepat di bawah chart (bukan ±2600px di bawah). Tiga kolom baru dipakai
+   mulai 1024px: di bawahnya panel kanan yang terbuka (default) akan memeras chart jadi < 500px. */
+@media (max-width: 1023px) {
   body { overflow-x: hidden; overflow-y: auto; }
   .stat--limits { grid-column: span 2; }
   .app { display: flex; flex-direction: column; height: auto; min-height: 100vh; }
-  .workspace, body.show-right .workspace { display: contents; }
+  .workspace { display: contents; }
   .topbar { order: 0; height: auto; flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
   .topbar__left, .topbar__right { flex-wrap: wrap; }
   .topbar__right { flex-shrink: 1; }
   .center { order: 1; }
   .dock { order: 2; height: auto; border-top: 1px solid var(--border); }
   .panel--left { order: 3; border-right: 0; border-top: 1px solid var(--border); overflow: visible; }
-  .panel--right, body.show-right .panel--right { display: flex; order: 4; border-left: 0; border-top: 1px solid var(--border); height: 420px; }
+  .panel--right { display: flex; order: 4; border-left: 0; border-top: 1px solid var(--border); height: 420px; }
+  /* Ditutup di ponsel/tablet tegak: hanya baris tab yang tersisa; panah menunjuk ke bawah (buka) / atas (tutup). */
+  body.right-collapsed .panel--right { height: auto; }
+  body.right-collapsed .panel--right .pane { display: none; }
+  .right-collapse svg { transform: rotate(-90deg); }
+  body.right-collapsed .right-collapse svg { transform: rotate(90deg); }
   /* Tinggi eksplisit: tanpa ini height:100% canvas tidak terhitung dan chart hanya ±170px. */
   .chart-wrap { flex: none; height: 56vh; min-height: 340px; }
   .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -846,12 +865,12 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
   .confirm__price-card { grid-template-columns: 1fr; }
   .spark { width: 100%; }
   .toasts { top: auto; bottom: 12px; left: 50%; }
-  #toggleRight { display: none; }
 }
 @media (max-width: 620px) {
   .dock { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
+  #speedLabel, .conn__label { display: none; }     /* header ponsel muat dua baris (status koneksi tetap lewat titik) */
   .sliders { grid-template-columns: auto minmax(72px, 1fr) 32px; }
   .slider__label--d, .slider__label--b { padding-left: 0; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -881,7 +900,7 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
 .stat--limits[data-state="ara"] #limLabel { color: var(--up); }
 .stat--limits[data-state="arb"] #limLabel { color: var(--down-text); }
 
-/* Mode warna grid agen: Aksi / Cara baca / Sifat */
+/* Mode warna grid agen: Aksi / Tipe orang / Sifat orang */
 .seg--crowd { display: grid; grid-template-columns: repeat(3, 1fr); align-self: stretch; }
 .seg--crowd .seg__btn { font-family: var(--sans); font-size: 11px; padding: 0 6px; }
 .crowd-legend { display: flex; flex-direction: column; gap: 4px; }
@@ -904,4 +923,140 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* ═══════════════════════ Timeframe di strip OHLC (= landing page: 1m · 5m · 15m · 30m) ═══════════════════════ */
+.ohlc .tf-group { padding: 2px; gap: 1px; }
+.ohlc .tf-btn { height: 20px; padding: 0 7px; font-size: 10.5px; border-radius: 5px; }
+.ohlc .tf-btn.is-active { box-shadow: none; }
+
+/* ═══════════════════════ Tombol Panduan ═══════════════════════ */
+.help-btn { gap: 5px; padding: 0 10px 0 8px; }
+.help-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 1240px) { .help-btn__label { display: none; } .help-btn { width: 30px; padding: 0; } }
+
+/* Tiga tab panel kanan harus muat di 280–300px */
+.tab { font-size: 11.5px; gap: 5px; padding: 0 4px; white-space: nowrap; }
+
+/* ═══════════════════════ Input berita ═══════════════════════ */
+.mynews { flex: 1; min-height: 0; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.mynews__form { display: flex; flex-direction: column; gap: 6px; }
+.mynews__label { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-2); }
+.mynews__input, .mynews__text { width: 100%; font-size: 12px; font-family: var(--sans); }
+.mynews__text { min-height: 64px; padding-top: 7px; resize: vertical; line-height: 1.45; }
+.mynews__more summary { cursor: pointer; font-size: 11px; color: var(--text-2); padding: 2px 0; }
+.mynews__more summary:hover { color: var(--text); }
+.mynews__more[open] summary { margin-bottom: 6px; }
+.mynews__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mynews__status { font-size: 11px; line-height: 1.45; color: var(--text-2); }
+.mynews__status:empty { display: none; }
+.mynews__status.is-info  { color: var(--accent-2); }
+.mynews__status.is-ok    { color: var(--up); }
+.mynews__status.is-warn  { color: var(--amber-text); }
+.mynews__status.is-error { color: var(--error-text); }
+
+.mynews-card {
+  background: var(--panel-2); border: 1px solid var(--border-2); border-radius: var(--r);
+  padding: 10px; display: flex; flex-direction: column; gap: 8px; animation: fade-in .2s ease-out;
+}
+.mynews-card[hidden] { display: none; }
+.mynews-card__method { color: var(--text-3); }
+.mynews-card__title { font-size: 12.5px; }
+a.mynews-card__title { text-decoration: underline; text-decoration-color: var(--border-3); text-underline-offset: 2px; }
+a.mynews-card__title:hover { text-decoration-color: var(--accent-2); }
+.mynews-card__tickers { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.mynews-card__k { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-3); margin-right: 2px; }
+.mynews-card__tick { font-size: 10.5px; font-weight: 700; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border-2); color: var(--text-2); line-height: 18px; }
+.mynews-card__tick.is-primary { color: var(--accent-2); border-color: rgba(59, 130, 246, .45); background: rgba(59, 130, 246, .1); }
+.mynews-card__none { font-size: 10.5px; color: var(--text-3); }
+.mynews-card__senti { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.mynews-card__reason { font-size: 10.5px; color: var(--text-3); line-height: 1.4; }
+.mynews-card__ctls { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; border-top: 1px solid var(--border); }
+.mynews-card__ctl { display: flex; flex-direction: column; gap: 2px; padding-top: 6px; cursor: pointer; }
+.mynews-card__ctl-head { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: var(--text-2); }
+.mynews-card__ctl-head b { color: var(--text); font-weight: 600; }
+.mynews-card__effect { font-size: 11px; line-height: 1.5; color: var(--text); background: var(--panel-3); border-radius: var(--r-sm); padding: 7px 9px; }
+.mynews-card__note { font-size: 10.5px; color: var(--amber-text); line-height: 1.45; }
+.mynews-card__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mynews__hist { display: flex; flex-direction: column; gap: 6px; }
+.mynews__hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-3); }
+.mynews__list { display: flex; flex-direction: column; gap: 6px; }
+.mynews__empty { font-size: 11px; color: var(--text-3); line-height: 1.5; }
+.mynews-item { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r); padding: 7px 9px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.mynews-item__top { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.mynews-item__meta { font-size: 10px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mynews-item__title { font-size: 11.5px; font-weight: 600; color: var(--text); line-height: 1.4; word-break: break-word; }
+a.mynews-item__title:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ═══════════════════════ Panduan (tur) ═══════════════════════ */
+.tour { position: fixed; inset: 0; z-index: 150; }
+.tour[hidden] { display: none; }
+.tour__spot {
+  position: fixed; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(4, 6, 12, .66), 0 0 0 2px var(--accent-2);
+  transition: left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease;
+}
+.tour__spot.is-none { left: 50% !important; top: 50% !important; width: 0 !important; height: 0 !important; box-shadow: 0 0 0 9999px rgba(4, 6, 12, .66); }
+.tour__card {
+  position: fixed; width: min(340px, calc(100vw - 24px)); padding: 14px 16px 12px;
+  background: var(--panel); border: 1px solid var(--border-2); border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 6px; animation: fade-in .18s ease-out;
+}
+.tour__step { font-size: 10.5px; font-weight: 600; letter-spacing: .4px; color: var(--accent-2); }
+.tour__title { font-size: 15px; font-weight: 700; color: var(--text-strong); line-height: 1.3; }
+.tour__text { font-size: 12px; line-height: 1.55; color: var(--text-2); }
+.tour__dots { display: flex; gap: 4px; margin-top: 4px; }
+.tour__dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--border-2); }
+.tour__dots i.is-on { background: var(--accent-2); width: 16px; border-radius: 3px; }
+.tour__nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.tour__nav-r { display: flex; gap: 6px; }
+:root[data-theme="light"] .tour__spot { box-shadow: 0 0 0 9999px rgba(15, 23, 42, .45), 0 0 0 2px var(--accent); }
+:root[data-theme="light"] .tour__spot.is-none { box-shadow: 0 0 0 9999px rgba(15, 23, 42, .45); }
+
+
+/* ═══════════════════════ Panel kanan: buka / tutup ═══════════════════════ */
+.right-collapse {
+  flex: none; width: 30px; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-3); border-left: 1px solid var(--border);
+  transition: color var(--t), background var(--t);
+}
+.right-collapse:hover { color: var(--text-strong); background: var(--panel-2); }
+.right-collapse svg, .rail__btn svg {
+  width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform var(--t);
+}
+.rail { display: none; }
+/* Panel 280px (≤ 1240px): tiga tab + tombol panah tetap muat tanpa terpotong */
+@media (max-width: 1240px) { .tab { padding: 0 2px; gap: 4px; } }
+@media (min-width: 1024px) {
+  /* Isi panel selebar panel terbuka: saat lebar kolom beranimasi, isinya bergeser masuk, tidak dilipat ulang. */
+  .panel--right > .right-head, .panel--right > .pane { min-width: calc(var(--right-w) - 1px); }
+  body.right-collapsed .panel--right > .right-head,
+  body.right-collapsed .panel--right > .pane { display: none; }
+  body.right-collapsed .rail {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    width: calc(var(--rail-w) - 1px); flex: 1; padding: 6px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+  }
+}
+/* Layar pendek: strip tidak muat dengan label tegak → ikon saja (nama tetap ada di title/aria-label).
+   Tinggi strip = tinggi jendela − header − dock (dock dua baris di ≤ 1040px). */
+@media (min-width: 1041px) and (max-height: 560px), (min-width: 1024px) and (max-width: 1040px) and (max-height: 640px) {
+  .rail__label { display: none; }
+  .rail__btn { padding: 8px 0; }
+}
+.rail__btn {
+  width: 34px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 9px 0; border-radius: 6px; color: var(--text-2);
+  transition: color var(--t), background var(--t);
+}
+.rail__btn:hover { color: var(--text-strong); background: var(--panel-2); }
+.rail__btn--open { padding: 8px 0; color: var(--text); border: 1px solid var(--border); margin-bottom: 6px; }
+.rail__btn.is-active { color: var(--text-strong); box-shadow: inset 2px 0 0 var(--accent); }
+@media (forced-colors: active) { .rail__btn.is-active { outline: 2px solid Highlight; outline-offset: -2px; } }
+/* Panel kanan memotong isinya (overflow hidden): cincin fokus digambar di dalam tombol agar utuh. */
+.right-head .tab:focus-visible, .right-collapse:focus-visible, .rail__btn:focus-visible { outline-offset: -2px; }
+.rail__label {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font-size: 11px; font-weight: 600; letter-spacing: .3px; white-space: nowrap;
 }
