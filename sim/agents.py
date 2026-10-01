@@ -101,9 +101,12 @@ def get_llm_advisor() -> LLMAdvisor | None:
     """
     Penasihat LLM bersama untuk semua agen, atau None bila LLM dimatikan atau tidak
     ada kunci. Konfigurasi dibaca sekali dari environment:
-    SIMPASAR_LLM, SIMPASAR_LLM_MODEL, SIMPASAR_LLM_RPM (default 12),
+    SIMPASAR_LLM, SIMPASAR_LLM_MODEL, SIMPASAR_LLM_RPM (default 3),
     SIMPASAR_LLM_MAX_REQUESTS (default 1000 per proses, 0 = tanpa batas),
-    SIMPASAR_LLM_CONCURRENCY (default 4), SIMPASAR_LLM_TIMEOUT_MS (default 25000).
+    SIMPASAR_LLM_BATCH_SIZE (default 11),
+    SIMPASAR_LLM_SENTIMENT_WEIGHT (default 0.25),
+    SIMPASAR_LLM_SENTIMENT_HALFLIFE_S (default 60),
+    SIMPASAR_LLM_CONCURRENCY (default 1), SIMPASAR_LLM_TIMEOUT_MS (default 25000).
     """
     global _llm_advisor, _llm_advisor_state
     if _llm_advisor_state != "unresolved":
@@ -111,9 +114,12 @@ def get_llm_advisor() -> LLMAdvisor | None:
     with _llm_advisor_lock:
         if _llm_advisor_state != "unresolved":
             return _llm_advisor
-        rpm = _env_number("SIMPASAR_LLM_RPM", 12.0)
+        rpm = _env_number("SIMPASAR_LLM_RPM", 3.0)
         max_requests = max(0, int(_env_number("SIMPASAR_LLM_MAX_REQUESTS", 1000)))
-        concurrency = min(16, int(_env_number("SIMPASAR_LLM_CONCURRENCY", 4)))
+        concurrency = min(16, int(_env_number("SIMPASAR_LLM_CONCURRENCY", 1)))
+        batch_size = max(1, min(16, int(_env_number("SIMPASAR_LLM_BATCH_SIZE", 11))))
+        sentiment_weight = max(0.0, min(1.0, _env_number("SIMPASAR_LLM_SENTIMENT_WEIGHT", 0.25)))
+        sentiment_halflife_s = max(1.0, min(3600.0, _env_number("SIMPASAR_LLM_SENTIMENT_HALFLIFE_S", 60.0)))
         if not llm_enabled_by_env() or rpm <= 0 or concurrency <= 0:
             _llm_advisor_state = "disabled"
             return None
@@ -131,6 +137,9 @@ def get_llm_advisor() -> LLMAdvisor | None:
                 model=os.environ.get("SIMPASAR_LLM_MODEL", "").strip() or _DEFAULT_LLM_MODEL,
                 rpm=rpm,
                 concurrency=concurrency,
+                batch_size=batch_size,
+                sentiment_weight=sentiment_weight,
+                sentiment_halflife_s=sentiment_halflife_s,
                 max_requests=max_requests,
                 secrets=secrets,
                 logger=_safe_print,
@@ -200,35 +209,33 @@ _PERSONA_DESCRIPTIONS: dict[str, str] = {
 }
 
 
-def _build_persona_prompt(agent: "Agent", base_order: float, price: float, gut_seed: float) -> str:
-    """Prompt role-play persona agen (teks asli logika LLM tim, dipindah ke fungsi)."""
-    pnl = float((price - agent.entry_price) / agent.entry_price) if agent.entry_price > 0 else 0.0
-    persona = _PERSONA_DESCRIPTIONS[agent.psych_profile]
+def _persona_header(agent_type: str, psych_profile: str) -> str:
+    persona = _PERSONA_DESCRIPTIONS[psych_profile]
     return (
-        f"You are role-playing as one individual retail investor inside a stock-market "
-        f"simulation. Think and react as this specific person would — not as a formula.\n\n"
-        f"Who you are: {persona}\n\n"
-        f"Your trading style is '{agent.agent_type}', which just produced a cold, rational "
-        f"base signal of {base_order:+.3f} (range -1.5 = strong sell, +1.5 = strong buy) "
-        f"before your feelings about your own position get involved.\n\n"
-        f"Your situation right now:\n"
+        "You are role-playing as individual retail investors inside a stock-market "
+        "simulation. Think and react as each specific person would — not as a formula.\n\n"
+        f"Shared persona: {persona}\n\n"
+        f"Their trading style is '{agent_type}', which produces each person's cold, "
+        "rational base signal before feelings about their own position get involved."
+    )
+
+
+def _agent_situation_line(agent: "Agent", base_order: float, price: float, gut_seed: float) -> str:
+    pnl = float((price - agent.entry_price) / agent.entry_price) if agent.entry_price > 0 else 0.0
+    return (
+        f"[AGENT {agent.id}]\n"
+        f"- Base signal: {base_order:+.3f} (range -1.5 = strong sell, +1.5 = strong buy)\n"
         f"- Current price: {price:.2f}\n"
-        f"- Your average entry price: {agent.entry_price:.2f}\n"
+        f"- Average entry price: {agent.entry_price:.2f}\n"
         f"- Unrealized P&L: {pnl * 100:+.2f}%\n"
         f"- Position size: {agent.position:.2f} (1.0 = one full position)\n"
-        f"- Capital you still have free to deploy: {agent.capital_remaining * 100:.0f}%\n"
-        f"- Roughly speaking, real pain starts creeping in somewhere around a "
-        f"{agent.pain_threshold * 100:.0f}% loss, and the itch to take profit builds "
-        f"somewhere around a {agent.greed_threshold * 100:.0f}% gain — but these are only "
-        f"loose feelings, not tripwires. Whether you act earlier out of anxiety, later out "
-        f"of stubbornness or hope, or not at all, is a judgment call only you would make.\n"
-        f"- A personal 'gut feeling' seed for this exact moment, just so your reaction isn't "
-        f"mechanically identical every time you find yourself in a similar spot: "
-        f"{gut_seed:.3f}\n\n"
-        f"Given who you are and how this specific moment feels to you, what do you actually "
-        f"do? Respond with JSON matching the schema: a float 'order' between -1.5 (panic-sell "
-        f"everything) and +1.5 (buy aggressively), and a short 'reason' (<=15 words) capturing "
-        f"the feeling behind it."
+        f"- Capital remaining: {agent.capital_remaining * 100:.0f}%\n"
+        f"- Pain threshold: {agent.pain_threshold * 100:.0f}% loss\n"
+        f"- Greed threshold: {agent.greed_threshold * 100:.0f}% gain\n"
+        f"- Reaction delay probability: {agent.reaction_delay_prob:.2f}\n"
+        f"- Gut-feeling seed: {gut_seed:.3f}\n"
+        "Choose this agent's order from -1.5 (panic-sell everything) to +1.5 "
+        "(buy aggressively), and a short reason (15 words or fewer) capturing the feeling."
     )
 
 
@@ -305,10 +312,23 @@ class Agent:
             # (thread simulasi) hanya bila anggaran request masih tersedia.
             advisor.offer(
                 self,
-                # gut seed dari RNG advisor, bukan RNG pasar: anggaran request tidak menggeser aliran acak simulasi.
-                lambda b=base_order, p=price: _build_persona_prompt(self, b, p, advisor.gut_seed()),
+                lambda b=base_order, p=price: _agent_situation_line(self, b, p, advisor.gut_seed()),
                 price,
+                group_key=(self.agent_type, self.psych_profile),
+                build_header=lambda: _persona_header(self.agent_type, self.psych_profile),
             )
+
+        def with_sentiment(order: float) -> float:
+            if advisor is None or advisor.sentiment_weight == 0:
+                return order
+            sentiment = advisor.sentiment(self.psych_profile)
+            if sentiment is None:
+                return order
+            return float(np.clip(
+                order + advisor.sentiment_weight * sentiment * rng.uniform(0.5, 1.0),
+                -1.5,
+                1.5,
+            ))
 
         # ── Fallback rules — used whenever no fresh LLM advice is ready ──
         # (no key, budget spent, request still in flight, or an error).
@@ -318,10 +338,10 @@ class Agent:
         if self.psych_profile == "disciplined":
             if pnl < -self.pain_threshold:
                 severity = 0.5 + min(1.0, (-pnl - self.pain_threshold) / self.pain_threshold)
-                return -1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0))
+                return with_sentiment(-1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0)))
             if pnl > self.greed_threshold:
                 severity = 0.5 + min(1.0, (pnl - self.greed_threshold) / self.greed_threshold)
-                return -1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0))
+                return with_sentiment(-1.5 * float(np.clip(severity * rng.uniform(0.6, 1.0), 0.3, 1.0)))
 
         elif self.psych_profile == "bagholder":
             if pnl < -self.pain_threshold:
@@ -329,11 +349,11 @@ class Agent:
                 if base_order < 0:
                     capitulate = -pnl > 2 * self.pain_threshold and rng.random() < 0.15
                     partial = rng.uniform(0.6, 1.0) if capitulate else rng.uniform(0.05, 0.20)
-                    return base_order * partial
-                return base_order   # sinyal beli tetap jalan
+                    return with_sentiment(base_order * partial)
+                return with_sentiment(base_order)
             if pnl > self.greed_threshold:
                 relief = rng.uniform(0.7, 1.0)   # buru-buru ambil untung, kadang terlalu cepat
-                return -1.5 * float(relief)
+                return with_sentiment(-1.5 * float(relief))
 
         elif self.psych_profile == "averager":
             if pnl < -self.pain_threshold and self.capital_remaining > 0.15:
@@ -346,11 +366,11 @@ class Agent:
                 ) / total
                 self.position = min(2.5, total)
                 self.capital_remaining = max(0.0, self.capital_remaining - buy_qty)
-                return 1.5 * confidence
+                return with_sentiment(1.5 * confidence)
             if pnl > self.greed_threshold:
-                return -1.5 * float(rng.uniform(0.7, 1.0))
+                return with_sentiment(-1.5 * float(rng.uniform(0.7, 1.0)))
 
-        return base_order
+        return with_sentiment(base_order)
 
     # ── Update state posisi setelah order dikirim ────────────────────
     def _update_position(self, order: float, price: float) -> None:

@@ -80,8 +80,13 @@ Isi konfigurasi pada file `.env` sesuai kebutuhan:
 | `GEMINI_API_KEY` | String | *Kosong* | Kunci API Google Gemini untuk agen berbasis LLM. *(Jika kosong, simulasi otomatis beralih ke mode rule-based)*. |
 | `SIMPASAR_LLM` | String | `on` | Set ke `off` untuk menonaktifkan LLM sepenuhnya. |
 | `SIMPASAR_LLM_MODEL` | String | `gemini-3.1-flash-lite` | Model Gemini yang digunakan untuk penalaran agen. |
-| `SIMPASAR_LLM_RPM` | Integer | `12` | Batas maksimum request Gemini per menit. |
-| `SIMPASAR_LLM_CONCURRENCY` | Integer | `4` | Jumlah request paralel ke Gemini. |
+| `SIMPASAR_LLM_RPM` | Number | `3` | Laju awal maksimum request Gemini per menit; otomatis turun setelah 429. |
+| `SIMPASAR_LLM_CONCURRENCY` | Integer | `1` | Jumlah request paralel ke Gemini. |
+| `SIMPASAR_LLM_BATCH_SIZE` | Integer | `11` | Maksimum agen sekepribadian yang dinilai dalam satu request Gemini. |
+| `SIMPASAR_LLM_MAX_REQUESTS` | Integer | `1000` | Batas total request per proses server; `0` berarti tanpa batas. |
+| `SIMPASAR_LLM_TIMEOUT_MS` | Integer | `25000` | Batas waktu satu request Gemini dalam milidetik. |
+| `SIMPASAR_LLM_SENTIMENT_WEIGHT` | Number | `0.25` | Bobot sentimen LLM pada keputusan fallback; `0` menonaktifkannya. |
+| `SIMPASAR_LLM_SENTIMENT_HALFLIFE_S` | Number | `60` | Waktu paruh (detik) sentimen LLM sebelum pengaruhnya meluruh. |
 | `SIMPASAR_AGENT_LOG` | Integer | `0` | Set `1` untuk mencetak log keputusan agen setiap tick. |
 | `SECTORS_API_KEY` | String | *(kunci default tim)* | Opsional. Kunci Bearer Sectors MCP untuk harga IHSG/emiten & berita. |
 | `SECTORS_MCP_URL` | String | `https://sectors-mcp.supertype.ai/mcp` | Opsional. Set `offline://x` untuk mematikan semua panggilan Sectors (hemat kredit); `scripts/dev_server.py` melakukannya otomatis kecuali `--online`. |
