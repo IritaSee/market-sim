@@ -78,15 +78,6 @@
     setTimeout(revealInView, 400);
   }
 
-  // Sorotan kartu mengikuti kursor
-  $$(".card").forEach((card) => {
-    card.addEventListener("pointermove", (e) => {
-      const r = card.getBoundingClientRect();
-      card.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
-      card.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
-    });
-  });
-
   // ─────────────────────────── MATRIKS AGEN ───────────────────────────
   const matrix = $("#matrix");
   if (matrix) {
@@ -107,39 +98,41 @@
     matrix.addEventListener("pointerleave", clear);
   }
 
+  // Matriks: posisi sedang untung / rugi (teks sel ikut berganti lewat [data-when] di CSS)
+  const board = $("#mxBoard");
+  if (board) {
+    const segBtns = $$(".seg-btn[data-pos]", board);
+    segBtns.forEach((btn) => btn.addEventListener("click", () => {
+      board.dataset.pos = btn.dataset.pos;
+      segBtns.forEach((x) => {
+        const on = x === btn;
+        x.classList.toggle("is-on", on);
+        x.setAttribute("aria-pressed", String(on));
+      });
+    }));
+  }
+
   const yearEl = $("#year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
   // ───────────────────── PIL IHSG REAL-TIME (hero) ─────────────────────
   // Dipanggil sekali saat halaman dimuat (tidak ada polling → hemat kredit Sectors).
-  // Di server statis (landing/serve.js) endpoint ini tidak ada → tampilkan keterangan.
+  // Pil disembunyikan (atribut hidden di HTML) dan hanya ditampilkan bila ada data IHSG sungguhan
+  // dari server simulator; tanpa server / data cadangan → pil tetap tersembunyi, bukan pesan error.
   async function fetchLiveIHSG() {
+    const pill = $("#ihsg-ticker");
     const valEl = $("#ihsg-val");
     const chgEl = $("#ihsg-change");
     const dateEl = $("#ihsg-date");
-    if (!valEl) return;
-    const unavailable = (why) => {
-      valEl.textContent = "tidak tersedia";
-      if (chgEl) chgEl.textContent = "";
-      if (dateEl) dateEl.textContent = why ? `• ${why}` : "";
-    };
+    if (!pill || !valEl) return;
     try {
       const res = await fetch("/api/ihsg");
-      if (!res.ok) return unavailable("butuh server simulator");
+      if (!res.ok) return;
       const data = await res.json();
       const price = Number(data.price);
-      if (!Number.isFinite(price) || price <= 0) return unavailable("data belum ada");
+      // "fallback" = angka contoh saat Sectors belum pernah terhubung: jangan tampil seolah data bursa.
+      if (!Number.isFinite(price) || price <= 0 || data.status === "fallback") return;
       const nf2 = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-      const labelEl = $("#ihsg-label");
-      if (data.status === "fallback") {
-        // Angka contoh saat Sectors tidak terhubung: jangan tampil seolah data bursa terkini.
-        if (labelEl) labelEl.textContent = "IHSG (angka contoh, data bursa offline)";
-        valEl.textContent = price.toLocaleString("id-ID", nf2);
-        if (chgEl) chgEl.textContent = "";
-        if (dateEl) dateEl.textContent = "";
-        return;
-      }
-      if (labelEl) labelEl.textContent = "IHSG penutupan terakhir";
       valEl.textContent = price.toLocaleString("id-ID", nf2);
       if (chgEl && Number.isFinite(Number(data.change_pct))) {
         const pct = Number(data.change_pct);
@@ -153,11 +146,11 @@
       if (dateEl && data.date) {
         const d = new Date(`${String(data.date).slice(0, 10)}T00:00:00`);
         const when = Number.isNaN(d.getTime()) ? String(data.date) : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-        dateEl.textContent = `• ${when} · data Sectors`;
+        dateEl.textContent = `${when} · data Sectors`;
       }
+      pill.hidden = false;
     } catch (err) {
       console.warn("IHSG ticker fetch error:", err);
-      unavailable("butuh server simulator");
     }
   }
   fetchLiveIHSG();
@@ -220,6 +213,9 @@
     noise: { buy: "#9ff0c9", sell: "#ffb3ad", hold: "#1b2230" },
   };
   const PSYCH_BORDER = { disciplined: COLORS.blue, bagholder: COLORS.violet, averager: COLORS.orange };
+  const PAIN_FILL = "#661a17";     // merah tua = sedang rugi berat
+  const PROFIT_FILL = "#16553a";   // hijau tua = sedang pegang saham dan untung (tidak sedang beli)
+  const PROFIT_MIN = 0.02;         // untung > 2% dari harga beli
   const TYPE_DOT = { fundamentalist: COLORS.blue, chartist: COLORS.violet, noise: COLORS.orange };
 
   let lastStatus = "Normal";
@@ -279,7 +275,8 @@
       const col = i % 10, row = Math.floor(i / 10);
       const x0 = col * CELL, y0 = row * CELL;
       const fill = ACTION_FILL[a.type] || ACTION_FILL.noise;
-      gctx.fillStyle = a.inPain ? "#4a0f0f" : fill[a.action];
+      const inProfit = a.position > 0 && a.pnl > PROFIT_MIN && a.action !== "buy";
+      gctx.fillStyle = a.inPain ? PAIN_FILL : inProfit ? PROFIT_FILL : fill[a.action];
       gctx.fillRect(x0 + 1, y0 + 1, CELL - 2, CELL - 2);
       gctx.strokeStyle = PSYCH_BORDER[a.psych] || "#444"; gctx.lineWidth = 0.8;
       gctx.strokeRect(x0 + 1.5, y0 + 1.5, CELL - 3, CELL - 3);
@@ -366,12 +363,12 @@
   const now = () => tickToClock(market.tick).time;
   on(el.btnRumor, "click", () => {
     market.injectRumor(1.0); flash(el.btnRumor);
-    pushLog(`<b style="color:${COLORS.amber}">${now()}</b> · 📢 rumor disebar, pemburu rumor condong beli`);
+    pushLog(`<b style="color:${COLORS.amber}">${now()}</b> · rumor disebar, orang noise condong beli`);
     render(market.getState());
   });
   on(el.btnPanic, "click", () => {
     market.injectPanic(1.0); flash(el.btnPanic);
-    pushLog(`<b style="color:${COLORS.red}">${now()}</b> · 📉 kabar buruk, pemburu rumor condong jual`);
+    pushLog(`<b style="color:${COLORS.red}">${now()}</b> · kabar buruk, orang noise condong jual`);
     render(market.getState());
   });
   on(el.btnPause, "click", () => {
@@ -387,13 +384,13 @@
   on(el.selPop, "change", () => {
     const [f, c, n] = el.selPop.value.split(",").map(Number);
     market.setPopulation(f, c, n);
-    pushLog(`<b style="color:${COLORS.blue}">${now()}</b> · nilai wajar ${Math.round(f * 100)}% · tren ${Math.round(c * 100)}% · rumor ${Math.round(n * 100)}%`);
+    pushLog(`<b style="color:${COLORS.blue}">${now()}</b> · fundamentalist ${Math.round(f * 100)}% · chartist ${Math.round(c * 100)}% · noise ${Math.round(n * 100)}%`);
     render(market.getState());
   });
   on(el.selPsych, "change", () => {
     const [d, b] = el.selPsych.value.split(",").map(Number);
     market.setPsych(d, b);
-    pushLog(`<b style="color:${COLORS.violet}">${now()}</b> · disiplin ${Math.round(d * 100)}% · keras kepala ${Math.round(b * 100)}% · suka nambah ${Math.round((1 - d - b) * 100)}%`);
+    pushLog(`<b style="color:${COLORS.violet}">${now()}</b> · discipline ${Math.round(d * 100)}% · denial ${Math.round(b * 100)}% · averager ${Math.round((1 - d - b) * 100)}%`);
     render(market.getState());
   });
 
