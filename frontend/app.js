@@ -175,6 +175,15 @@
       dateLabel: `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`,
     };
   }
+  // Jam di header = waktu penutupan menit/candle terakhir: tick 14 (09:14) → "09:15"; akhir sesi 1 → "12:00";
+  // akhir hari → "16:00". Dengan candle 15 menit jam melompat 09:15, 09:30, … (bukan berjalan per menit).
+  function candleCloseTime(tick) {
+    const t = Math.max(0, Math.trunc(Number(tick) || 0));
+    const m = (t % MINUTES_PER_DAY) + 1;
+    if (m === SESSION1_MINUTES) return '12:00';
+    if (m === MINUTES_PER_DAY) return '16:00';
+    return tickToClock(t + 1).time;
+  }
   // Label sumbu-X: "09:15"; pada candle pertama tiap hari bursa → "22 Sep".
   function formatTickLabel(t0) { const c = tickToClock(t0); return c.minute === 0 ? c.dateLabel : c.time; }
   // Pil crosshair: "Sen 22 Sep · 09:15–09:29" (bila candle melintasi hari: dua tanggal).
@@ -199,7 +208,7 @@
     ref: NaN, limits: null,             // harga acuan & batas ARA/ARB hari ini (state.limits dari server)
     sesHigh: null, sesLow: null,
     paused: false, connected: false, wasConnected: false,
-    tf: '15m',
+    tf: '5m',
     awaitingSync: false, lastSyncReq: 0, syncAttempts: 0,
     lastAgents: [], llmReasons: new Map(), lastTickSeen: -1,
     priceInfo: {},                      // detail Sectors per simbol (change, market_cap…) dari modal, disimpan lokal
@@ -261,7 +270,7 @@
   };
   // Timeframe yang bisa dipilih (= landing page): 1, 5, 15, 30 menit per candle; pilihan diingat per browser.
   const TF_CHOICES = ['1m', '5m', '15m', '30m'];
-  { const saved = storageGet('simpasar:tf'); S.tf = TF_CHOICES.includes(saved) ? saved : '15m'; }
+  { const saved = storageGet('simpasar:tf'); S.tf = TF_CHOICES.includes(saved) ? saved : '5m'; }   // bawaan: 5 menit
   // Kapasitas jendela chart mengikuti timeframe (≈90 candle), bukan seluruh histori 2000 tick:
   // dengan 2000 tick pada 15m kapasitasnya 134 candle sehingga candle terlalu kurus (~5 px).
   const windowTicksFor = (period) => Math.min(MAX_HISTORY, Math.max(120, period * 90));
@@ -304,8 +313,10 @@
     tfButtons.forEach((b) => { const on = b.dataset.tf === tf; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
     if (persist) storageSet('simpasar:tf', tf);
     updateOhlcStrip();
+    updateSpeedHint();
   }
-  tfButtons.forEach((b) => b.addEventListener('click', () => setTimeframe(b.dataset.tf, true)));
+  // Timeframe juga menentukan kecepatan server (1x = 1 candle per detik) → kirim ke server.
+  tfButtons.forEach((b) => b.addEventListener('click', () => { setTimeframe(b.dataset.tf, true); requestSpeed(null, b.dataset.tf); }));
   setTimeframe(S.tf, false);
 
   const overlay = $('chartOverlay');
@@ -438,10 +449,13 @@
       if (S.awaitingSync) return;                          // tunggu snapshot penuh (ada batas waktu, lihat onSyncTimeout)
       if (S.tick < 0 || !S.prices.length) { requestSync(); return; }
       if (st.tick === S.tick) return;                      // duplikat
-      if (st.tick !== S.tick + 1) { requestSync(); return; } // tick loncat / putus → sinkron ulang
-      S.prices.push(num(st.price, S.price));
-      S.volumes.push(num(st.volume, 0));
-      if (S.prices.length > MAX_HISTORY) { S.prices.shift(); S.volumes.shift(); }
+      // Server mengirim satu pesan per candle: harga & volume tiap menit ada di batch_prices/batch_volumes.
+      const bp = Array.isArray(st.batch_prices) ? st.batch_prices : [st.price];
+      const bv = Array.isArray(st.batch_volumes) ? st.batch_volumes : [st.volume];
+      if (!bp.length) return;                              // dijeda di tengah candle: tidak ada menit baru
+      if (st.tick !== S.tick + bp.length) { requestSync(); return; } // menit loncat / putus → sinkron ulang
+      for (let i = 0; i < bp.length; i++) { S.prices.push(num(bp[i], S.price)); S.volumes.push(num(bv[i], 0)); }
+      while (S.prices.length > MAX_HISTORY) { S.prices.shift(); S.volumes.shift(); }
     }
     S.prevPrice = isSnapshot && S.prices.length >= 2 ? S.prices[S.prices.length - 2] : S.price;
     S.tick = st.tick;
@@ -454,7 +468,7 @@
     if (st.sim_time) syncSimStart(st.sim_time);
     if (typeof st.paused === 'boolean' && st.paused !== S.paused) { S.paused = st.paused; updatePauseBtn(); }
     if (st.params && typeof st.params === 'object') syncParams(st.params);
-    if (st.tick_interval != null) syncSpeed(Number(st.tick_interval), false);   // server baru; server lama tidak mengirim
+    if (st.speed) syncSpeed(st.speed, false);
     render(st);
     initStreamMessages();                                    // sekali, setelah simbol server diketahui (pesan menyebut ticker aktif)
     streamReact(st);
@@ -470,7 +484,7 @@
     switch (msg.event) {
       case 'paused': S.paused = true; updatePauseBtn(); break;
       case 'resumed': S.paused = false; updatePauseBtn(); break;
-      case 'speed_changed': syncSpeed(Number(msg.tick_interval), true); break;
+      case 'speed_changed': syncSpeed(msg.speed, true); break;
       case 'news_injected': {
         const strength = num(msg.strength, 0);
         const fp = num(msg.fundamental_pct, 0);
@@ -633,7 +647,7 @@
     const serverDate = parseISODate(stTime.date);
     const dateLabel = serverDate ? `${WEEKDAYS_SHORT[serverDate.getDay()]} ${serverDate.getDate()} ${MONTHS_SHORT[serverDate.getMonth()]}` : `${clock.weekdayShort} ${clock.dateLabel}`;
     setText('clockDate', dateLabel);
-    setText('clockTime', stTime.time || clock.time);
+    setText('clockTime', candleCloseTime(tick));
     setText('clockSession', `Sesi ${stTime.session || clock.session}`);
     setText('clockDay', `Hari ${stTime.day || clock.day}`);
 
@@ -768,11 +782,13 @@
     box.title = `Batas harian BEI hari ini. Acuan ${fmtPrice(ref)} (penutupan hari sebelumnya) · ${rule}. ` +
       'ARB = Auto Rejection Bawah, ARA = Auto Rejection Atas: harga tidak bisa keluar dari rentang ini.';
 
-    const hit = lim.hit === 'ara' || lim.hit === 'arb' ? lim.hit : null;
-    box.dataset.state = hit || 'open';
-    setText('limLabel', hit ? `Terkunci ${hit.toUpperCase()}` : 'Batas harian');
+    const locked = lim.hit === 'ara' || lim.hit === 'arb' ? lim.hit : null;
+    box.dataset.state = locked || 'open';
+    setText('limLabel', locked ? `Terkunci ${locked.toUpperCase()}` : 'Batas harian');
     setChartLimitLines(lim);
 
+    // ARA/ARB yang tersentuh di tengah candle (batch_hit) tetap diumumkan.
+    const hit = locked || (lim.batch_hit === 'ara' || lim.batch_hit === 'arb' ? lim.batch_hit : null);
     if (hit) {
       const key = `${lim.day}|${hit}`;
       if (!limitAnnounced.has(key)) {
@@ -1150,9 +1166,17 @@
     toast('info', 'Nilai wajar disamakan dengan IHSG riil', `${NF2.format(price)}${stale ? ' (cache lama Sectors)' : ''} · simulasi dimulai ulang`, 0, 'ihsg');
   });
 
-  // Kecepatan: interval detik/tick, rasio nyata terhadap 1x = 0,25 s dalam batas server 0,05–1,5 s.
-  // Tombol aktif mengikuti tick_interval dari server (klien lain / reload), bukan hanya klik lokal.
-  const SPEED_VALUES = { '0.5': 0.5, '1.0': 0.25, '2.0': 0.125, '3.0': 0.0833, '5.0': 0.05 };
+  // Kecepatan mengikuti timeframe: 1x = 1 candle per detik (5m → 5 menit bursa per detik), 2x = 2 candle
+  // per detik, dst. Server menyimpan {mult, tf} bersama (semua klien melihat simulasi yang sama).
+  const SPEED_VALUES = { '0.5': 0.5, '1.0': 1, '2.0': 2, '3.0': 3, '5.0': 5 };
+  function tfMinutes(tf) { return TIMEFRAMES[tf] ? TIMEFRAMES[tf].period : 15; }   // deklarasi fungsi: dipakai setTimeframe saat init
+  function updateSpeedHint() {
+    setText('speedHint', `1x = 1 candle (${tfMinutes(S.tf)} menit bursa) per detik`);
+  }
+  function requestSpeed(key, tf) {
+    const mult = SPEED_VALUES[key || speedKey] || 1;
+    return sendOrWarn({ cmd: 'set_speed', mult, tf: tfMinutes(tf || S.tf) });
+  }
   const speedButtons = Array.from(document.querySelectorAll('.seg__btn[data-speed]'));
   let speedKey = '1.0', speedLocalKey = null, speedLocalAt = 0;
   function markSpeed(key) {
@@ -1164,14 +1188,21 @@
       if (on) setText('speedLabel', b.textContent.trim());
     });
   }
-  function nearestSpeedKey(interval) {
+  function nearestSpeedKey(mult) {
     let best = '1.0', bestD = Infinity;
-    for (const [k, v] of Object.entries(SPEED_VALUES)) { const d = Math.abs(Math.log(interval / v)); if (d < bestD) { bestD = d; best = k; } }
+    for (const [k, v] of Object.entries(SPEED_VALUES)) { const d = Math.abs(Math.log(mult / v)); if (d < bestD) { bestD = d; best = k; } }
     return best;
   }
-  function syncSpeed(interval, authoritative) {
-    if (!isNum(interval) || interval <= 0) return;
-    const key = nearestSpeedKey(interval);
+  // speed = {mult, tf} dari server. Timeframe server dipakai juga di chart (simulasi dipakai bersama).
+  function syncSpeed(speed, authoritative) {
+    if (!speed || typeof speed !== 'object') return;
+    const tfKey = `${Number(speed.tf)}m`;
+    if (TF_CHOICES.includes(tfKey) && tfKey !== S.tf && (authoritative || Date.now() - speedLocalAt >= 1500)) {
+      setTimeframe(tfKey, true);
+    }
+    const mult = Number(speed.mult);
+    if (!isNum(mult) || mult <= 0) return;
+    const key = nearestSpeedKey(mult);
     // Delta yang sudah di jalan sebelum set_speed kita diproses masih membawa interval lama → abaikan sebentar.
     if (!authoritative && key !== speedLocalKey && Date.now() - speedLocalAt < 1500) return;
     if (authoritative) speedLocalAt = 0;
@@ -1179,7 +1210,7 @@
   }
   speedButtons.forEach((btn) => btn.addEventListener('click', () => {
     const key = btn.dataset.speed;
-    if (!sendOrWarn({ cmd: 'set_speed', interval: SPEED_VALUES[key] || 0.25 })) return;
+    if (!requestSpeed(key, S.tf)) return;
     speedLocalKey = key; speedLocalAt = Date.now();
     markSpeed(key);
   }));
@@ -1858,14 +1889,16 @@
         text: 'Klik di sini (atau tekan /) untuk memilih saham BEI mana saja, misalnya BBCA atau GOTO. Harga awalnya diambil dari harga penutupan terakhir di bursa lewat Sectors API.' },
       { sel: '#statusBadge', title: 'Status pasar',
         text: 'Normal, Bubble (harga jauh di atas nilai wajar), atau Panik-Crash (jatuh jauh di bawahnya). Status ini muncul sendiri dari reaksi 100 investor tiruan.' },
+      { sel: '#simClock', title: 'Jam bursa simulasi',
+        text: '1 langkah simulasi = 1 menit jam bursa: Sesi 1 pukul 09.00–12.00, Sesi 2 pukul 13.30–16.00. Akhir pekan dilompati.' },
       { sel: '#statsRow', title: 'Angka penting',
         text: 'Harga sekarang, nilai wajar, selisih keduanya, tertinggi dan terendah hari ini, suasana pasar (−3 panik sampai +3 euforia), serta batas harian ARA/ARB.' },
       { sel: ['#tfGroup', '#chartWrap'], title: 'Chart dan timeframe',
-        text: 'Pilih lebar candle 1, 5, 15, atau 30 menit. Di chart: scroll untuk zoom, seret untuk menggeser, klik ganda untuk kembali ke tampilan awal.' },
+        text: 'Pilih lebar candle 1, 5, 15, atau 30 menit (bawaannya 5 menit). Di chart: scroll untuk zoom, seret untuk menggeser, klik ganda untuk kembali ke tampilan awal.' },
       { sel: '#dockActions', title: 'Atur simulasinya',
         text: 'Sebar rumor (R) menaikkan suasana pasar, Kabar buruk (K) menurunkannya; orang noise bereaksi lebih dulu. Jeda (Spasi) dan Reset juga ada di sini.' },
       { sel: '#speedGroup', title: 'Kecepatan',
-        text: 'Percepat atau perlambat simulasi dari 0,5x sampai 5x.' },
+        text: 'Percepat atau perlambat simulasi dari 0,5x sampai 5x. Bawaannya 1x. Kecepatan mengikuti timeframe: 1x = satu candle per detik, jadi di timeframe 5 menit (bawaan) jam bursa maju 5 menit tiap detik.' },
       { sel: '#dockMix', title: 'Komposisi investor',
         text: 'Geser porsi tipe orang (fundamentalist dan chartist, sisanya noise) dan sifat orang (discipline dan denial, sisanya averager). Ke-100 investor langsung dibentuk ulang dan posisinya mulai dari nol, sedangkan harga dan chart tetap berjalan.' },
       { sel: '#crowdBlock', title: '100 investor tiruan',

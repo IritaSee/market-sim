@@ -50,6 +50,16 @@
     </div>
 
     <div class="topbar__right">
+      <div class="simclock mono" id="simClock" title="Jam simulasi: 1 langkah = 1 menit bursa (Sesi 1 09:00–12:00, Sesi 2 13:30–16:00)">
+        <span id="clockDate">Sen 22 Sep</span>
+        <span class="simclock__sep">·</span>
+        <span class="simclock__time" id="clockTime">09:00</span>
+        <span class="simclock__tz">WIB</span>
+        <span class="simclock__sep">·</span>
+        <span id="clockSession">Sesi 1</span>
+        <span class="simclock__sep">·</span>
+        <span id="clockDay">Hari 1</span>
+      </div>
       <span class="meta mono" id="speedLabel" title="Kecepatan simulasi">1x</span>
       <div class="conn" id="conn" title="Status koneksi ke server simulasi">
         <span class="conn__dot" id="connDot"></span>
@@ -181,8 +191,8 @@
         <span class="ohlc__symbol" id="ohlcSymbol">BBCA</span>
         <div class="tf-group" id="tfGroup" role="group" aria-label="Timeframe chart (menit bursa per candle)">
           <button class="tf-btn" type="button" data-tf="1m" aria-pressed="false" title="1 candle = 1 menit bursa">1m</button>
-          <button class="tf-btn" type="button" data-tf="5m" aria-pressed="false" title="1 candle = 5 menit bursa">5m</button>
-          <button class="tf-btn is-active" type="button" data-tf="15m" aria-pressed="true" title="1 candle = 15 menit bursa">15m</button>
+          <button class="tf-btn is-active" type="button" data-tf="5m" aria-pressed="true" title="1 candle = 5 menit bursa">5m</button>
+          <button class="tf-btn" type="button" data-tf="15m" aria-pressed="false" title="1 candle = 15 menit bursa">15m</button>
           <button class="tf-btn" type="button" data-tf="30m" aria-pressed="false" title="1 candle = 30 menit bursa">30m</button>
         </div>
         <span class="ohlc__item"><span class="ohlc__k">O</span><span class="ohlc__v" id="ohlcO">—</span></span>
@@ -353,13 +363,13 @@
     </section>
 
     <section class="dock-card" id="dockSpeed">
-      <h3 class="dock-card__title">Kecepatan <span class="dock-card__hint">1x ≈ 4 menit bursa per detik</span></h3>
+      <h3 class="dock-card__title">Kecepatan <span class="dock-card__hint" id="speedHint">1x = 1 candle (5 menit bursa) per detik</span></h3>
       <div class="seg" role="group" aria-label="Kecepatan simulasi" id="speedGroup">
-        <button class="seg__btn" type="button" data-speed="0.5" aria-pressed="false" title="Setengah kecepatan normal">0,5x</button>
-        <button class="seg__btn is-active" type="button" data-speed="1.0" aria-pressed="true" title="Normal: ±4 menit bursa per detik">1x</button>
-        <button class="seg__btn" type="button" data-speed="2.0" aria-pressed="false">2x</button>
-        <button class="seg__btn" type="button" data-speed="3.0" aria-pressed="false">3x</button>
-        <button class="seg__btn" type="button" data-speed="5.0" aria-pressed="false" title="Paling cepat">5x</button>
+        <button class="seg__btn" type="button" data-speed="0.5" aria-pressed="false" title="1 candle per 2 detik">0,5x</button>
+        <button class="seg__btn is-active" type="button" data-speed="1.0" aria-pressed="true" title="1 candle per detik">1x</button>
+        <button class="seg__btn" type="button" data-speed="2.0" aria-pressed="false" title="2 candle per detik">2x</button>
+        <button class="seg__btn" type="button" data-speed="3.0" aria-pressed="false" title="3 candle per detik">3x</button>
+        <button class="seg__btn" type="button" data-speed="5.0" aria-pressed="false" title="5 candle per detik (paling cepat)">5x</button>
       </div>
     </section>
 

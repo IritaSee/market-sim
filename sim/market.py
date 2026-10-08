@@ -51,6 +51,7 @@ MAX_FUNDAMENTAL  = 1e9    # harga saham BEI tertinggi ± 1e6 rupiah; IHSG ± 1e4
 MAX_SENTIMENT    = 3.0
 # Berita bisa menggeser nilai wajar (orang fundamentalist menilai ulang). Satu berita maks. ±10%,
 # dan total pergeseran dari harga awal dibatasi ±50% supaya simulasi tidak lepas kendali.
+CANDLE_MINUTES = (1, 5, 15, 30)     # timeframe candle; semuanya membagi habis 180 (sesi 1) dan 330 (sehari)
 MAX_NEWS_SHIFT_PCT   = 10.0
 MAX_NEWS_DRIFT_RATIO = 0.5
 # "Sedang untung" / "sedang rugi" untuk statistik & grid: P&L di luar ±2%.
@@ -161,8 +162,43 @@ class Market:
 
     def step(self) -> dict:
         """Satu tick (= 1 menit bursa). Mengembalikan state delta (tanpa histori)."""
+        self.advance()
+        return self.get_state(full=False)
+
+    def advance_candle(self, minutes: int) -> dict:
+        """
+        Jalankan simulasi sampai satu candle `minutes` menit selesai, berakhir tepat di batas candle
+        (15 menit: 09:00–09:14, 09:15–09:29, …; candle tidak melintasi istirahat siang / penutupan
+        karena 180 dan 330 menit habis dibagi 1/5/15/30). Mengembalikan state delta dari tick terakhir
+        plus harga & volume setiap menit di candle itu (batch_prices / batch_volumes), supaya klien
+        bisa membentuk OHLC lengkap walau hanya menerima satu pesan per candle.
+        """
+        if minutes not in CANDLE_MINUTES:
+            raise ValueError(f"timeframe candle harus salah satu dari {CANDLE_MINUTES}")
+        r = (self.tick % MINUTES_PER_DAY) % minutes
+        steps = (minutes - 1 - r) % minutes or minutes
+        prices: list[float] = []
+        volumes: list[float] = []
+        hit = None
+        for _ in range(steps):
+            if self.is_paused:
+                break
+            self.advance()
+            prices.append(round(self.price, 2))
+            volumes.append(round(self.volume, 2))
+            if hit is None:
+                hit = limit_hit(self.price, self._limits())
+        state = self.get_state(full=False)
+        state["batch_prices"] = prices
+        state["batch_volumes"] = volumes
+        if hit:
+            state["limits"]["batch_hit"] = hit      # ARA/ARB tersentuh di tengah candle
+        return state
+
+    def advance(self) -> None:
+        """Satu tick (= 1 menit bursa) tanpa menyusun state (dipakai advance_candle)."""
         if self.is_paused:
-            return self.get_state(full=False)
+            return
 
         # Tick berikutnya membuka hari bursa baru → harga acuan = penutupan kemarin.
         if (self.tick + 1) % MINUTES_PER_DAY == 0:
@@ -215,7 +251,6 @@ class Market:
             self.sentiment = 0.0
 
         self.tick += 1
-        return self.get_state(full=False)
 
     # ------------------------------------------------------------------ #
     #  Controls                                                            #

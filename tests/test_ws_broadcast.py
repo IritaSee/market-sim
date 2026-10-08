@@ -312,10 +312,10 @@ class _HealthyReader(threading.Thread):
 
 
 def test_real_server_stalled_socket() -> None:
-    saved = (server.WSClient, server.WS_STALL_TIMEOUT, server.tick_rate)
+    saved = (server.WSClient, server.WS_STALL_TIMEOUT, server.speed_mult, server.candle_minutes)
     server.WSClient = _RecordingClient
     server.WS_STALL_TIMEOUT = 4.0
-    server.tick_rate = 0.05                          # 5x: ±15 KB × 20 tick/detik, buffer cepat penuh
+    server._set_speed(20.0, 1)                       # 20 candle 1 menit/detik (±15 KB per pesan): buffer cepat penuh
     server.market.resume()
     srv, thread, port = _start_uvicorn()
     healthy = raw = None
@@ -385,7 +385,8 @@ def test_real_server_stalled_socket() -> None:
         writers_done = all(c.writer is None or c.writer.done() for c in _RecordingClient.instances)
         srv.should_exit = True
         thread.join(timeout=15)
-        server.WSClient, server.WS_STALL_TIMEOUT, server.tick_rate = saved
+        server.WSClient, server.WS_STALL_TIMEOUT = saved[:2]
+        server._set_speed(saved[2], saved[3])
         server.clients.clear()
     assert not leftover, leftover
     assert writers_done, "task penulis bocor setelah klien putus"

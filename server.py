@@ -59,7 +59,7 @@ load_env_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 from sim.agents import get_gemini_client, llm_status, set_news_context, shutdown_llm_advisor  # noqa: E402
 from sim.market import (  # noqa: E402
-    FUNDAMENTAL_RANGE_MSG, MAX_NEWS_SHIFT_PCT, MAX_SENTIMENT, Market, valid_fundamental,
+    CANDLE_MINUTES, FUNDAMENTAL_RANGE_MSG, MAX_NEWS_SHIFT_PCT, MAX_SENTIMENT, Market, valid_fundamental,
 )
 from sim.news import NewsError, analyze_news  # noqa: E402
 from sim.sectors import (  # noqa: E402
@@ -127,10 +127,14 @@ def _fallback_start_meta() -> dict:
 market     = Market(n_agents=100, seed=42, fundamental=START_FALLBACK_PRICE)
 market.set_symbol(_fallback_start_meta(), START_FALLBACK_PRICE)
 clients:   "set[WSClient]" = set()
-tick_rate  = 0.25   # detik antar tick (≈4 tick/detik default 1x, realistis)
-
-TICK_INTERVAL_MIN = 0.05           # 5x
-TICK_INTERVAL_MAX = 1.5
+# Kecepatan mengikuti timeframe chart: 1x = satu candle per detik (timeframe 5m → 5 menit bursa
+# per detik), 2x = dua candle per detik, 0,5x = satu candle per 2 detik. Simulasi tetap 1 tick =
+# 1 menit, tetapi dijalankan per candle (lihat Market.advance_candle) dan dikirim satu pesan per candle.
+SPEED_MULTS = (0.5, 1.0, 2.0, 3.0, 5.0)
+speed_mult     = 1.0
+candle_minutes = 5      # bawaan saat server mulai: timeframe 5 menit, kecepatan 1x
+tick_rate      = 1.0 / (candle_minutes * speed_mult)   # detik per tick (turunan, untuk info klien)
+_speed_wake: asyncio.Event | None = None               # membangunkan loop saat kecepatan diganti
 WS_MAX_MESSAGE_BYTES = 64 * 1024   # perintah klien kecil (<1 KB); tolak payload raksasa sebelum json.loads
 WS_MAX_CMDS_PER_SEC  = 20          # pembatas per koneksi (get_state dikecualikan)
 WS_RATE_LIMIT_MESSAGE = "Terlalu banyak perintah, coba lagi sebentar"
@@ -158,9 +162,18 @@ def _dumps(payload: dict) -> str | None:
 
 
 def _with_speed(state: dict) -> dict:
-    """Tambahkan kecepatan server (detik per tick) ke state, supaya tombol kecepatan klien tersinkron."""
+    """Tambahkan kecepatan server ke state, supaya tombol kecepatan & timeframe klien tersinkron."""
     state["tick_interval"] = round(float(tick_rate), 4)
+    state["speed"] = {"mult": speed_mult, "tf": candle_minutes}
     return state
+
+
+def _set_speed(mult: float, tf: int) -> None:
+    global speed_mult, candle_minutes, tick_rate
+    speed_mult, candle_minutes = float(mult), int(tf)
+    tick_rate = 1.0 / (candle_minutes * speed_mult)
+    if _speed_wake is not None:
+        _speed_wake.set()
 
 
 def current_state(full: bool = True) -> dict:
@@ -389,14 +402,19 @@ def broadcast(payload: dict) -> int:
 # ------------------------------------------------------------------ #
 
 async def simulation_loop() -> None:
+    global _speed_wake
     loop = asyncio.get_running_loop()
+    _speed_wake = asyncio.Event()
     next_at = loop.time()
+    last_log = -1
     while True:
         try:
             if not market.is_paused and clients:
-                state = _with_speed(market.step())   # delta: snapshot=false, tanpa histori
+                # Satu candle per putaran: delta tick terakhir + batch_prices/batch_volumes per menit.
+                state = _with_speed(market.advance_candle(candle_minutes))
                 broadcast(state)
-                if state["tick"] % 40 == 0:
+                if state["tick"] // 40 != last_log:
+                    last_log = state["tick"] // 40
                     llm = state.get("llm", {})
                     llm_part = (f"llm dipakai {llm.get('applied', 0)}/{llm.get('requested', 0)} request, error {llm.get('errors', 0)}"
                                 if llm.get("enabled") else f"llm {llm.get('reason')}")
@@ -406,11 +424,17 @@ async def simulation_loop() -> None:
         except Exception:
             # Satu tick yang gagal tidak boleh mematikan loop simulasi untuk selamanya.
             traceback.print_exc()
-        # Jadwal berbasis tenggat: waktu proses per tick tidak menambah interval, sehingga
-        # 5x (0,05 s) benar-benar ≈ 20 tick/detik. Tertinggal jauh → jangan mengejar beruntun.
+        # Jadwal berbasis tenggat: 1x = 1 candle/detik, 5x = 5 candle/detik. Tertinggal jauh → jangan
+        # mengejar beruntun. Ganti kecepatan membangunkan loop (0,5x tidak membuat klik 5x menunggu 2 detik).
+        frame = 1.0 / speed_mult
         now = loop.time()
-        next_at = max(next_at + tick_rate, now - tick_rate)
-        await asyncio.sleep(max(0.0, next_at - now))
+        next_at = max(next_at + frame, now - frame)
+        try:
+            await asyncio.wait_for(_speed_wake.wait(), timeout=max(0.0, next_at - now))
+            next_at = loop.time()
+        except asyncio.TimeoutError:
+            pass
+        _speed_wake.clear()
 
 
 def _silence_genai_aclose_bug(loop: asyncio.AbstractEventLoop, context: dict) -> None:
@@ -791,7 +815,6 @@ async def handle_set_symbol(client: WSClient, msg: dict) -> None:
 
 
 async def handle_command(client: WSClient, msg: dict) -> None:
-    global tick_rate
     cmd = str(msg.get("cmd", ""))
 
     # Semua angka dari klien divalidasi (finite + batas) sebelum menyentuh state pasar;
@@ -876,9 +899,21 @@ async def handle_command(client: WSClient, msg: dict) -> None:
         broadcast(current_state(full=True))
 
     elif cmd == "set_speed":
-        # interval antar tick: 0.05 s (5x) – 1.5 s (lambat); semua klien menandai tombol yang sama
-        tick_rate = _bounded_float(msg.get("interval", 0.25), TICK_INTERVAL_MIN, TICK_INTERVAL_MAX)
-        broadcast({"event": "speed_changed", "tick_interval": round(tick_rate, 4)})
+        # {mult: 0.5|1|2|3|5, tf: 1|5|15|30} → mult candle per detik, candle tf menit. Klien lama
+        # mengirim {interval: detik/tick} (1x lama = 0,25 s) → dipetakan ke pengali terdekat.
+        if "mult" in msg or "tf" in msg:
+            mult = _bounded_float(msg.get("mult", speed_mult), min(SPEED_MULTS), max(SPEED_MULTS))
+            tf_raw = msg.get("tf", candle_minutes)
+            if isinstance(tf_raw, bool) or not isinstance(tf_raw, (int, float)) or int(tf_raw) != tf_raw                     or int(tf_raw) not in CANDLE_MINUTES:
+                raise ValueError(f"timeframe harus salah satu dari {CANDLE_MINUTES} menit")
+            tf = int(tf_raw)
+        else:
+            interval = _bounded_float(msg.get("interval", 0.25), 0.01, 10.0)
+            mult, tf = 0.25 / interval, candle_minutes
+        mult = min(SPEED_MULTS, key=lambda m: abs(math.log(m / mult)))
+        _set_speed(mult, tf)
+        broadcast({"event": "speed_changed", "tick_interval": round(tick_rate, 4),
+                   "speed": {"mult": speed_mult, "tf": candle_minutes}})
 
     elif cmd == "get_state":
         client.request_snapshot()

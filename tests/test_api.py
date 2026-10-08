@@ -90,7 +90,7 @@ def test_rest(client: TestClient) -> None:
     assert r.status_code == 200
     state = r.json()
     assert state["snapshot"] is True and "price_history" in state and "symbol" in state and "sim_time" in state
-    assert state["tick_interval"] == server.tick_rate and "source_kind" in state["symbol"]
+    assert state["speed"] == {"mult": server.speed_mult, "tf": server.candle_minutes} and "source_kind" in state["symbol"]
     assert state["symbol"]["symbol"] in ("IHSG", "BBCA", "TLKM")
     assert state["sim_time"]["minutes_per_day"] == 330
     assert "limits" in state and state["limits"]["rule"] in ("nominal", "percent", "index")
@@ -114,7 +114,7 @@ def test_websocket(client: TestClient) -> None:
         assert first["symbol"]["source_kind"] == "fallback"   # offline: nilai cadangan, bukan harga Sectors
         assert first["symbol"]["source"] == server.START_FALLBACK_SOURCE
         assert first["fundamental"] == 6200.0 and first["price_history"][0] == 6200.0
-        assert first["tick_interval"] == 0.25
+        assert first["speed"] == {"mult": 1.0, "tf": 5}
         # Batas ARA/ARB BBCA dari acuan 6200 (band >Rp5.000: +20% / −15%).
         lim = first["limits"]
         assert lim["applies"] is True and lim["ref"] == 6200.0 and lim["band"] == ">Rp5.000", lim
@@ -147,7 +147,10 @@ def test_websocket(client: TestClient) -> None:
         # Delta per tick: tanpa histori, snapshot false.
         delta = recv_until(ws, lambda m: "event" not in m and m.get("snapshot") is False, "delta tick")
         assert "price_history" not in delta and delta["symbol"]["symbol"] == "BBCA"
-        assert delta["tick_interval"] == 0.25 and delta["symbol"]["source_kind"] == "manual"
+        assert delta["speed"] == {"mult": 1.0, "tf": 5} and delta["symbol"]["source_kind"] == "manual"
+        # Satu pesan per candle 5 menit (bawaan): harga tiap menit ada di batch_prices dan berakhir di batas candle.
+        assert 1 <= len(delta["batch_prices"]) <= 5 and len(delta["batch_volumes"]) == len(delta["batch_prices"])
+        assert (delta["tick"] % 330) % 5 == 4, delta["tick"]
 
         # Tanpa fundamental & Sectors offline → symbol_error dengan price_status, simbol TIDAK berubah.
         ws.send_json({"cmd": "set_symbol", "symbol": "TLKM"})
@@ -193,32 +196,36 @@ def test_websocket(client: TestClient) -> None:
 
 
 def test_speed_in_state(client: TestClient) -> None:
-    """F21/F24/F27: tick_interval di setiap state (snapshot & delta) + event speed_changed ke semua klien."""
+    """Kecepatan {mult, tf} di setiap state + event speed_changed ke semua klien (1x = 1 candle/detik)."""
     with client.websocket_connect("/ws") as a, client.websocket_connect("/ws") as b:
         snap = a.receive_json()
-        assert snap["snapshot"] is True and snap["tick_interval"] == server.tick_rate
+        assert snap["snapshot"] is True and snap["speed"] == {"mult": 1.0, "tf": 5}
         b.receive_json()
-        a.send_json({"cmd": "set_speed", "interval": 0.125})
+        a.send_json({"cmd": "set_speed", "mult": 2, "tf": 5})
         for ws in (a, b):
             ev = recv_until(ws, lambda m: m.get("event") == "speed_changed", "speed_changed")
-            assert ev["tick_interval"] == 0.125, ev
-            delta = recv_until(ws, lambda m: "event" not in m and m.get("snapshot") is False, "delta 2x")
-            assert delta["tick_interval"] == 0.125
-        assert client.get("/api/state").json()["tick_interval"] == 0.125
+            assert ev["speed"] == {"mult": 2.0, "tf": 5}, ev
+            delta = recv_until(ws, lambda m: "event" not in m and m.get("snapshot") is False and m["speed"]["tf"] == 5, "delta 2x")
+            assert (delta["tick"] % 330) % 5 == 4 and len(delta["batch_prices"]) <= 5
+        assert client.get("/api/state").json()["speed"] == {"mult": 2.0, "tf": 5}
         b.send_json({"cmd": "get_state"})
         snap = recv_until(b, lambda m: m.get("snapshot") is True, "snapshot 2x")
-        assert snap["tick_interval"] == 0.125
+        assert snap["speed"] == {"mult": 2.0, "tf": 5}
 
-        # Di luar batas server → di-clamp (5x = 0,05 s); nilai rusak → error, kecepatan tetap.
-        a.send_json({"cmd": "set_speed", "interval": 0.01})
+        # Pengali di luar 0,5–5x di-clamp ke tombol terdekat; timeframe tidak dikenal / nilai rusak → error.
+        a.send_json({"cmd": "set_speed", "mult": 50, "tf": 30})
         ev = recv_until(a, lambda m: m.get("event") == "speed_changed", "speed_changed clamp")
-        assert ev["tick_interval"] == 0.05 and server.tick_rate == 0.05
-        a.send_json({"cmd": "set_speed", "interval": "cepat"})
-        recv_until(a, lambda m: m.get("event") == "error" and m.get("cmd") == "set_speed", "error set_speed")
-        assert server.tick_rate == 0.05
-        a.send_json({"cmd": "set_speed", "interval": 0.25})
-        recv_until(a, lambda m: m.get("event") == "speed_changed" and m.get("tick_interval") == 0.25, "speed 1x")
-    assert server.tick_rate == 0.25
+        assert ev["speed"] == {"mult": 5.0, "tf": 30} and server.speed_mult == 5.0
+        for bad in ({"mult": 1, "tf": 7}, {"mult": "cepat", "tf": 15}, {"mult": 1, "tf": "15"}):
+            a.send_json({"cmd": "set_speed", **bad})
+            recv_until(a, lambda m: m.get("event") == "error" and m.get("cmd") == "set_speed", f"error set_speed {bad}")
+        assert (server.speed_mult, server.candle_minutes) == (5.0, 30)
+        # Klien lama: {interval} (1x lama = 0,25 s) → pengali terdekat, timeframe tetap.
+        a.send_json({"cmd": "set_speed", "interval": 0.125})
+        recv_until(a, lambda m: m.get("event") == "speed_changed" and m["speed"] == {"mult": 2.0, "tf": 30}, "legacy 2x")
+        a.send_json({"cmd": "set_speed", "mult": 1, "tf": 5})
+        recv_until(a, lambda m: m.get("event") == "speed_changed" and m["speed"] == {"mult": 1.0, "tf": 5}, "speed 1x")
+    assert (server.speed_mult, server.candle_minutes) == (1.0, 5)
 
 
 def test_rate_limit_replies_and_get_state_exempt(client: TestClient) -> None:
