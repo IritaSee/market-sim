@@ -1858,8 +1858,6 @@
         text: 'Klik di sini (atau tekan /) untuk memilih saham BEI mana saja, misalnya BBCA atau GOTO. Harga awalnya diambil dari harga penutupan terakhir di bursa lewat Sectors API.' },
       { sel: '#statusBadge', title: 'Status pasar',
         text: 'Normal, Bubble (harga jauh di atas nilai wajar), atau Panik-Crash (jatuh jauh di bawahnya). Status ini muncul sendiri dari reaksi 100 investor tiruan.' },
-      { sel: '#simClock', title: 'Jam bursa simulasi',
-        text: '1 langkah simulasi = 1 menit jam bursa: Sesi 1 pukul 09.00–12.00, Sesi 2 pukul 13.30–16.00. Akhir pekan dilompati.' },
       { sel: '#statsRow', title: 'Angka penting',
         text: 'Harga sekarang, nilai wajar, selisih keduanya, tertinggi dan terendah hari ini, suasana pasar (−3 panik sampai +3 euforia), serta batas harian ARA/ARB.' },
       { sel: ['#tfGroup', '#chartWrap'], title: 'Chart dan timeframe',

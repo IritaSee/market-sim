@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 SECTORS_MCP_URL = os.environ.get("SECTORS_MCP_URL", "https://sectors-mcp.supertype.ai/mcp")
 SECTORS_API_KEY = os.environ.get(
     "SECTORS_API_KEY",
-    "98472105befd14b45a8c0a677cd3954bbb3f806639559aa0c6451af5ca95553a"
+    "5c1b7d3d6fb9953f23c5058c46e03f1941e6aefe4a909c1215e2f5499d70dfc1"
 )
 
 # Cache sederhana di memori untuk menghemat kuota API credit

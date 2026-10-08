@@ -823,8 +823,6 @@ input[type=range]:focus-visible { outline: 2px solid var(--accent-2); outline-of
   .symbol-btn { overflow: hidden; }
   .symbol-btn__kbd { display: none; }
   .symbol-btn .chip { display: block; min-width: 0; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; line-height: 16px; }
-  /* Sembunyikan "· Hari N" (pemisah SEBELUM #clockDay), bukan pemisah setelah Sesi. */
-  .simclock #clockSession + .simclock__sep, .simclock #clockDay { display: none; }
 }
 /* Dock dua baris: Aksi + Kecepatan di atas, komposisi selebar dock di bawah. */
 @media (max-width: 1040px) {
